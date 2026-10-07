@@ -7,7 +7,10 @@ Data: [Beach Water Quality – Automated Sensors](https://catalog.data.gov/datas
 ```
 backend/    Django (config/ + app monitoring/: models, services, views, mqtt_consumer, tests)
 sensor/     Sensorsimulator (sensor_sim/: data_source, message, publishers, simulator, tests)
+<<<<<<< HEAD
 firmware/   ESP-IDF-firmware för riktig ESP32 (core 0/1, MQTT) - se firmware/README.md
+=======
+>>>>>>> 309d9750b177e1fb84201d1eeb64c828cf7f5bc9
 docs/       ARCHITECTURE.md (diagram + teknikval), api-requests.http
 infra/      Mosquitto-konfiguration (+ docker-compose.yml i rotmappen)
 .vscode/    Debug-konfigurationer för varje modul
