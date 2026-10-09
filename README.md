@@ -5,468 +5,309 @@
 [![MQTT](https://img.shields.io/badge/MQTT-QoS%201-purple)](https://mqtt.org/)
 [![License](https://img.shields.io/badge/License-Educational-lightgrey)](#license)
 
-An end-to-end IoT system for collecting, transmitting, storing, processing and visualizing environmental sensor data.
+
+## 📖 Bakgrund
+
+
+En kommun vill övervaka miljödata, t.ex. badvattenkvalitet, för att:
+
+        fatta faktabaserade beslut
+        identifiera avvikelser och risker
+        presentera information tydligt för verksamhet och allmänhet
+
+Projektet simulerar ett verkligt IoT-flöde där en Python-baserad sensor skickar mätvärden (turbiditet i NTU) via MQTT eller HTTP till en Django-backend. Backend validerar, klassificerar och lagrar datan som tidsserier och exponerar den via ett REST-API som en Bootstrap/Chart.js-dashboard visualiserar.
+
+## 🎯 Projektmål
+Målet är att utveckla ett komplett IoT-dataflöde från en simulerad sensor till en webbaserad dashboard.
+
+Systemet ska:
+
+**Samla in simulerad sensordata**
+        
+**Skicka data med jämna intervall**
+        
+**Validara data, Lagra tidsseriedata**
+        
+**Exponera API för senaste och historiska värden**
+        
+**Visa dashboard med status, diagram och trender**
+
+    “Backend ska exponera ett REST‑API… API ska möjliggöra hämtning av senaste mätvärde och historisk data.”
+
+
+## 📌 Projektöversikt
+
+För att nå projekten mål vi ska bygga en end-to-end IoT system for collecting, transmitting, storing, processing and visualizing environmental sensor data.
 
 Projektet är uppbyggt kring **fem huvudmoduler**:
 
-1. **Simulerad IoT-enhet (Sensor)**
-2. **Datakommunikation**
-3. **Backend / API**
-4. **Databas – tidsseriedata**
-5. **Frontend – Dashboard**
+| Modul | Beskrivning |
+| --- | --- |
+| **1. ESP32‑sensor** | Fysisk turbidity‑sensor som mäter vattengrumlighet i NTU |
+| **2. Datakommunikation** | MQTT (Mosquitto) eller HTTP för transport av mätdata |
+| **3. Backend / API (Django)** | Validering, lagring, avvikelsedetektering, REST‑API |
+| **4. Databas (SQLite)** | Tidsserielagring med index och duplicatskydd |
+| **5. Frontend / Dashboard** | Visualisering av realtidsdata och historiska trender |
 
-Målet är att demonstrera ett komplett IoT-dataflöde från en simulerad sensor till en webbaserad dashboard.
 
----
+
 
 ## Systemöversikt
 
 ```text
-    ┌─────────────────────────────┐
-    │ 1. SIMULERAD IoT-ENHET      │
-    │                             │
-    │ Python Sensor Simulator     │
-    │ - Sensorvärden              │
-    │ - Sensor ID                 │
-    │ - Timestamp                 │
-    │ - NTU / turbidity           │
-    └──────────────┬──────────────┘
-                   │
-                   │ MQTT / HTTP
-                   ▼
-    ┌─────────────────────────────┐
-    │ 2. DATAKOMMUNIKATION        │
-    │                             │
-    │ MQTT                         │
-    │ Eclipse Mosquitto            │
-    │ REST/HTTP                    │
-    └──────────────┬──────────────┘
-                   │
-                   ▼
-    ┌─────────────────────────────┐
-    │ 3. BACKEND / API            │
-    │                             │
-    │ Django                      │
-    │ Django REST Framework       │
-    │ MQTT Consumer               │
-    │ Validation & Business Logic │
-    └──────────────┬──────────────┘
-                   │
-                   ▼
-    ┌─────────────────────────────┐
-    │ 4. DATABAS                  │
-    │    TIDSSERIEDATA            │
-    │                             │
-    │ SQLite                      │
-    │ Sensor readings             │
-    │ Timestamp                   │
-    │ Value / Unit / Quality      │
-    └──────────────┬──────────────┘
-                   │
-                   │ REST API
-                   ▼
-    ┌─────────────────────────────┐
-    │ 5. FRONTEND / DASHBOARD     │
-    │                             │
-    │ HTML                        │
-    │ Bootstrap                   │
-    │ JavaScript                  │
-    │ Chart.js                    │
-    │                             │
-    │ Live / historical data      │
-    │ Sensor selection            │
-    │ Charts & anomaly status     │
-    └─────────────────────────────┘
 
-#Project Structure
-        smart-env-monitoring/
-        │
-        ├── backend/
-        │   ├── config/
-        │   ├── monitoring/
-        │   │   ├── models.py
-        │   │   ├── serializers.py
-        │   │   ├── services.py
-        │   │   ├── views.py
-        │   │   ├── mqtt_consumer.py
-        │   │   ├── management/
-        │   │   │   └── commands/
-        │   │   │       └── run_mqtt_consumer.py
-        │   │   ├── templates/
-        │   │   ├── static/
-        │   │   └── tests/
-        │   └── manage.py
-        │
-        ├── sensor/
-        │   ├── sensor_sim/
-        │   │   ├── config.py
-        │   │   ├── data_source.py
-        │   │   ├── message.py
-        │   │   ├── publishers.py
-        │   │   ├── simulator.py
-        │   │   └── __main__.py
-        │   ├── data/
-        │   │   └── sample_readings.json
-        │   └── tests/
-        │
-        ├── firmware/
-        │   ├── main/
-        │   ├── CMakeLists.txt
-        │   └── sdkconfig.defaults
-        │
-        ├── infra/
-        │   └── mosquitto.conf
-        │
-        ├── docs/
-        │   ├── ARCHITECTURE.md
-        │   └── api-requests.http
-        │
-        ├── docker-compose.yml
-        ├── requirements.txt
-        ├── .env.example
-        └── README.md
 ```
-## 1. Simulerad IoT-enhet – Sensor
 
-Den första modulen representerar själva IoT-enheten.
+<img width="1024" height="1536" alt="Copilot_20261009_141719" src="https://github.com/user-attachments/assets/d0eb4e19-3965-4c23-9ba8-1f2101702a9f" />
 
-I utvecklingsmiljön används en Python-baserad sensor simulator istället för fysisk hårdvara. Simulatorn genererar miljödata som representerar exempelvis turbidity/vattengrumlighet.
 
-## Sensorfunktioner
 
-Simulatorn kan:
+# Project Structure
 
-      Generera sensorvärden
-      Använda riktiga dataset som datakälla
-      Använda lokal fallback-data
-      Skapa timestamps
-      Identifiera sensorn med sensor_id
-      Skicka data via MQTT
-      Skicka data via HTTP
-      Hantera nätverksfel
-      Retry:a transient errors
-      Köra i offline-läge
+       smart-env-monitoring/
+    │
+    ├── backend/                                  # Django backend + REST API
+    │   ├── config/                                # Django settings (DEBUG=0 i produktion)
+    │   ├── monitoring/
+    │   │   ├── models.py                          # Reading model (tidsseriedata)
+    │   │   ├── serializers.py                     # API serializers
+    │   │   ├── services.py                        # Business logic (anomaly detection)
+    │   │   ├── views.py                           # REST API endpoints
+    │   │   ├── mqtt_consumer.py                   # MQTT ingestion logic
+    │   │   ├── management/commands/
+    │   │   │   └── run_mqtt_consumer.py           # MQTT consumer command
+    │   │   ├── templates/                         # Dashboard HTML
+    │   │   ├── static/                            # CSS/JS assets
+    │   │   └── tests/                             # Backend tests
+    │   ├── secrets/                               # Secret management (produktion)
+    │   ├── logging/                               # Centralized logging config (framtida)
+    │   └── manage.py
+    │
+    ├── sensor/                                    # Python sensor simulator (fallback)
+    │   ├── sensor_sim/
+    │   │   ├── config.py
+    │   │   ├── data_source.py
+    │   │   ├── message.py
+    │   │   ├── publishers.py
+    │   │   ├── simulator.py
+    │   │   └── __main__.py
+    │   ├── data/sample_readings.json              # Offline fallback data
+    │   └── tests/
+    │
+    ├── firmware/                                  # ESP32 firmware (ESP-IDF)
+    │   ├── main/
+    │   │   ├── main.c                             # Turbidity sensor firmware
+    │   │   ├── wifi.c                             # WiFi setup
+    │   │   ├── mqtt.c                             # MQTT publisher (TLS, Auth)
+    │   │   ├── sensor.c                           # ADC turbidity logic
+    │   │   ├── ota.c                              # OTA updates (framtida)
+    │   │   └── device_mgmt.c                      # Device management (framtida)
+    │   ├── CMakeLists.txt
+    │   └── sdkconfig.defaults
+    │
+    ├── infra/                                     # Infrastructure configs
+    │   ├── mosquitto.conf                         # MQTT broker config (TLS, ACL)
+    │   ├── docker/                                # Dockerisering av hela stacken (framtida)
+    │   │   ├── docker-compose.yml
+    │   │   ├── nginx.conf                         # HTTPS reverse proxy (produktion)
+    │   │   └── grafana-prometheus/                # Observability stack (framtida)
+    │   └── network/                               # Network segmentation configs (produktion)
+    │
+    ├── docs/                                      # Documentation
+    │   ├── ARCHITECTURE.md                        # System architecture
+    │   ├── SECURITY.md                            # Produktionssäkerhet
+    │   ├── FUTURE_IMPROVEMENTS.md                 # Skalbarhetsplan
+    │   └── api-requests.http                      # API test collection
+    │
+    ├── scripts/                                   # Deployment scripts
+    │   ├── deploy_prod.sh                         # Produktionsdeployment
+    │   ├── init_timescaledb.sql                   # TimescaleDB setup (framtida)
+    │   └── init_redis.sh                          # Redis setup (framtida)
+    │
+    ├── docker-compose.yml                         # Lokal MQTT + backend
+    ├── requirements.txt                           # Python dependencies
+    ├── .env.example                               # Environment variables template
+    └── README.md                                  # Main documentation
+
+```text
+```
+# 🔧 Teknologival 
+Detta är vår fullständiga tekniskt ramverk som har vi använt för den projekten.
+
+<img width="1024" height="1536" alt="Copilot_20261009_140145" src="https://github.com/user-attachments/assets/fcb58559-a6c2-4dc9-a7d3-f2aefad83991" />
+
+
+
+## ⚙️ Systemmoduler – Smart Environmental Monitoring
+### 1️⃣ IoT‑enhet – Sensor (ESP32 + Turbidity‑sensor)
+Den fysiska IoT‑enheten mäter vattengrumlighet (NTU) och skickar data till backend.
+I utvecklingsmiljön används en Python‑baserad sensor‑simulator som ersättning för hårdvaran.
+
+Funktioner
+
+        ADC‑mätning av turbidity (NTU)
+        
+        Sensor‑ID och tidsstämpel (UTC)
+        
+        Klassificering av kvalitet (good/moderate/bad)
+        
+        Publicering via MQTT (TLS, Auth, ACL)
+        
+        Alternativ transport via HTTP/REST
+        
+        Retry‑mekanism vid nätverksfel
+        
+        Offline‑läge med lokal fallback‑data
+        
+        OTA‑uppdateringar och device management (produktion)
 
 Exempel på sensorvärde:
 
-        {
-          "sensor_id": "sensor-01-turbidity",
-          "timestamp": "2026-10-08T08:30:00Z",
-          "value": 12.4,
-          "unit": "NTU",
-          "quality": "good"
-        }
-
-### Sensor simulator
-
-Exempel:
-
-    cd sensor
-    python -m sensor_sim --transport mqtt --interval 3
-
-HTTP:
-
-    python -m sensor_sim --transport http --interval 3
-
-Offline:
-
-      python -m sensor_sim --offline
-
-Simulatorn kan därför användas för att testa hela IoT-systemet utan fysisk ESP32-hårdvara.
-
-## 2. Datakommunikation
-
-Datakommunikationsmodulen ansvarar för att transportera sensorinformationen från IoT-enheten till backend-systemet.
-
-Projektet stödjer två kommunikationsvägar:
-
-    Sensor
-      │
-      ├── MQTT ──► Mosquitto ──► Backend
-      │
-      └── HTTP ──► REST API ────► Backend
-    MQTT
-
-MQTT används som huvudsaklig IoT-kommunikation.
-
-## Broker:
-
-      Eclipse Mosquitto
-
-## Standardport:
-
-      1883
-
-Topic:
-
-    beach/{sensor_id}/readings
-
-Backend prenumererar på:
-
-      beach/+/readings
-
-Exempel:
-
-      beach/sensor-01-turbidity/readings
-MQTT payload
-      {
-        "sensor_id": "sensor-01-turbidity",
-        "timestamp": "2026-10-08T08:30:00Z",
-        "value": 12.4,
-        "unit": "NTU",
-        "quality": "good"
-      }
-
-MQTT använder:
-
-QoS 1
-
-vilket ger at-least-once delivery.
-
-Starta MQTT broker
-    docker compose up -d
-
-Kontrollera:
-
-    docker compose ps
-
-Stoppa:
-
-      docker compose down
-
-## HTTP
-
-HTTP används som alternativ transport för exempelvis:
-
-    API-testning
-    Lokal utveckling
-    Test utan MQTT broker
-    Integrationstester
-
-Exempel:
-
-POST /api/readings/
-      Content-Type: application/json
-## 3. Backend / API
-
-Backend-modulen är systemets centrala lager.
-
-### Den ansvarar för:
-
-      Ta emot sensorvärden
-      Validera data
-      Bearbeta data
-      Klassificera sensorvärden
-      Spara readings
-      Exponera REST API
-      Hantera MQTT-data
-      Tillhandahålla health check
-
-### Teknik:
-
-    Python
-    Django
-    Django REST Framework
-    Backend-arkitektur
-
-              MQTT
-                │
-                ▼
-       ┌─────────────────┐
-       │ MQTT Consumer    │
-       └────────┬────────┘
-                │
-                ▼
-       ┌─────────────────┐
-       │ Service Layer    │
-       │ Validation       │
-       │ Business Logic   │
-       └────────┬────────┘
-                │
-                ▼
-       ┌─────────────────┐
-       │ Django Models    │
-       └────────┬────────┘
-                │
-                ▼
-             Database
-
-## HTTP-flödet:
-      
-          HTTP Client
-              │
-              ▼
-          Django REST API
-              │
-              ▼
-          Serializer / Validation
-              │
-              ▼
-          Service Layer
-              │
-              ▼
-          Database
-
-## Starta backend
-    cd backend
-    python manage.py migrate
-    python manage.py runserver
-
-### Backend:
-
-      http://localhost:8000
-      API-endpoints
-      Health
-      GET /api/health/
-
-Exempel:
-
+    json
     {
-      "status": "ok"
+      "sensor_id": "esp32-turbidity-01",
+      "timestamp": "2026-10-08T08:30:00Z",
+      "value": 12.4,
+      "unit": "NTU",
+      "quality": "good"
     }
+### 2️⃣ Datakommunikation
+Transporterar sensordata till backend via säkra kanaler.
 
-### Sensors
-       GET /api/sensors/
-Latest readings
-       GET /api/readings/latest/
+Teknik
 
-### För en specifik sensor:
+    MQTT (Eclipse Mosquitto) – huvudprotokoll
+    
+    TLS‑kryptering
+    
+    Authentication & ACL
+    
+    QoS 1 (at‑least‑once delivery)
+    
+    Rate limiting (produktion)
+    
+    HTTP/REST – fallback för test och integration
 
-      GET /api/readings/latest/?sensor_id=sensor-01-turbidity
-### Historical readings
-      GET /api/readings/
+Flöde:
 
-Exempel:
+    Sensor ──► MQTT ──► Mosquitto ──► Backend
+    Sensor ──► HTTP ──► REST API ──► Backend
+    
+### 3️⃣ Backend / API (Django + DRF)
+Systemets centrala lager för databehandling, validering och lagring.
 
-      GET /api/readings/?sensor_id=sensor-01-turbidity&limit=100&order=desc
+Ansvar
 
-## Stödda filter:
+    Ta emot sensorvärden via MQTT och HTTP
+    
+    Validera inkommande data
+    
+    Klassificera avvikelser (anomaly detection)
+    
+    Spara readings i tidsseriedatabas
+    
+    Exponera REST‑API
+    
+    Tillhandahålla health‑check
+    
+    Hantera autentisering och säkerhet
 
-Parameter	Beskrivning
-sensor_id	Filtrera på sensor
-start	Starttid
-end	Sluttid
-limit	Antal readings
-order	asc eller desc
-Create reading
-POST /api/readings/
+Teknik
 
-Payload:
+    Python 3.11+
+    
+    Django 5.x
+    
+    Django REST Framework
+    
+    MQTT‑consumer (management command)
+    
+    Service layer för affärslogik
+    
+    JWT/API‑authentication
+    
+    Secret management
+    
+    DEBUG=0 i produktion
+    
+    Centralized logging (ELK / Grafana Loki)
+    
+    Network segmentation
 
-{
-  "sensor_id": "sensor-01-turbidity",
-  "timestamp": "2026-10-08T08:30:00Z",
-  "value": 12.4,
-  "unit": "NTU",
-  "quality": "good"
-}
-## 4. Databas – Tidsseriedata
+Backend‑arkitektur:
 
-Databasmodulen lagrar sensorvärden som tidsseriedata.
+    MQTT → Consumer → Service Layer → Django Models → Database
+    HTTP → REST API → Serializer → Service Layer → Database
+    
+### 4️⃣ Databas – Tidsseriedata
+Lagrar sensorvärden som tidsserier för analys och visualisering.
 
-Teknik:
+Teknik
 
-SQLite
+    SQLite – lokal utveckling
+    
+    PostgreSQL + TimescaleDB – produktion
+    
+    Redis caching – snabb åtkomst till senaste värden
+    
+    Indexering: timestamp, sensor_id
+    
+    Duplicate protection: sensor_id + timestamp
+    
+    Retention policies och nedsampling (TimescaleDB)
 
-Databasen innehåller historiska mätningar som kan användas för:
+Reading‑modell:
 
-Realtidsvisning
-Historiska grafer
-Sensoranalys
-Anomalidetektering
-Filtrering per sensor
-Filtrering per tidsintervall
-Reading-modell
-        Reading
-        │
-        ├── id
-        ├── sensor_id
-        ├── timestamp
-        ├── value
-        ├── unit
-        ├── quality
-        ├── status
-        └── created_at
+    Reading
+    │
+    ├── id
+    ├── sensor_id
+    ├── timestamp
+    ├── value
+    ├── unit
+    ├── quality
+    ├── status (OK / ANOMALY)
+    └── created_at
+    
+### 5️⃣ Frontend – Dashboard
+Visualiserar data från backend och databasen i ett användarvänligt gränssnitt.
 
-Exempel:
+Teknik
 
-    sensor_id   : sensor-01-turbidity
-    timestamp   : 2026-10-08 08:30:00
-    value       : 12.4
-    unit        : NTU
-    quality     : good
-    status      : OK
-    Tidsserie
+    HTML + Bootstrap 5
+    
+    JavaScript + Chart.js
+    
+    AJAX‑polling / WebSockets för realtidsuppdatering
+    
+    HTTPS för säker kommunikation
+    
+    Grafana/Prometheus för avancerad visualisering
+    
+    Notifieringar & larm (SMS, e‑post, Teams/Slack)
 
-Data kan konceptuellt representeras:
+Dashboard‑flöde:
 
-    Time
-     │
-     ├── 08:00 → 8.4 NTU
-     ├── 08:05 → 9.1 NTU
-     ├── 08:10 → 11.2 NTU
-     ├── 08:15 → 12.4 NTU
-     └── 08:20 → 31.7 NTU  ← ANOMALY
+    Dashboard → REST API → SQLite / TimescaleDB → Visualisering
+Funktioner
 
-Det gör databasen lämplig för att bygga historiska grafer och analysera förändringar över tid.
+    Senaste sensorvärde
+    
+    Sensorstatus (OK / ANOMALY)
+    
+    Historiska mätningar
+    
+    Tidsseriediagram
+    
+    Sensorval och datumfilter
+    
+    Automatisk uppdatering
+    
+    Visuell markering av avvikelser
 
-Duplicate protection
+### 🔄 Komplett dataflöde:
 
-Systemet skyddar mot duplicerade mätningar genom en unik kombination av:
-
-sensor_id + timestamp
-
-Databasen använder även index för vanliga queries:
-
-timestamp
-sensor_id + timestamp
-5. Frontend – Dashboard
-
-Frontend-modulen visualiserar den data som finns i backend och databasen.
-
-Teknik:
-
-    HTML
-    Bootstrap 5
-    JavaScript
-    Chart.js
-
-Dashboarden kommunicerar med backend via REST API.
-
-      ┌───────────────┐
-      │   Dashboard   │
-      └───────┬───────┘
-              │ HTTP GET
-              ▼
-      ┌───────────────┐
-      │ REST API      │
-      └───────┬───────┘
-              │
-              ▼
-      ┌───────────────┐
-      │ SQLite        │
-      └───────────────┘
-Dashboardfunktioner
-
-Dashboarden visar bland annat:
-
-      Senaste sensorvärde
-      Sensor-ID
-      Sensorstatus
-      Historiska mätningar
-      Tidsseriediagram
-      Sensorval
-      Datum-/tidsfilter
-      Anomalistatus
-      Automatisk uppdatering
-
-Dashboarden kan hämta nya värden med jämna intervall för att ge en nära realtidsliknande vy.
-
-Komplett dataflöde
-
-## Ett komplett scenario ser ut så här:
-
-      1. Sensor Simulator
+      1. ESP32 / Sensor Simulator
               │
               │ Sensor value
               ▼
@@ -518,123 +359,32 @@ Komplett dataflöde
       Dashboard
 Anomaly Detection
 
-Backend kan klassificera sensorvärden baserat på en konfigurerad tröskel.
-
-Exempel:
-
-ANOMALY_THRESHOLD=30
-
-Då kan:
-
-    12.4 NTU → OK
-    18.7 NTU → OK
-    29.8 NTU → OK
-    35.2 NTU → ANOMALY
-
-Detta gör det möjligt för dashboarden att tydligt visa avvikande mätningar.
-
-Reliability
-
-Systemet innehåller flera mekanismer för robust IoT-kommunikation.
-
-Retry
-
-Vid temporära kommunikationsfel används retry med exponential backoff:
-
-1s
- ↓
-2s
- ↓
-4s
- ↓
-8s
-
-Permanenta HTTP-fel retry:as inte eftersom samma request förväntas misslyckas igen.
-
-Offline fallback
-
-Om extern datakälla inte är tillgänglig kan simulatorn använda lokal data:
-
-sensor/data/sample_readings.json
-
-Det gör att projektet fortfarande kan köras utan internetåtkomst till den externa datakällan.
 
 
-Testing
+# Testing
 
 Backend:
 
-cd backend
-python manage.py test
+    cd backend
+    python manage.py test
 
 Sensor:
 
-cd sensor
-python -m unittest discover -s tests -t .
+    cd sensor
+    python -m unittest discover -s tests -t .
 
 Tester omfattar bland annat API, validation, service logic, MQTT ingestion, simulator, publishing och retry behavior.
 
-Technology Stack
-Modul	Technology
-1. Simulerad IoT-enhet	Python
-2. Datakommunikation	MQTT, HTTP, Eclipse Mosquitto
-3. Backend / API	Python, Django, Django REST Framework
-4. Databas	SQLite, Time-Series Data
-5. Frontend	HTML, Bootstrap 5, JavaScript, Chart.js
-Infrastruktur	Docker Compose
-Embedded extension	ESP32, ESP-IDF, FreeRTOS
-Reliability
 
-Systemet innehåller:
+## Development Workflow
 
-MQTT QoS 1
-Retry vid transient errors
-Exponential backoff
-Offline fallback
-Input validation
-Duplicate protection
-Database indexes
-Health endpoint
-
-Exempel på retry:
-
-1s → 2s → 4s → 8s
-Security
-
-För lokal utveckling används en enkel MQTT-konfiguration.
-
-För produktion bör systemet kompletteras med:
-
-MQTT TLS
-MQTT authentication
-MQTT ACL
-HTTPS
-API authentication
-Secret management
-DEBUG=0
-Network segmentation
-Rate limiting
-Centralized logging
-Future Improvements
-Riktig ESP32-sensor
-PostgreSQL + TimescaleDB
-Redis caching
-MQTT TLS
-JWT/API authentication
-Dockerisering av hela stacken
-Grafana/Prometheus
-Sensor alarms
-Notifications
-Device management
-OTA firmware updates
-Development Workflow
-feature/*
-    ↓
-integration / development
-    ↓
-testing
-    ↓
-main
+    feature/*
+        ↓
+    integration / development
+        ↓
+    testing
+        ↓
+    main
 
 Exempel:
 
@@ -652,10 +402,10 @@ Exempel:
 Detta projekt demonstrerar en komplett IoT-pipeline med fem tydliga moduler:
 
     #	          Modul	                      Huvudansvar
-    1	    Simulerad IoT-enhet        	Generera sensorvärden
+    1	    Simulerad IoT-enhet           Generera sensorvärden
     2	    Datakommunikation	          Transportera data med MQTT/HTTP
     3	    Backend / API	              Validera, bearbeta och exponera data
-    4	    Databas	                    Lagra tidsseriedata
+    4	    Databas	                      Lagra tidsseriedata
     5	    Frontend	                  Visualisera data och anomalier
 
 End-to-end:
