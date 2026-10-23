@@ -418,4 +418,3 @@ Smart Environmental Monitoring – IoT Project
 Technologies:
 
 Python • IoT • MQTT • Django • REST API • SQLite • Time-Series Data • JavaScript • Bootstrap • Chart.js • Docker • ESP32 • ESP-IDF • FreeRTOS
-
