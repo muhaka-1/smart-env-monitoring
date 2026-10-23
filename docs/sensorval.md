@@ -1,5 +1,7 @@
 # Sensorval och rekommenderad omfattning
 
+> **Avgränsning beslutad 2026-10-23:** Fysisk sensor, ESP32 och firmware ingår inte i den obligatoriska MVP:n. Projektet ska använda en simulerad sensor som läser det öppna Chicago-datasetet. Dokumentet nedan bevaras endast som research för möjligt framtida arbete. Köp eller implementation av hårdvara ska inte blockera nuvarande projektplan.
+
 **Projekt:** smart-env-monitoring  
 **Målplattform:** ESP32-S3  
 **Dokumentdatum:** 2026-10-11  
