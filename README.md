@@ -64,6 +64,8 @@ MVP:n är klar när:
 
 Den granskade, korrigerade backlogplanen finns i [docs/BACKLOG_REVIEW.md](docs/BACKLOG_REVIEW.md). Den beskriver hur samtliga 35 issues och fem milstolpar bör behållas, ändras, slås ihop eller flyttas ut ur MVP:n.
 
+Den beslutade sprintplanen, onsdagsleveranserna och ansvarsfördelningen för tre personer finns i [docs/SPRINT_PLAN.md](docs/SPRINT_PLAN.md).
+
 ## Nuvarande struktur
 
 ```text
@@ -71,6 +73,7 @@ smart-env-monitoring/
 ├── README.md
 └── docs/
     ├── BACKLOG_REVIEW.md
+    ├── SPRINT_PLAN.md
     ├── pat_veckolagg.md
     └── sensorval.md
 ```
