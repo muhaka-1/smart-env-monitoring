@@ -1,6 +1,21 @@
 
-# Python cache and virtual environments
+# Python cache
 __pycache__/
 *.py[cod]
+*.pyc
+
+# Python virtual environments
 .venv/
 venv/
+
+# Local database
+db.sqlite3
+
+# Environment variables and secrets
+.env
+
+# Local editor settings
+.vscode/settings.json
+
+# Sensor simulator cache
+sensor/data/cache.json
