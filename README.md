@@ -66,6 +66,8 @@ Den granskade, korrigerade backlogplanen finns i [docs/BACKLOG_REVIEW.md](docs/B
 
 Den beslutade sprintplanen, onsdagsleveranserna och ansvarsfördelningen för tre personer finns i [docs/SPRINT_PLAN.md](docs/SPRINT_PLAN.md).
 
+Den responsiva dashboard-wireframen och dess API-underlag finns i [docs/dashboard-wireframe.md](docs/dashboard-wireframe.md). Den körbara prototypen kan öppnas lokalt via [docs/dashboard-wireframe.html](docs/dashboard-wireframe.html).
+
 ## Nuvarande struktur
 
 ```text
