@@ -128,6 +128,9 @@ Projektet är uppbyggt kring **fem huvudmoduler**:
     ├── requirements.txt                           # Python dependencies
     ├── .env.example                               # Environment variables template
     └── README.md                                  # Main documentation
+## Dashboard-wireframe
+
+Den responsiva dashboard-wireframen och dess API-underlag finns i [docs/dashboard-wireframe.md](docs/dashboard-wireframe.md). Den körbara prototypen kan öppnas lokalt via [docs/dashboard-wireframe.html](docs/dashboard-wireframe.html).
 
 ```text
 ```

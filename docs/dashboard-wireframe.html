@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miljöbevakning – dashboard-wireframe</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f3f7f7;
+      --surface: #ffffff;
+      --surface-soft: #edf5f4;
+      --text: #153236;
+      --muted: #60767a;
+      --border: #cbdad9;
+      --primary: #006c70;
+      --primary-soft: #d9eeee;
+      --ok: #147a45;
+      --ok-soft: #def3e6;
+      --warn: #9b6200;
+      --warn-soft: #fff0c9;
+      --error: #b3261e;
+      --error-soft: #fde5e2;
+      --chart: #087f8c;
+      --threshold: #b3261e;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--text); }
+    button, select { font: inherit; }
+    button:focus-visible, select:focus-visible { outline: 3px solid #75c5c8; outline-offset: 2px; }
+
+    .app-shell { min-height: 100vh; }
+    .topbar { background: #0d3f43; color: #fff; padding: 18px 24px; }
+    .topbar-inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; background: #d9eeee; color: #0d3f43; border-radius: 12px; font-weight: 800; }
+    .brand h1 { margin: 0; font-size: 1.15rem; }
+    .brand p { margin: 2px 0 0; color: #c7dddd; font-size: .84rem; }
+    .prototype-label { border: 1px solid #7ba5a7; padding: 6px 10px; border-radius: 999px; font-size: .76rem; letter-spacing: .05em; }
+
+    main { max-width: 1120px; margin: 0 auto; padding: 26px 24px 48px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .toolbar-fields { display: flex; flex-wrap: wrap; gap: 12px; }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: .78rem; font-weight: 700; }
+    select { min-height: 42px; padding: 8px 36px 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+    .state-switch { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: var(--surface-soft); border-radius: 10px; }
+    .state-switch button { min-height: 36px; border: 0; border-radius: 7px; padding: 7px 12px; background: transparent; color: var(--text); cursor: pointer; }
+    .state-switch button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 4px rgba(18, 55, 58, .16); font-weight: 700; }
+
+    .backend { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .84rem; margin: 0 0 16px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+    .dot.error { background: var(--error); }
+
+    .summary-grid { display: grid; grid-template-columns: 1.25fr .8fr .8fr; gap: 16px; margin-bottom: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px rgba(21, 50, 54, .05); }
+    .eyebrow { margin: 0 0 8px; color: var(--muted); font-size: .76rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .sensor-name { margin: 0 0 18px; font-size: 1.2rem; }
+    .reading-row { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+    .value { margin: 0; font-size: clamp(2.4rem, 7vw, 4.3rem); line-height: .95; font-weight: 750; letter-spacing: -.05em; }
+    .unit { font-size: 1.1rem; color: var(--muted); letter-spacing: 0; }
+    .status { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 9px 12px; font-weight: 800; }
+    .status.ok { background: var(--ok-soft); color: var(--ok); }
+    .status.warning { background: var(--warn-soft); color: var(--warn); }
+    .status.error { background: var(--error-soft); color: var(--error); }
+    .status-symbol { font-size: 1.1rem; }
+    .timestamp { margin: 15px 0 0; color: var(--muted); font-size: .86rem; }
+
+    .metric-label { margin: 0 0 12px; color: var(--muted); font-size: .82rem; }
+    .metric-value { margin: 0; font-size: 1.8rem; font-weight: 750; }
+    .metric-help { margin: 7px 0 0; color: var(--muted); font-size: .8rem; }
+
+    .chart-card { margin-bottom: 16px; }
+    .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 16px; }
+    .card-header h2 { margin: 0; font-size: 1.05rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: .78rem; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-line { width: 20px; height: 3px; border-radius: 3px; background: var(--chart); }
+    .legend-line.threshold { height: 0; border-top: 2px dashed var(--threshold); background: none; }
+    .chart-wrap { width: 100%; overflow: hidden; }
+    .chart { width: 100%; height: auto; display: block; }
+    .chart text { fill: var(--muted); font-family: inherit; font-size: 12px; }
+    .chart .grid { stroke: #dce7e6; stroke-width: 1; }
+    .chart .series { fill: none; stroke: var(--chart); stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
+    .chart .area { fill: #dff1f2; }
+    .chart .threshold { stroke: var(--threshold); stroke-width: 2; stroke-dasharray: 7 6; }
+    .chart .point { fill: var(--surface); stroke: var(--chart); stroke-width: 3; }
+
+    .bottom-grid { display: grid; grid-template-columns: 1.45fr .75fr; gap: 16px; }
+    .sensor-list { display: grid; gap: 10px; }
+    .sensor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e1ebea; }
+    .sensor-row:last-child { border-bottom: 0; }
+    .sensor-title { font-weight: 700; overflow-wrap: anywhere; }
+    .sensor-meta { color: var(--muted); font-size: .78rem; margin-top: 3px; }
+    .sensor-reading { font-weight: 800; white-space: nowrap; }
+    .mini-status { color: var(--ok); font-size: .82rem; font-weight: 800; white-space: nowrap; }
+    .explanation { margin: 0; padding-left: 18px; color: var(--muted); }
+    .explanation li + li { margin-top: 10px; }
+
+    .message-state { display: none; min-height: 420px; place-items: center; text-align: center; }
+    .message-state:not([hidden]) { display: grid; }
+    .message-box { max-width: 480px; }
+    .message-icon { width: 58px; height: 58px; margin: 0 auto 16px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-soft); font-size: 1.5rem; }
+    .message-state h2 { margin: 0 0 8px; }
+    .message-state p { margin: 0; color: var(--muted); }
+    .message-state.error .message-icon { background: var(--error-soft); color: var(--error); }
+    #dashboard[hidden], .message-state[hidden] { display: none; }
+
+    @media (max-width: 820px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .summary-grid .hero { grid-column: 1 / -1; }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .topbar { padding: 14px 16px; }
+      .prototype-label { display: none; }
+      main { padding: 18px 14px 36px; }
+      .toolbar, .toolbar-fields { display: grid; grid-template-columns: 1fr; width: 100%; }
+      select { width: 100%; }
+      .state-switch { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; }
+      .state-switch button { padding-inline: 7px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .summary-grid .hero { grid-column: auto; }
+      .card { padding: 16px; border-radius: 12px; }
+      .reading-row { align-items: start; flex-direction: column; }
+      .value { font-size: 3.2rem; }
+      .sensor-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+      .sensor-row .mini-status { grid-column: 1 / -1; }
+      .chart { width: 680px; transform-origin: left top; transform: scale(.72); margin-bottom: -58px; }
+      .chart-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">SE</div>
+          <div>
+            <h1>Smart miljöövervakning</h1>
+            <p>Simulerad badvattenmätning i Chicago</p>
+          </div>
+        </div>
+        <div class="prototype-label">WIREFRAME</div>
+      </div>
+    </header>
+
+    <main>
+      <section class="toolbar" aria-label="Dashboardfilter">
+        <div class="toolbar-fields">
+          <label>
+            Sensor
+            <select id="sensor-select">
+              <option value="63rd">63rd Street Beach</option>
+              <option value="oak">Oak Street Beach</option>
+              <option value="rainbow">Rainbow Beach</option>
+            </select>
+          </label>
+          <label>
+            Tidsintervall
+            <select id="range-select">
+              <option>Senaste timmen</option>
+              <option selected>Senaste 24 timmarna</option>
+              <option>Senaste 7 dagarna</option>
+            </select>
+          </label>
+        </div>
+        <div class="state-switch" role="group" aria-label="Visa prototypläge">
+          <button type="button" data-state="normal" aria-pressed="true">Normal</button>
+          <button type="button" data-state="empty" aria-pressed="false">Ingen data</button>
+          <button type="button" data-state="error" aria-pressed="false">API-fel</button>
+        </div>
+      </section>
+
+      <p class="backend" id="backend-status"><span class="dot" aria-hidden="true"></span>Backend tillgänglig · `/api/health/` svarar OK</p>
+
+      <div id="dashboard">
+        <section class="summary-grid" aria-label="Aktuell sammanfattning">
+          <article class="card hero">
+            <p class="eyebrow">Senaste mätning</p>
+            <h2 class="sensor-name" id="sensor-name">63rd Street Beach</h2>
+            <div class="reading-row">
+              <p class="value"><span id="latest-value">2,74</span> <span class="unit">NTU</span></p>
+              <div class="status ok"><span class="status-symbol" aria-hidden="true">✓</span><span>OK</span></div>
+            </div>
+            <p class="timestamp">Uppmätt 24 oktober 2026, 00:59 · sensor-ID: <span id="sensor-id">63rd-street-beach-turbidity</span></p>
+          </article>
+
+          <article class="card">
+            <p class="metric-label">Datakvalitet</p>
+            <p class="metric-value">Good</p>
+            <p class="metric-help">API-fält: <code>quality</code></p>
+          </article>
+
+          <article class="card">
+            <p class="metric-label">Projektets tröskel</p>
+            <p class="metric-value">30,0 NTU</p>
+            <p class="metric-help">Pedagogisk projektregel, inte myndighetsklassificering</p>
+          </article>
+        </section>
+
+        <section class="card chart-card">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Historik</p>
+              <h2 id="chart-title">Turbiditet · senaste 24 timmarna</h2>
+            </div>
+            <div class="legend" aria-label="Diagramförklaring">
+              <span class="legend-item"><span class="legend-line"></span>Mätvärde</span>
+              <span class="legend-item"><span class="legend-line threshold"></span>Tröskel 30 NTU</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg class="chart" viewBox="0 0 680 250" role="img" aria-labelledby="chart-svg-title chart-svg-desc">
+              <title id="chart-svg-title">Historiska turbiditetsvärden</title>
+              <desc id="chart-svg-desc">Värden mellan 2,1 och 5,2 NTU ligger under projektets tröskel på 30 NTU.</desc>
+              <line class="grid" x1="58" y1="35" x2="650" y2="35"></line>
+              <line class="grid" x1="58" y1="95" x2="650" y2="95"></line>
+              <line class="grid" x1="58" y1="155" x2="650" y2="155"></line>
+              <line class="grid" x1="58" y1="215" x2="650" y2="215"></line>
+              <line class="threshold" x1="58" y1="62" x2="650" y2="62"></line>
+              <text x="8" y="39">40</text><text x="8" y="99">25</text><text x="14" y="159">10</text><text x="21" y="219">0</text>
+              <text x="58" y="240">00:00</text><text x="203" y="240">06:00</text><text x="350" y="240">12:00</text><text x="497" y="240">18:00</text><text x="612" y="240">Nu</text>
+              <path class="area" d="M58,199 L145,196 L232,201 L319,190 L406,194 L493,185 L580,197 L650,198 L650,215 L58,215 Z"></path>
+              <path class="series" d="M58,199 L145,196 L232,201 L319,190 L406,194 L493,185 L580,197 L650,198"></path>
+              <circle class="point" cx="58" cy="199" r="5"></circle><circle class="point" cx="145" cy="196" r="5"></circle>
+              <circle class="point" cx="232" cy="201" r="5"></circle><circle class="point" cx="319" cy="190" r="5"></circle>
+              <circle class="point" cx="406" cy="194" r="5"></circle><circle class="point" cx="493" cy="185" r="5"></circle>
+              <circle class="point" cx="580" cy="197" r="5"></circle><circle class="point" cx="650" cy="198" r="5"></circle>
+            </svg>
+          </div>
+        </section>
+
+        <section class="bottom-grid">
+          <article class="card">
+            <div class="card-header"><h2>Senaste värde per sensor</h2><span class="metric-help">3 sensorer</span></div>
+            <div class="sensor-list">
+              <div class="sensor-row">
+                <div><div class="sensor-title">63rd Street Beach</div><div class="sensor-meta">24 okt. 2026 · 00:59</div></div>
+                <div class="sensor-reading">2,74 NTU</div><div class="mini-status">✓ OK</div>
+              </div>
+              <div class="sensor-row">
+                <div><div class="sensor-title">Oak Street Beach</div><div class="sensor-meta">24 okt. 2026 · 00:58</div></div>
+                <div class="sensor-reading">4,00 NTU</div><div class="mini-status">✓ OK</div>
+              </div>
+              <div class="sensor-row">
+                <div><div class="sensor-title">Rainbow Beach</div><div class="sensor-meta">24 okt. 2026 · 00:59</div></div>
+                <div class="sensor-reading">2,61 NTU</div><div class="mini-status">✓ OK</div>
+              </div>
+            </div>
+          </article>
+
+          <aside class="card">
+            <h2>Så läser du statusen</h2>
+            <ul class="explanation">
+              <li><strong>OK:</strong> värdet ligger under projektets tröskel.</li>
+              <li><strong>ANOMALY:</strong> värdet passerar projektets tröskel.</li>
+              <li>Statusen är en projektregel och inte en officiell badvattenklassificering.</li>
+            </ul>
+          </aside>
+        </section>
+      </div>
+
+      <section class="card message-state" id="empty-state" hidden aria-live="polite">
+        <div class="message-box">
+          <div class="message-icon" aria-hidden="true">–</div>
+          <h2>Inga mätningar ännu</h2>
+          <p>Den valda sensorn har inga värden för tidsintervallet. Prova ett längre intervall eller en annan sensor.</p>
+        </div>
+      </section>
+
+      <section class="card message-state error" id="error-state" hidden role="alert">
+        <div class="message-box">
+          <div class="message-icon" aria-hidden="true">!</div>
+          <h2>Data kunde inte hämtas</h2>
+          <p>Kontrollera att Django-servern är startad och att `/api/health/` svarar. Försök sedan igen.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const sensors = {
+      '63rd': { name: '63rd Street Beach', id: '63rd-street-beach-turbidity', value: '2,74' },
+      oak: { name: 'Oak Street Beach', id: 'oak-street-beach-turbidity', value: '4,00' },
+      rainbow: { name: 'Rainbow Beach', id: 'rainbow-beach-turbidity', value: '2,61' }
+    };
+    const dashboard = document.getElementById('dashboard');
+    const emptyState = document.getElementById('empty-state');
+    const errorState = document.getElementById('error-state');
+    const backendStatus = document.getElementById('backend-status');
+
+    document.getElementById('sensor-select').addEventListener('change', (event) => {
+      const sensor = sensors[event.target.value];
+      document.getElementById('sensor-name').textContent = sensor.name;
+      document.getElementById('sensor-id').textContent = sensor.id;
+      document.getElementById('latest-value').textContent = sensor.value;
+    });
+
+    document.getElementById('range-select').addEventListener('change', (event) => {
+      document.getElementById('chart-title').textContent = `Turbiditet · ${event.target.value.toLowerCase()}`;
+    });
+
+    document.querySelectorAll('[data-state]').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-state]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        const state = button.dataset.state;
+        dashboard.hidden = state !== 'normal';
+        emptyState.hidden = state !== 'empty';
+        errorState.hidden = state !== 'error';
+        backendStatus.innerHTML = state === 'error'
+          ? '<span class="dot error" aria-hidden="true"></span>Backend kan inte nås · kontrollera `/api/health/`'
+          : '<span class="dot" aria-hidden="true"></span>Backend tillgänglig · `/api/health/` svarar OK';
+      });
+    });
+  </script>
+</body>
+</html>
