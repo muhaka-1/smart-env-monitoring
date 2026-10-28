@@ -424,3 +424,10 @@ Smart Environmental Monitoring – IoT Project
 Technologies:
 
 Python • IoT • MQTT • Django • REST API • SQLite • Time-Series Data • JavaScript • Bootstrap • Chart.js • Docker • ESP32 • ESP-IDF • FreeRTOS
+
+## Demodata för diagrammet
+```bash
+cd backend
+python manage.py seed_demo_data --repeat 7 --clear
+```
+Fyller databasen med cirka 6 dygn historik för alla 6 sensorer. Se `docs/sensors.md` och `docs/data-rules.md`.
