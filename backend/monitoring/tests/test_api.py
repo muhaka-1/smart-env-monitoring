@@ -44,6 +44,12 @@ class ApiTests(TestCase):
         self.assertEqual(self.client.get(reverse("readings"), {"start": "nope"}).status_code, 400)
         self.assertEqual(self.client.get(reverse("readings"), {"limit": "x"}).status_code, 400)
 
+    def test_history_returns_metric_unit_threshold(self):
+        self.post({"sensor_id": "t1", "metric": "temperature", "timestamp": "2026-01-01T10:00:00Z", "value": 20})
+        r = self.client.get(reverse("readings"), {"sensor_id": "t1"}).json()
+        self.assertEqual((r["metric"], r["unit"], r["threshold"]), ("temperature", "°C", 25.0))
+        self.assertEqual(r["results"][0]["threshold"], 25.0)
+
     def test_health_and_dashboard(self):
         self.assertEqual(self.client.get(reverse("health")).status_code, 200)
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)

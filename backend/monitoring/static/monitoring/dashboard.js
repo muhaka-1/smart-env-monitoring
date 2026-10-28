@@ -1,4 +1,5 @@
 const REFRESH_MS = 5000;
+const LABELS = { turbidity: "Turbiditet", temperature: "Temperatur" };
 const $ = (id) => document.getElementById(id);
 let chart = null;
 let selected = null;
@@ -18,11 +19,12 @@ function renderCards(items) {
       <div class="card shadow-sm h-100 border-${isAnomaly(r.status) ? "danger" : "success"} ${r.sensor_id === selected ? "border-3" : ""}"
            role="button" data-sensor="${r.sensor_id}">
         <div class="card-body">
+          <div class="fw-semibold">${LABELS[r.metric] || r.metric}</div>
           <div class="text-muted small">${r.sensor_id}</div>
           <div class="display-5 fw-bold">${r.value.toFixed(1)} <small class="fs-6">${r.unit}</small></div>
           <span class="badge fs-6 bg-${isAnomaly(r.status) ? "danger" : "success"}">
             ${isAnomaly(r.status) ? "⚠ Avvikelse" : "✔ OK"}</span>
-          <div class="text-muted small mt-2">${fmt(r.timestamp)}</div>
+          <div class="text-muted small mt-2">${fmt(r.timestamp)} · gräns ${r.threshold ?? "–"} ${r.unit}</div>
         </div>
       </div>
     </div>`).join("") || '<p class="text-muted">Inga mätvärden ännu.</p>';
@@ -32,15 +34,16 @@ function renderCards(items) {
 
 function renderChart(data) {
   const rows = data.results;
-  const cfg = {
-    labels: rows.map((r) => fmt(r.timestamp)),
-    datasets: [
-      { label: "Turbiditet (NTU)", data: rows.map((r) => r.value), borderColor: "#0d6efd", tension: 0.2,
-        pointBackgroundColor: rows.map((r) => (isAnomaly(r.status) ? "#dc3545" : "#198754")), pointRadius: 3 },
-      { label: "Gränsvärde", data: rows.map(() => data.threshold), borderColor: "#dc3545",
-        borderDash: [6, 4], pointRadius: 0 },
-    ],
-  };
+  const name = `${LABELS[data.metric] || "Värde"} (${data.unit || ""})`;
+  const datasets = [
+    { label: name, data: rows.map((r) => r.value), borderColor: "#0d6efd", tension: 0.2,
+      pointBackgroundColor: rows.map((r) => (isAnomaly(r.status) ? "#dc3545" : "#198754")), pointRadius: 3 },
+  ];
+  if (data.threshold != null) {
+    datasets.push({ label: "Gränsvärde", data: rows.map(() => data.threshold), borderColor: "#dc3545",
+      borderDash: [6, 4], pointRadius: 0 });
+  }
+  const cfg = { labels: rows.map((r) => fmt(r.timestamp)), datasets };
   if (chart) { chart.data = cfg; chart.update("none"); }
   else chart = new Chart($("chart"), { type: "line", data: cfg, options: { animation: false } });
 }

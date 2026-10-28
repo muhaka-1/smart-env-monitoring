@@ -9,7 +9,7 @@ from sensor_sim.message import build_message
 from sensor_sim.publishers import HttpPublisher, PermanentError, Publisher, TransientError
 from sensor_sim.simulator import Simulator
 
-M = [Measurement("s1", 1.0, "good"), Measurement("s2", 2.0, "good")]
+M = [Measurement("s1", "turbidity", 1.0, "good", "NTU"), Measurement("s2", "temperature", 2.0, "good", "°C")]
 
 
 class FakePublisher(Publisher):
@@ -25,7 +25,7 @@ class FakePublisher(Publisher):
 class MessageTests(unittest.TestCase):
     def test_contains_required_fields(self):
         msg = build_message(M[0])
-        self.assertEqual(set(msg), {"sensor_id", "timestamp", "value", "unit", "quality"})
+        self.assertEqual(set(msg), {"sensor_id", "metric", "timestamp", "value", "unit", "quality"})
 
 
 class SimulatorTests(unittest.TestCase):

@@ -5,9 +5,15 @@ from .models import Reading
 from .serializers import ReadingSerializer
 
 
-def evaluate_status(value: float, threshold: float | None = None) -> str:
-    """Returnerar 'ANOMALY' om värdet överskrider tröskelvärdet, annars 'OK'."""
-    limit = settings.ANOMALY_THRESHOLD if threshold is None else threshold
+def get_threshold(metric: str) -> float | None:
+    return settings.ANOMALY_THRESHOLDS.get(metric)
+
+
+def evaluate_status(value: float, metric: str = Reading.Metric.TURBIDITY, threshold: float | None = None) -> str:
+    """Returnerar 'ANOMALY' om värdet överskrider mätstorhetens gränsvärde, annars 'OK'."""
+    limit = get_threshold(metric) if threshold is None else threshold
+    if limit is None:
+        return Reading.Status.OK
     return Reading.Status.ANOMALY if value > limit else Reading.Status.OK
 
 
@@ -15,7 +21,9 @@ def ingest_reading(payload: dict) -> Reading:
     """Validerar och sparar en mätning. Kastar ValidationError vid felaktig data."""
     serializer = ReadingSerializer(data=payload)
     serializer.is_valid(raise_exception=True)
-    return serializer.save(status=evaluate_status(serializer.validated_data["value"]))
+    data = serializer.validated_data
+    metric = data.get("metric", Reading.Metric.TURBIDITY)
+    return serializer.save(status=evaluate_status(data["value"], metric))
 
 
 def get_latest(sensor_id: str):

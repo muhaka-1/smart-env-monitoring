@@ -67,48 +67,18 @@ REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
 }
 
-
 # --- Applikationsspecifik konfiguration ---
-#ANOMALY_THRESHOLD = float(os.getenv("ANOMALY_THRESHOLD", "30"))  # NTU (turbiditet)
-#INGEST_API_KEY = os.getenv("INGEST_API_KEY", "")  # tom = ingen nyckel krävs lokalt
-#HISTORY_DEFAULT_LIMIT = 500
-#HISTORY_MAX_LIMIT = 5000
-#MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
-#MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-#MQTT_SUBSCRIBE_TOPIC = os.getenv("MQTT_SUBSCRIBE_TOPIC", "beach/+/readings")
-
-
-
-# --- Applikationsspecifik konfiguration ---
-
-BEACH_LIMIT_WATER_TEMP_C = float(
-    os.getenv("BEACH_LIMIT_WATER_TEMP_C", "25")
-)
-
-BEACH_LIMIT_TURBIDITY_NTU = float(
-    os.getenv(
-        "BEACH_LIMIT_TURBIDITY_NTU",
-        os.getenv("ANOMALY_THRESHOLD", "30"),
-    )
-)
-
-# Bakåtkompatibilitet med befintlig kod
-ANOMALY_THRESHOLD = BEACH_LIMIT_TURBIDITY_NTU
+# Gränsvärde per mätstorhet (värde ÖVER gränsen = avvikelse)
 ANOMALY_THRESHOLDS = {
-    "temperature": BEACH_LIMIT_WATER_TEMP_C,
-    "turbidity": BEACH_LIMIT_TURBIDITY_NTU,
+    "turbidity": float(os.getenv("ANOMALY_THRESHOLD_TURBIDITY", os.getenv("ANOMALY_THRESHOLD", "30"))),  # NTU
+    "temperature": float(os.getenv("ANOMALY_THRESHOLD_TEMPERATURE", "25")),  # °C
 }
-
-INGEST_API_KEY = os.getenv("INGEST_API_KEY", "")
+INGEST_API_KEY = os.getenv("INGEST_API_KEY", "")  # tom = ingen nyckel krävs lokalt
 HISTORY_DEFAULT_LIMIT = 500
 HISTORY_MAX_LIMIT = 5000
 MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_SUBSCRIBE_TOPIC = os.getenv(
-    "MQTT_SUBSCRIBE_TOPIC",
-    "beach/+/readings",
-)
-
+MQTT_SUBSCRIBE_TOPIC = os.getenv("MQTT_SUBSCRIBE_TOPIC", "beach/+/readings")
 
 LOGGING = {
     "version": 1,

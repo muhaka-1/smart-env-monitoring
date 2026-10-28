@@ -69,9 +69,12 @@ class ReadingListCreateView(APIView):
         if order not in ("asc", "desc"):
             raise ValidationError({"order": "Använd 'asc' eller 'desc'."})
         rows = services.query_history(q.get("sensor_id"), start, end, limit, order == "desc")
+        first = rows[0] if rows else None  # gränsvärde/enhet gäller sensorn när sensor_id är satt
         return Response(
             {
-                "threshold": settings.ANOMALY_THRESHOLD,
+                "metric": first.metric if first else None,
+                "unit": first.unit if first else None,
+                "threshold": services.get_threshold(first.metric) if first else None,
                 "count": len(rows),
                 "results": ReadingSerializer(rows, many=True).data,
             }
