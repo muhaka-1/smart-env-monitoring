@@ -24,6 +24,7 @@ Backend validerar allt som tas emot oavsett källa (HTTP eller MQTT):
 |---|---|
 | Obligatoriskt fält saknas, ogiltigt tal, `NaN`/`Infinity`, ogiltigt `sensor_id`, okänd `metric` eller `quality` | HTTP 400 (MQTT: loggas och avvisas) |
 | Samma `sensor_id` + `timestamp` en gång till | HTTP 400 (dubblett) |
+| `unit` som inte hör till `metric` (turbiditet = `NTU`, temperatur = `°C`), t.ex. HTML i fältet | HTTP 400 (dashboarden visar enheten som text, issue #43) |
 | Fel eller saknad API-nyckel (när `INGEST_API_KEY` är satt) | HTTP 401 |
 
 ## Tester

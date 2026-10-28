@@ -16,7 +16,7 @@ ESP32-sensorn har sensor-ID `<base-id>-turbidity` och `<base-id>-temperature` (s
 Gränsvärden: `ANOMALY_THRESHOLD_TURBIDITY` / `ANOMALY_THRESHOLD_TEMPERATURE` i backend (se `docs/MODULES.md`).
 
 ## Enheter
-- **Turbiditet: alltid NTU.** Temperatur: °C. Enheten följer med i varje meddelande (`unit`). Om `unit` saknas sätter backend rätt enhet utifrån `metric`.
+- **Turbiditet: alltid NTU.** Temperatur: °C. Enheten följer med i varje meddelande (`unit`). Om `unit` saknas sätter backend rätt enhet utifrån `metric`; en annan enhet än den som hör till mätstorheten avvisas med HTTP 400.
 - Temperatur är ett tillägg till kravet om turbiditet. Den kan tas bort utan att övriga delar påverkas.
 
 ## Sändningsfrekvens

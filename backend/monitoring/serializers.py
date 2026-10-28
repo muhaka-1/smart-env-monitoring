@@ -35,6 +35,11 @@ class ReadingSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         metric = attrs.get("metric", Reading.Metric.TURBIDITY)
-        if not attrs.get("unit"):
-            attrs["unit"] = DEFAULT_UNITS[metric]  # enhet följer mätstorheten om den saknas
+        expected = DEFAULT_UNITS[metric]
+        unit = attrs.get("unit")
+        if not unit:
+            attrs["unit"] = expected  # enhet följer mätstorheten om den saknas
+        elif unit != expected:
+            # Fri text i enhetsfältet visas i dashboarden; endast känd enhet per mätstorhet tillåts (issue #43)
+            raise serializers.ValidationError({"unit": f"Enheten för {metric} måste vara '{expected}'."})
         return attrs

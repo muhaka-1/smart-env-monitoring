@@ -50,6 +50,12 @@ class ApiTests(TestCase):
         self.assertEqual((r["metric"], r["unit"], r["threshold"]), ("temperature", "°C", 25.0))
         self.assertEqual(r["results"][0]["threshold"], 25.0)
 
+    def test_unit_must_match_metric(self):
+        self.assertEqual(self.post({**make(), "unit": "<img src=x onerror=alert(1)>"}).status_code, 400)
+        self.assertEqual(self.post({**make(sensor="t1"), "metric": "temperature", "unit": "NTU"}).status_code, 400)
+        self.assertEqual(self.post({**make(sensor="t2"), "metric": "temperature", "unit": "°C"}).status_code, 201)
+        self.assertEqual(self.post({**make(sensor="t3"), "unit": "NTU"}).status_code, 201)
+
     def test_health_and_dashboard(self):
         self.assertEqual(self.client.get(reverse("health")).status_code, 200)
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)
