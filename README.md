@@ -41,13 +41,16 @@ För att nå projekten mål vi ska bygga en end-to-end IoT system for collecting
 
 Projektet är uppbyggt kring **fem huvudmoduler**:
 
-| Modul | Beskrivning |
-| --- | --- |
-| **1. ESP32‑sensor** | Fysisk turbidity‑sensor som mäter vattengrumlighet i NTU |
-| **2. Datakommunikation** | MQTT (Mosquitto) eller HTTP för transport av mätdata |
-| **3. Backend / API (Django)** | Validering, lagring, avvikelsedetektering, REST‑API |
-| **4. Databas (SQLite)** | Tidsserielagring med index och duplicatskydd |
-| **5. Frontend / Dashboard** | Visualisering av realtidsdata och historiska trender |
+## Moduler
+| # | Modul | Mapp |
+|---|---|---|
+| 1 | ESP32-sensor | `firmware/main/sensors/` (+ `sensor/` simulator utan hårdvara) |
+| 2 | Datakommunikation (MQTT/HTTP) | `firmware/main/communication/`, `sensor/sensor_sim/publishers.py` |
+| 3 | Backend / API (Django) | `backend/monitoring/` |
+| 4 | Databas (SQLite) | `backend/monitoring/models.py`, `migrations/` |
+| 5 | Frontend / Dashboard | `backend/monitoring/templates/`, `static/` |
+
+Gränssnitt, ansvar och tester: `docs/MODULES.md`. Testdokumentation: `docs/testing.md`.
 
 
 
