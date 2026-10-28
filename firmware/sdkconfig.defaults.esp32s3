@@ -1,0 +1,13 @@
+# Läses automatiskt efter sdkconfig.defaults när du kör: idf.py set-target esp32s3
+# Kort: Freenove ESP32-S3-WROOM (med kameramodul) + GPIO Extension Board
+#
+# Upptagna pinnar att undvika på detta kort:
+#   4-18 (utom 14)  kameran (SIOD/SIOC/VSYNC/HREF/XCLK/Y2-Y9/PCLK)
+#   2, 48           lysdioder på kortet
+#   0, 3, 45, 46    strapping-pinnar (påverkar uppstart)
+#   19, 20          USB    43, 44  UART0 (konsol)    35-37  octal PSRAM    38-40  SD-kort
+#
+# Turbiditet: GPIO1 = ADC1_CH0 (ADC1 fungerar med Wi-Fi; ADC2 gör det inte)
+CONFIG_BEACH_ADC_CHANNEL=0
+# DS18B20 DATA: GPIO21 (+ 4,7 kΩ pull-up till 3,3 V)
+CONFIG_BEACH_TEMP_GPIO=21

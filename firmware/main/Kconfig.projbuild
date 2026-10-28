@@ -1,47 +1,67 @@
-menu "Beach Sensor"
-    config BEACH_WIFI_SSID
-        string "Wi-Fi SSID"
-        default "myssid"
-    config BEACH_WIFI_PASSWORD
-        string "Wi-Fi password"
-        default "mypassword"
-    config BEACH_MQTT_BROKER_URI
-        string "MQTT broker URI (datorns LAN-IP, inte localhost)"
-        default "mqtt://192.168.1.100:1883"
-    config BEACH_SENSOR_ID
-        string "Sensor ID (a-z, 0-9, -, _)"
-        default "esp32-beach-01-turbidity"
-    config BEACH_SAMPLE_INTERVAL_MS
-        int "Sample interval (ms)"
-        default 5000
-    config BEACH_SENSOR_SIMULATED
-        bool "Simulerade matvarden (ingen riktig sensor)"
-        default y
-    config BEACH_ADC_CHANNEL
-        int "ADC1-kanal (ESP32: 6 = GPIO34)"
-        default 6
-        depends on !BEACH_SENSOR_SIMULATED
-    config BEACH_NTU_FULL_SCALE
-        int "NTU vid full ADC-utslag (kalibrera mot din sensor)"
-        default 100
-        depends on !BEACH_SENSOR_SIMULATED
-    config BEACH_MAX_RETRIES
-        int "Max antal sandningsforsok"
-        default 5
-    config BEACH_RETRY_BASE_DELAY_MS
-        int "Retry base delay (ms), dubbleras per forsok"
-        default 1000
-    config BEACH_QUEUE_LENGTH
-        int "Kolangd mellan sensor- och kommunikationstask"
-        default 16
+menu "Smart Environmental Monitoring"
 
-    config BEACH_LIMIT_TURBIDITY_NTU
-        int "Maximum turbidity (NTU)"
-        range 0 1000
-        default 30
+    menu "Nätverk (Datakommunikation)"
+        config BEACH_WIFI_SSID
+            string "Wi-Fi SSID"
+            default "myssid"
+        config BEACH_WIFI_PASSWORD
+            string "Wi-Fi password"
+            default "mypassword"
+        config BEACH_MQTT_BROKER_URI
+            string "MQTT broker URI (datorns LAN-IP, inte localhost)"
+            default "mqtt://192.168.1.100:1883"
+        config BEACH_MAX_RETRIES
+            int "Max antal sandningsforsok per mätvärde"
+            default 5
+        config BEACH_RETRY_BASE_DELAY_MS
+            int "Retry base delay (ms), dubbleras per forsok"
+            default 1000
+        config BEACH_QUEUE_LENGTH
+            int "Kolangd mellan sensor_task och mqtt_task"
+            default 16
+    endmenu
 
-    config BEACH_LIMIT_WATER_TEMP_C
-        int "Maximum water temperature (C)"
-        range -2 50
-        default 25
+    menu "ESP32-sensor"
+        config BEACH_SENSOR_BASE_ID
+            string "Sensor base ID (a-z, 0-9, -). Blir <id>-turbidity och <id>-temperature"
+            default "esp32-beach-01"
+        config BEACH_SAMPLE_INTERVAL_MS
+            int "Sample interval (ms)"
+            default 5000
+        config BEACH_SENSOR_SIMULATED
+            bool "Simulerade matvarden (ingen riktig hardvara)"
+            default y
+        config BEACH_STATUS_LED_GPIO
+            int "Status-LED (heartbeat). GPIO2 = inbyggd LED pa ESP32 DevKit och Freenove S3"
+            default 2
+        config BEACH_ADC_CHANNEL
+            int "Turbiditet: ADC1-kanal (ESP32: 6 = GPIO34)"
+            default 6
+        config BEACH_ADC_RAW_CLEAR
+            int "Turbiditet: ADC-ravarde i klart vatten (0 NTU) - kalibrera!"
+            default 3500
+            depends on !BEACH_SENSOR_SIMULATED
+        config BEACH_ADC_RAW_DIRTY
+            int "Turbiditet: ADC-ravarde i referensvatten med kand grumlighet - kalibrera!"
+            default 2500
+            depends on !BEACH_SENSOR_SIMULATED
+        config BEACH_NTU_AT_DIRTY
+            int "Turbiditet: NTU for referensvattnet ovan"
+            default 100
+            depends on !BEACH_SENSOR_SIMULATED
+        config BEACH_TEMP_GPIO
+            int "Temperatur: GPIO for DS18B20 (1-Wire DATA, 4.7k pull-up till 3.3V)"
+            default 4
+        config BEACH_LIMIT_TURBIDITY_NTU
+            int "Larmgrans turbiditet (NTU) - hall lika med backendens ANOMALY_THRESHOLD_TURBIDITY"
+            default 30
+        config BEACH_LIMIT_WATER_TEMP_C
+            int "Larmgrans vattentemperatur (grader C) - hall lika med backendens ANOMALY_THRESHOLD_TEMPERATURE"
+            default 25
+    endmenu
+
+    config BEACH_RUN_SELFTEST
+        bool "Kor automatiska systemtester efter uppstart (loggar PASS/FAIL)"
+        default n
+
 endmenu

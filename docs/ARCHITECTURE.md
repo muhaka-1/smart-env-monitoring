@@ -27,7 +27,7 @@ flowchart LR
 
 | Modul | Ansvar | Mapp |
 |---|---|---|
-| Sensor-simulering | datakälla, meddelande, transport, retry | `sensor/sensor_sim/` |
+| ESP32-sensor + Datakommunikation | sensorer, larm, JSON, Wi-Fi, SNTP, MQTT, retry | `firmware/main/` (`sensors/`, `communication/`), PC-simulator i `sensor/sensor_sim/` |
 | Backend | validering, statuslogik, API, MQTT-ingest | `backend/monitoring/` |
 | Databas | modell, index, constraints | `backend/monitoring/models.py` |
 | Frontend | dashboard (mall + JS) | `backend/monitoring/templates`, `static` |
@@ -49,4 +49,4 @@ flowchart LR
 - Nedsampling/aggregering för långa historikperioder, cache (Redis) för "senaste värde", paginering av historik.
 - MQTT över TLS med autentisering/ACL per sensor; API-nyckel för POST finns via `INGEST_API_KEY`.
 - Containerisering (Docker) och CI (tester vid varje push).
-- Begränsning idag: tröskelvärdet är ett globalt värde (NTU); i produktion bör det vara per sensor/mätstorhet.
+- Gränsvärden är konfigurerade per mätstorhet (`ANOMALY_THRESHOLDS`). Nästa steg i produktion är gränsvärden per enskild sensor/plats i databasen.

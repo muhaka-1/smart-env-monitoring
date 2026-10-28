@@ -1,0 +1,7 @@
+# Läses automatiskt efter sdkconfig.defaults när du kör: idf.py set-target esp32
+# Kort: ESP32 DevKit (ESP-WROOM-32, USB-C)
+#
+# Turbiditet: GPIO34 = ADC1_CH6 (input-only, ADC1 fungerar med Wi-Fi)
+CONFIG_BEACH_ADC_CHANNEL=6
+# DS18B20 DATA: GPIO4 (+ 4,7 kΩ pull-up till 3,3 V)
+CONFIG_BEACH_TEMP_GPIO=4

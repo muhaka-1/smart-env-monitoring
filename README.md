@@ -421,3 +421,14 @@ Smart Environmental Monitoring – IoT Project
 Technologies:
 
 Python • IoT • MQTT • Django • REST API • SQLite • Time-Series Data • JavaScript • Bootstrap • Chart.js • Docker • ESP32 • ESP-IDF • FreeRTOS
+
+## Moduler
+| # | Modul | Mapp |
+|---|---|---|
+| 1 | ESP32-sensor | `firmware/main/sensors/` (+ `sensor/` simulator utan hårdvara) |
+| 2 | Datakommunikation (MQTT/HTTP) | `firmware/main/communication/`, `sensor/sensor_sim/publishers.py` |
+| 3 | Backend / API (Django) | `backend/monitoring/` |
+| 4 | Databas (SQLite) | `backend/monitoring/models.py`, `migrations/` |
+| 5 | Frontend / Dashboard | `backend/monitoring/templates/`, `static/` |
+
+Gränssnitt, ansvar och tester: `docs/MODULES.md`. Testdokumentation: `docs/testing.md`.

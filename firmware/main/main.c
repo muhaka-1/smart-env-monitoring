@@ -1,114 +1,85 @@
-/*
- * Beach sensor firmware (ESP-IDF)
+/**
+ * ============================================================================
+ * PROJEKT: Smart Environmental Monitoring Platform - ESP32-firmware
+ * SPRÅK: Ren C (ESP-IDF v5.x / FreeRTOS, modulär arkitektur)
  *
- *  Core 1: sensor_task - mäter med jämna intervall -> FreeRTOS-kö
- *  Core 0: comm_task   - kö -> JSON -> MQTT (QoS 1) med retry/backoff
- *
- * Wi-Fi/LwIP körs som standard på core 0, därför ligger kommunikationen där.
- * På enkärniga chip (t.ex. ESP32-C3) hamnar båda tasks på core 0.
+ * MODULER (hela systemet):
+ * 1. ESP32-sensor:       sensors/        (sensor_task, turbiditet, DS18B20, larmgränser)   - Muhammad
+ * 2. Datakommunikation:  communication/  (mqtt_task, Wi-Fi, SNTP, MQTT, JSON)              - Muhammad
+ * 3. Backend / API:      ../backend      (Django: validering, avvikelsedetektering, REST)  - Muhammad
+ * 4. Databas:            ../backend/monitoring/models.py (SQLite, index, dubblettskydd)     - Pat
+ * 5. Frontend:           ../backend/monitoring/templates, static (dashboard)                - Pat
+ * Test & Verifiering:    testing/        (self-tests TC-01.., mocks)
+ * ============================================================================
  */
+
 #include <stdio.h>
-#include <time.h>
-#include "esp_log.h"
-#include "esp_system.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
 #include "freertos/task.h"
-#include "mqtt_publisher.h"
+#include "freertos/queue.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "esp_rom_sys.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
-#include "sensor.h"
-#include "time_sync.h"
-#include "wifi_manager.h"
 
-#define COMM_CORE   0
+// Modulheaders
+#include "sensor_types.h"
+#include "sensors/sensor_task.h"
+#include "communication/mqtt_task.h"
+#include "testing/test_runner.h"
+
+static const char *TAG = "MAIN_SYSTEM";
+
+// Global FreeRTOS-kö för att transportera telemetridata mellan Core 1 och Core 0
+QueueHandle_t s_sensor_queue = NULL;
+
 #if CONFIG_FREERTOS_UNICORE
 #define SENSOR_CORE 0
 #else
 #define SENSOR_CORE 1
 #endif
 
-static const char *TAG = "main";
-static QueueHandle_t s_queue;
+void app_main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
+    esp_rom_printf("\r\n\r\n==================================================\r\n");
+    esp_rom_printf("   SMART ENVIRONMENTAL MONITORING - ESP32 v1.0    \r\n");
+    esp_rom_printf("==================================================\r\n\r\n");
 
-static void sensor_task(void *arg)
-{
-    TickType_t last = xTaskGetTickCount();
-    for (;;) {
-        sample_t s;
-        if (sensor_read(&s) == ESP_OK) {
-            if (xQueueSend(s_queue, &s, 0) != pdTRUE) {
-                ESP_LOGW(TAG, "Kön full - mätvärde kasserat");  // sensorn blockeras aldrig
-            }
-        } else {
-            ESP_LOGE(TAG, "Sensorläsning misslyckades");
-        }
-        vTaskDelayUntil(&last, pdMS_TO_TICKS(CONFIG_BEACH_SAMPLE_INTERVAL_MS));  // jämnt intervall
+    ESP_LOGI(TAG, "Initierar system och NVS Flash...");
+
+    // 1. NVS (Non-Volatile Storage) - krävs av Wi-Fi-drivern
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        nvs_flash_erase();
+        ret = nvs_flash_init();
     }
-}
+    ESP_LOGI(TAG, "NVS status: %s", esp_err_to_name(ret));
 
-static void format_json(const sample_t *s, char *buf, size_t len)
-{
-    struct tm tm;
-    char ts[24];
-    gmtime_r(&s->sec, &tm);
-    strftime(ts, sizeof(ts), "%Y-%m-%dT%H:%M:%S", &tm);
-    snprintf(buf, len,
-             "{\"sensor_id\":\"%s\",\"timestamp\":\"%s.%03dZ\",\"value\":%.2f,\"unit\":\"NTU\",\"quality\":\"%s\"}",
-             CONFIG_BEACH_SENSOR_ID, ts, s->ms, s->value, quality_str(s->quality));
-}
-
-static bool send_with_retry(const char *topic, const char *json)
-{
-    for (int attempt = 1; attempt <= CONFIG_BEACH_MAX_RETRIES; attempt++) {
-        esp_err_t err = mqtt_publisher_send(topic, json, 5000);
-        if (err == ESP_OK) return true;
-        ESP_LOGW(TAG, "Försök %d/%d misslyckades: %s", attempt, CONFIG_BEACH_MAX_RETRIES, esp_err_to_name(err));
-        if (attempt < CONFIG_BEACH_MAX_RETRIES) {
-            vTaskDelay(pdMS_TO_TICKS(CONFIG_BEACH_RETRY_BASE_DELAY_MS << (attempt - 1)));  // exponentiell backoff
-        }
+    // 2. Delad FreeRTOS-kö för sensortelemetri
+    s_sensor_queue = xQueueCreate(CONFIG_BEACH_QUEUE_LENGTH, sizeof(sensor_telemetry_t));
+    if (s_sensor_queue == NULL) {
+        ESP_LOGE(TAG, "Kritiskt fel: Kunde inte skapa FreeRTOS sensor queue!");
+        return;
     }
-    return false;
-}
+    ESP_LOGI(TAG, "FreeRTOS sensor queue skapad (Kapacitet: %d paket)", CONFIG_BEACH_QUEUE_LENGTH);
 
-static void comm_task(void *arg)
-{
-    char topic[96], json[256];
-    snprintf(topic, sizeof(topic), "beach/%s/readings", CONFIG_BEACH_SENSOR_ID);
-    sample_t s;
-    for (;;) {
-        if (xQueueReceive(s_queue, &s, portMAX_DELAY) != pdTRUE) continue;
-        format_json(&s, json, sizeof(json));
-        if (send_with_retry(topic, json)) {
-            ESP_LOGI(TAG, "Skickade: %s", json);
-        } else {
-            ESP_LOGE(TAG, "Gav upp - datapunkt förlorad: %s", json);
-        }
-    }
-}
+    // 3. Sensorhårdvara: ADC (turbiditet) och 1-Wire (DS18B20)
+    init_sensor_hardware();
 
-void app_main(void)
-{
-    esp_err_t r = nvs_flash_init();
-    if (r == ESP_ERR_NVS_NO_FREE_PAGES || r == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        r = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(r);
+    // 4. SensorTask på Core 1 (Modul 1: ESP32-sensor)
+    xTaskCreatePinnedToCore(sensor_task, "sensor_task", 4096, NULL, 2, NULL, SENSOR_CORE);
+    ESP_LOGI(TAG, "[Core %d] SensorTask startad (Modul 1)", SENSOR_CORE);
 
-    wifi_start();
-    wifi_wait_connected(portMAX_DELAY);
-    time_sync_start();
-    if (!time_sync_wait(30000)) {
-        ESP_LOGE(TAG, "SNTP misslyckades - startar om");
-        esp_restart();
-    }
-    mqtt_publisher_start();
+    // 5. MQTT Task på Core 0 (Modul 2: Datakommunikation) - startar Wi-Fi, SNTP och MQTT
+    xTaskCreatePinnedToCore(mqtt_task, "mqtt_task", 6144, NULL, 1, NULL, 0);
+    ESP_LOGI(TAG, "[Core 0] MQTT Task startad (Modul 2)");
 
-    s_queue = xQueueCreate(CONFIG_BEACH_QUEUE_LENGTH, sizeof(sample_t));
-    ESP_ERROR_CHECK(sensor_init());
+#if CONFIG_BEACH_RUN_SELFTEST
+    // 6. Självtester (väntar på nätverket, kör sedan TC-01..)
+    xTaskCreatePinnedToCore(self_test_task, "self_test", 8192, NULL, 1, NULL, 0);
+    ESP_LOGI(TAG, "[Core 0] Självtester schemalagda");
+#endif
 
-    xTaskCreatePinnedToCore(comm_task, "comm", 8192, NULL, 5, NULL, COMM_CORE);
-    xTaskCreatePinnedToCore(sensor_task, "sensor", 4096, NULL, 5, NULL, SENSOR_CORE);
-    ESP_LOGI(TAG, "Igång: sensor på core %d, kommunikation på core %d", SENSOR_CORE, COMM_CORE);
+    ESP_LOGI(TAG, "Systemet körs med modul 1 och 2 aktiva!");
 }
