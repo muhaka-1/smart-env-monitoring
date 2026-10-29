@@ -13,7 +13,12 @@ class Reading(models.Model):
         OK = "OK", "OK"
         ANOMALY = "ANOMALY", "Avvikelse"
 
+    class Metric(models.TextChoices):
+        TURBIDITY = "turbidity", "Turbiditet"
+        TEMPERATURE = "temperature", "Temperatur"
+
     sensor_id = models.CharField(max_length=100)
+    metric = models.CharField(max_length=20, choices=Metric.choices, default=Metric.TURBIDITY)
     timestamp = models.DateTimeField()
     value = models.FloatField()
     unit = models.CharField(max_length=20, default="NTU", blank=True)

@@ -32,6 +32,11 @@ def _api_key_ok(request):
 class DashboardView(TemplateView):
     template_name = "monitoring/dashboard.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["reading_stale_seconds"] = max(1, settings.READING_STALE_SECONDS)
+        return context
+
 
 class HealthView(APIView):
     def get(self, request):
@@ -69,9 +74,12 @@ class ReadingListCreateView(APIView):
         if order not in ("asc", "desc"):
             raise ValidationError({"order": "Använd 'asc' eller 'desc'."})
         rows = services.query_history(q.get("sensor_id"), start, end, limit, order == "desc")
+        first = rows[0] if rows and len({(r.metric, r.unit) for r in rows}) == 1 else None
         return Response(
             {
-                "threshold": settings.ANOMALY_THRESHOLD,
+                "metric": first.metric if first else None,
+                "unit": first.unit if first else None,
+                "threshold": services.get_threshold(first.metric) if first else None,
                 "count": len(rows),
                 "results": ReadingSerializer(rows, many=True).data,
             }

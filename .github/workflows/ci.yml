@@ -36,3 +36,6 @@ jobs:
 
       - name: Sensor-tester
         run: cd sensor && python -m unittest discover -s tests -t .
+
+      - name: Dashboard-tester
+        run: node backend/monitoring/tests/dashboard.test.cjs

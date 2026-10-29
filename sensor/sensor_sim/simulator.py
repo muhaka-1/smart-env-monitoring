@@ -40,8 +40,7 @@ class Simulator:
         message = build_message(next(self._cycle))
         ok = self.send_with_retry(message)
         if ok:
-            log.info("Skickade %s = %s %s (%s)", message["sensor_id"], message["value"],
-                     message["unit"], message["timestamp"])
+            log.info("Skickade %s = %s (%s)", message["sensor_id"], message["value"], message["timestamp"])
         return ok
 
     def run(self, count: int | None = None) -> int:

@@ -19,7 +19,7 @@ class Config:
         "https://data.cityofchicago.org/resource/qmqz-2xku.json"
         "?$limit=500&$order=measurement_timestamp DESC"
     )
-    sample_path: Path = PKG_ROOT / "data" / "sample_readings.json"
+    sample_path: Path = PKG_ROOT / "data" / "chicago_sample.json"
     max_retries: int = 5
     retry_base_delay: float = 1.0
     request_timeout: float = 5.0

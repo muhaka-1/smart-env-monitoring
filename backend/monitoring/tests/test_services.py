@@ -6,10 +6,15 @@ from monitoring.models import Reading
 
 
 class EvaluateStatusTests(SimpleTestCase):
-    @override_settings(ANOMALY_THRESHOLD=30)
+    @override_settings(ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25})
     def test_ok_at_threshold_and_anomaly_above(self):
-        self.assertEqual(services.evaluate_status(30), "OK")
-        self.assertEqual(services.evaluate_status(30.1), "ANOMALY")
+        self.assertEqual(services.evaluate_status(30, "turbidity"), "OK")
+        self.assertEqual(services.evaluate_status(30.1, "turbidity"), "ANOMALY")
+
+    @override_settings(ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25})
+    def test_threshold_is_per_metric(self):
+        self.assertEqual(services.evaluate_status(26, "temperature"), "ANOMALY")
+        self.assertEqual(services.evaluate_status(26, "turbidity"), "OK")
 
 
 class IngestTests(TestCase):
@@ -21,6 +26,14 @@ class IngestTests(TestCase):
         r = services.ingest_reading(self.payload(value=99))
         self.assertEqual(r.status, "ANOMALY")
         self.assertEqual(Reading.objects.count(), 1)
+
+    def test_temperature_gets_default_unit_and_own_threshold(self):
+        r = services.ingest_reading(self.payload(sensor_id="oak-temperature", metric="temperature", value=27))
+        self.assertEqual((r.unit, r.status), ("°C", "ANOMALY"))
+
+    def test_unknown_metric_rejected(self):
+        with self.assertRaises(ValidationError):
+            services.ingest_reading(self.payload(metric="ph"))
 
     def test_missing_field_rejected(self):
         p = self.payload()

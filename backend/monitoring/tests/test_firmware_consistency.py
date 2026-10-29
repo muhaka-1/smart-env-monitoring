@@ -21,7 +21,7 @@ def kconfig_default(symbol: str) -> float:
 
 @unittest.skipUnless(KCONFIG.exists(), "firmware/ saknas i checkouten")
 @unittest.skipIf(
-    any(k in os.environ for k in ("ANOMALY_THRESHOLD", "ANOMALY_THRESHOLD_TURBIDITY", "ANOMALY_THRESHOLD_TEMPERATURE")),
+    any(k in os.environ for k in ("ANOMALY_THRESHOLD", "ANOMALY_THRESHOLD_TURBIDITY", "ANOMALY_THRESHOLD_TEMPERATURE", "BEACH_LIMIT_TURBIDITY_NTU", "BEACH_LIMIT_WATER_TEMP_C")),
     "gränsvärden är överstyrda via miljövariabler",
 )
 class FirmwareThresholdSyncTests(SimpleTestCase):
