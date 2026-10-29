@@ -1,6 +1,6 @@
 # MQTT: lokal broker, publicering och mottagning
 
-Beslutet (MQTT som huvudtransport, HTTP som lokal reservlösning) finns i issue #4 och `docs/sensors.md`.
+Beslutet (MQTT som huvudtransport, HTTP som lokal reservlösning) finns i `docs/protocol-decision.md` (issue #4).
 
 ## 1. Starta och stoppa brokern lokalt
 Kräver Docker. Konfigurationen finns i `infra/mosquitto.conf` (port 1883, anonyma klienter, endast för lokal utveckling).
