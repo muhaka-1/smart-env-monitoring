@@ -23,6 +23,8 @@ flowchart LR
 
 **Dataflöde:** dataset → simulator (ny tidsstämpel + sensor_id) → MQTT → konsument → validering → databas → REST-API → dashboard.
 
+Det dokumenterade transportbeslutet och jämförelsen mellan MQTT och HTTP finns i [`protocol-decision.md`](protocol-decision.md).
+
 ## Modulseparation
 
 | Modul | Ansvar | Mapp |

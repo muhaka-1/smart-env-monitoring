@@ -1,5 +1,28 @@
 # Sensorer, intervall och meddelanden
 
+## MVP-beslut för datasetet
+
+- **Källa:** City of Chicago, *Beach Water Quality – Automated Sensors*.
+- **Vald plats:** Ohio Street Beach.
+- **Primärt mätvärde:** turbiditet i NTU, eftersom projektets scenario handlar om badvattenkvalitet.
+- **Kompletterande mätvärde:** vattentemperatur i °C. Det ger ett andra realistiskt mätflöde men kan tas bort utan att MVP:n slutar fungera.
+- **Lokal reservdata:** `sensor/data/chicago_sample.json` med 25 verkliga datasetrader.
+
+### Kontroll av reservdatan
+
+Kontrollen utfördes 2026-10-29. Alla 25 rader är användbara och ger tillsammans 50 simulerade mätvärden: 25 turbiditetsvärden och 25 temperaturvärden.
+
+| Kontroll | Resultat |
+|---|---|
+| Plats | 25 av 25 rader: Ohio Street Beach |
+| Unika `measurement_id` | 25 av 25 |
+| Saknade platsnamn, tidsstämplar, mätvärden eller ID | 0 |
+| Turbiditet | 0,00–0,99 NTU |
+| Vattentemperatur | 22,4–23,1 °C |
+| Rader som avvisas av simulatorns validering | 0 |
+
+Den lokala kopian uppfyller därmed kravet på minst 20 användbara rader. Det fullständiga fjärrdatasetet kan däremot innehålla saknade, negativa eller orimliga värden. Dessa fall och simulatorns hantering dokumenteras i [`data-rules.md`](data-rules.md).
+
 ## Sensorlista i den äldre demofilen
 Sensor-ID skapas av strandnamnet i datasetet: `<strandnamn som slug>-<mätstorhet>`.
 
