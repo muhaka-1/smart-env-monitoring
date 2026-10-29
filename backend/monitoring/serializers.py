@@ -35,6 +35,11 @@ class ReadingSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         metric = attrs.get("metric", Reading.Metric.TURBIDITY)
+        value = attrs["value"]
+        if metric == Reading.Metric.TURBIDITY and value < 0:
+            raise serializers.ValidationError({"value": "Turbiditet får inte vara negativ."})
+        if metric == Reading.Metric.TEMPERATURE and not -5 <= value <= 50:
+            raise serializers.ValidationError({"value": "Temperatur måste vara mellan -5 och 50 °C."})
         expected = DEFAULT_UNITS[metric]
         unit = attrs.get("unit")
         if not unit:
