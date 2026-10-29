@@ -64,11 +64,13 @@ class SeedDemoDataTests(TestCase):
         self.assertGreater(len(values), 2)                                        # upprepningar är varierade
         self.assertTrue(all(v >= 0 for v in values))
 
-    def test_clear_makes_rerun_idempotent(self):
+    def test_clear_rejected_without_deleting_existing_data(self):
         path = make_file([rec(), rec(ts="2025-07-01T10:15:00.000")])
         seed(path)
-        seed(path, clear=True)
-        self.assertEqual(Reading.objects.count(), 4)
+        before = list(Reading.objects.values_list("id", "value"))
+        with self.assertRaises(CommandError):
+            seed(path, clear=True)
+        self.assertEqual(list(Reading.objects.values_list("id", "value")), before)
 
     def test_without_clear_old_data_is_kept(self):
         path = make_file([rec()])

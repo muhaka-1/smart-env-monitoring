@@ -15,7 +15,7 @@ En rad kan ge två mätvärden (turbiditet och temperatur). Ett ogiltigt värde 
 
 - Avvisade värden loggas (en varning med antal per orsak) och skickas aldrig.
 - Tidsstämplar med `Z` eller tidszon omvandlas till UTC; tider utan zon tolkas som UTC.
-- Reservfilen `sensor/data/sample_readings.json` testas så att alla rader är giltiga (inga avvisade).
+- Reservfilen `sensor/data/chicago_sample.json` testas så att alla rader är giltiga (inga avvisade).
 
 ## Backend (andra försvarslinjen)
 Backend validerar allt som tas emot oavsett källa (HTTP eller MQTT):

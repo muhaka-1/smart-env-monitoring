@@ -1,7 +1,11 @@
 # Sensorer, intervall och meddelanden
 
-## Slutlig sensorlista
+## Sensorlista i den äldre demofilen
 Sensor-ID skapas av strandnamnet i datasetet: `<strandnamn som slug>-<mätstorhet>`.
+
+Simulatorns reservfil `sensor/data/chicago_sample.json` innehåller 25 faktiska rader från Ohio Street Beach i [Chicago Beach Water Quality](https://data.cityofchicago.org/resource/qmqz-2xku.json), hämtade 2026-10-29. Tidsintervallet i källan är 2026-09-24 23:00–2026-09-25 23:00. Kolumnerna är `beach_name`, `measurement_timestamp`, `turbidity`, `water_temperature` och `measurement_id`. Fälten kan kontrolleras med `python -m tools.fetch_real_sample` i `sensor/`.
+
+Den äldre filen `sample_readings.json` används separat för demodata. Tabellen nedan beskriver den, inte den nya reservfilen.
 
 | Strand (visningsnamn) | Sensor-ID | Mätstorhet | Enhet | Gränsvärde (avvikelse om värdet är **över**) |
 |---|---|---|---|---|
@@ -12,8 +16,7 @@ Sensor-ID skapas av strandnamnet i datasetet: `<strandnamn som slug>-<mätstorhe
 | Rainbow Beach | `rainbow-beach-turbidity` | Grumlighet | NTU | 30 |
 | Rainbow Beach | `rainbow-beach-temperature` | Vattentemperatur | °C | 25 |
 
-ESP32-sensorn har sensor-ID `<base-id>-turbidity` och `<base-id>-temperature` (standard `esp32-beach-01`).
-Gränsvärden: `ANOMALY_THRESHOLD_TURBIDITY` / `ANOMALY_THRESHOLD_TEMPERATURE` i backend (se `docs/MODULES.md`).
+Gränsvärden: `ANOMALY_THRESHOLD_TURBIDITY` / `ANOMALY_THRESHOLD_TEMPERATURE` i backend. Projektet använder simulerade sensorer.
 
 ## Enheter
 - **Turbiditet: alltid NTU.** Temperatur: °C. Enheten följer med i varje meddelande (`unit`). Om `unit` saknas sätter backend rätt enhet utifrån `metric`; en annan enhet än den som hör till mätstorheten avvisas med HTTP 400.
@@ -23,9 +26,8 @@ Gränsvärden: `ANOMALY_THRESHOLD_TURBIDITY` / `ANOMALY_THRESHOLD_TEMPERATURE` i
 | Källa | Intervall |
 |---|---|
 | PC-simulator | **5 s** totalt (`SENSOR_INTERVAL` eller `--interval`), ett meddelande åt gången |
-| PC-simulator, per sensor (reservfilen) | var **30 s** (6 sensorer delar på 5 s-takten). Ett helt varv = 480 meddelanden = **40 min** |
+| PC-simulator, per sensor (reservfilen) | var **10 s** (2 sensorer delar på 5 s-takten). Ett varv = 50 meddelanden = **4 min 10 s** |
 | PC-simulator, per sensor (riktiga datasetet) | varierar: beror på antalet sensorer och hur mätningarna fördelas i datasetet |
-| ESP32 | **5 s** per sensor (`Sample interval`, båda mätstorheterna varje intervall) |
 
 Formel för simulatorn: tid per sensor = intervall × antal meddelanden mellan två sändningar från samma sensor.
 
@@ -52,7 +54,7 @@ Formel för simulatorn: tid per sensor = intervall × antal meddelanden mellan t
 2. Efter sista försöket loggas felet och mätvärdet **förloras** (ingen lagring på sändarsidan).
 3. Avvisad data (HTTP 4xx): **ingen retry**, felet loggas.
 4. Backend loggar och avvisar ogiltig data utan att stoppa konsumenten.
-5. Klienten (`paho`) återansluter själv i bakgrunden efter ett avbrott; ESP32-firmware gör samma med exponentiell backoff.
+5. Klienten (`paho`) återansluter själv i bakgrunden efter ett avbrott.
 
 ## Demodata för diagrammet
-`python manage.py seed_demo_data --repeat 7 --clear` fyller databasen med cirka 6 dygn historik för alla 6 sensorer (se README).
+`python manage.py seed_demo_data --repeat 7` fyller databasen med cirka 6 dygn historik för alla 6 sensorer (se README).

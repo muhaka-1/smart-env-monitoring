@@ -44,13 +44,13 @@ Projektet är uppbyggt kring **fem huvudmoduler**:
 ## Moduler
 | # | Modul | Mapp |
 |---|---|---|
-| 1 | ESP32-sensor | `firmware/main/sensors/` (+ `sensor/` simulator utan hårdvara) |
-| 2 | Datakommunikation (MQTT/HTTP) | `firmware/main/communication/`, `sensor/sensor_sim/publishers.py` |
+| 1 | Simulerad sensor | `sensor/sensor_sim/` |
+| 2 | Datakommunikation (MQTT/HTTP) | `sensor/sensor_sim/publishers.py`, `backend/monitoring/mqtt_consumer.py` |
 | 3 | Backend / API (Django) | `backend/monitoring/` |
 | 4 | Databas (SQLite) | `backend/monitoring/models.py`, `migrations/` |
 | 5 | Frontend / Dashboard | `backend/monitoring/templates/`, `static/` |
 
-Gränssnitt, ansvar och tester: `docs/MODULES.md`. Testdokumentation: `docs/testing.md`.
+Arkitektur och gränssnitt: `docs/ARCHITECTURE.md`. Testdokumentation: `docs/testing.md`.
 
 
 
@@ -66,6 +66,8 @@ Gränssnitt, ansvar och tester: `docs/MODULES.md`. Testdokumentation: `docs/test
 
 
 # Project Structure
+
+Strukturen nedan innehåller även framtida idéer. Simulatorn är den använda sensorkällan; firmware och fysisk utrustning är inte del av detta projekt.
 
        smart-env-monitoring/
     │
@@ -94,7 +96,8 @@ Gränssnitt, ansvar och tester: `docs/MODULES.md`. Testdokumentation: `docs/test
     │   │   ├── publishers.py
     │   │   ├── simulator.py
     │   │   └── __main__.py
-    │   ├── data/sample_readings.json              # Offline fallback data
+    │   ├── data/chicago_sample.json               # Offline kopia av datasetet
+    │   ├── data/sample_readings.json              # Separat demodata
     │   └── tests/
     │
     ├── firmware/                                  # ESP32 firmware (ESP-IDF)
@@ -145,19 +148,19 @@ Detta är vår fullständiga tekniskt ramverk som har vi använt för den projek
 
 
 ## ⚙️ Systemmoduler – Smart Environmental Monitoring
-### 1️⃣ IoT‑enhet – Sensor (ESP32 + Turbidity‑sensor)
-Den fysiska IoT‑enheten mäter vattengrumlighet (NTU) och skickar data till backend.
-I utvecklingsmiljön används en Python‑baserad sensor‑simulator som ersättning för hårdvaran.
+### 1️⃣ Simulerad IoT-enhet
+Simulatorn skickar vattengrumlighet (NTU) och temperatur från datasetet till backend.
+Projektet använder en Python-baserad sensor-simulator som läser datasetet; fysisk hårdvara ingår inte i projektet.
 
 Funktioner
 
-        ADC‑mätning av turbidity (NTU)
+        Datasetbaserade mätvärden för turbiditet och temperatur
         
         Sensor‑ID och tidsstämpel (UTC)
         
         Klassificering av kvalitet (good/moderate/bad)
         
-        Publicering via MQTT (TLS, Auth, ACL)
+        Publicering via MQTT (lokal broker)
         
         Alternativ transport via HTTP/REST
         
@@ -165,7 +168,7 @@ Funktioner
         
         Offline‑läge med lokal fallback‑data
         
-        OTA‑uppdateringar och device management (produktion)
+
 
 Exempel på sensorvärde:
 
@@ -425,9 +428,17 @@ Technologies:
 
 Python • IoT • MQTT • Django • REST API • SQLite • Time-Series Data • JavaScript • Bootstrap • Chart.js • Docker • ESP32 • ESP-IDF • FreeRTOS
 
+## Dataset och lokal dashboard
+
+Simulatorns offline-reservfil `sensor/data/chicago_sample.json` innehåller 25 observationer från Ohio Street Beach i City of Chicagos dataset, hämtade 2026-10-29. Källan, tidsintervallet och kolumnmappningen beskrivs i `docs/sensors.md`. Kör `python -m sensor_sim --offline` från `sensor/` för att använda den lokala kopian.
+
+Bootstrap 5.3.3 och Chart.js 4.4.3 levereras lokalt med sina licenser, så dashboardens bibliotek inte kräver CDN. `READING_STALE_SECONDS` bestämmer när en mätning markeras som inaktuell; standardvärdet är 300 sekunder och bör anpassas till simulatorns sändningsintervall och antal sensorer.
+
 ## Demodata för diagrammet
 ```bash
 cd backend
-python manage.py seed_demo_data --repeat 7 --clear
+python manage.py seed_demo_data --repeat 7
 ```
 Fyller databasen med cirka 6 dygn historik för alla 6 sensorer. Se `docs/sensors.md` och `docs/data-rules.md`.
+
+Innan temperaturdata skickas ska backend och dess migration för `metric` vara installerade. Granska befintliga °C-mätningar före migrationen: äldre rader kan inte alltid klassificeras säkert automatiskt. Flaggan `--clear` avvisas för att skydda befintliga mätningar. Ange `ANOMALY_THRESHOLD_TURBIDITY` och `ANOMALY_THRESHOLD_TEMPERATURE` i backend. Äldre miljövariabler `BEACH_LIMIT_*` stöds när de nya namnen saknas.

@@ -1,0 +1,177 @@
+[
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T23:00:00.000",
+    "turbidity": "0.99",
+    "water_temperature": "22.9",
+    "measurement_id": "OhioStreetBeach202609252300"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T22:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.8",
+    "measurement_id": "OhioStreetBeach202609252200"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T21:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.8",
+    "measurement_id": "OhioStreetBeach202609252100"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T20:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.9",
+    "measurement_id": "OhioStreetBeach202609252000"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T19:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23",
+    "measurement_id": "OhioStreetBeach202609251900"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T18:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.9",
+    "measurement_id": "OhioStreetBeach202609251800"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T17:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.9",
+    "measurement_id": "OhioStreetBeach202609251700"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T16:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23",
+    "measurement_id": "OhioStreetBeach202609251600"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T15:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23",
+    "measurement_id": "OhioStreetBeach202609251500"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T14:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23.1",
+    "measurement_id": "OhioStreetBeach202609251400"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T13:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23.1",
+    "measurement_id": "OhioStreetBeach202609251300"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T12:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23.1",
+    "measurement_id": "OhioStreetBeach202609251200"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T11:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "23",
+    "measurement_id": "OhioStreetBeach202609251100"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T10:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.8",
+    "measurement_id": "OhioStreetBeach202609251000"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T09:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.6",
+    "measurement_id": "OhioStreetBeach202609250900"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T08:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.9",
+    "measurement_id": "OhioStreetBeach202609250800"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T07:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.6",
+    "measurement_id": "OhioStreetBeach202609250700"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T06:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.5",
+    "measurement_id": "OhioStreetBeach202609250600"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T05:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.4",
+    "measurement_id": "OhioStreetBeach202609250500"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T04:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.5",
+    "measurement_id": "OhioStreetBeach202609250400"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T03:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.5",
+    "measurement_id": "OhioStreetBeach202609250300"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T02:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.6",
+    "measurement_id": "OhioStreetBeach202609250200"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T01:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.7",
+    "measurement_id": "OhioStreetBeach202609250100"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-25T00:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.7",
+    "measurement_id": "OhioStreetBeach202609252400"
+  },
+  {
+    "beach_name": "Ohio Street Beach",
+    "measurement_timestamp": "2026-09-24T23:00:00.000",
+    "turbidity": "0",
+    "water_temperature": "22.7",
+    "measurement_id": "OhioStreetBeach202609242300"
+  }
+]

@@ -70,10 +70,11 @@ REST_FRAMEWORK = {
 # --- Applikationsspecifik konfiguration ---
 # Gränsvärde per mätstorhet (värde ÖVER gränsen = avvikelse)
 ANOMALY_THRESHOLDS = {
-    "turbidity": float(os.getenv("ANOMALY_THRESHOLD_TURBIDITY", os.getenv("ANOMALY_THRESHOLD", "30"))),  # NTU
-    "temperature": float(os.getenv("ANOMALY_THRESHOLD_TEMPERATURE", "25")),  # °C
+    "turbidity": float(os.getenv("ANOMALY_THRESHOLD_TURBIDITY", os.getenv("BEACH_LIMIT_TURBIDITY_NTU", os.getenv("ANOMALY_THRESHOLD", "30")))),  # NTU
+    "temperature": float(os.getenv("ANOMALY_THRESHOLD_TEMPERATURE", os.getenv("BEACH_LIMIT_WATER_TEMP_C", "25"))),  # °C
 }
 INGEST_API_KEY = os.getenv("INGEST_API_KEY", "")  # tom = ingen nyckel krävs lokalt
+READING_STALE_SECONDS = int(os.getenv("READING_STALE_SECONDS", "300"))
 HISTORY_DEFAULT_LIMIT = 500
 HISTORY_MAX_LIMIT = 5000
 MQTT_HOST = os.getenv("MQTT_HOST", "localhost")

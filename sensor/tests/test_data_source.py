@@ -79,4 +79,6 @@ class SampleFileTests(unittest.TestCase):
         measurements = normalize(raw, skipped)
         self.assertEqual(dict(skipped), {})                    # inga avvisade rader
         self.assertEqual(len(measurements), len(raw) * 2)      # turbiditet + temperatur per rad
-        self.assertEqual(len({m.sensor_id for m in measurements}), 6)  # 3 stränder x 2 mätstorheter
+        self.assertGreaterEqual(len(raw), 20)
+        self.assertEqual({m.sensor_id for m in measurements},
+                         {"ohio-street-beach-turbidity", "ohio-street-beach-temperature"})

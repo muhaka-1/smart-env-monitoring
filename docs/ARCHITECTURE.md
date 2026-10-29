@@ -49,4 +49,4 @@ flowchart LR
 - Nedsampling/aggregering för långa historikperioder, cache (Redis) för "senaste värde", paginering av historik.
 - MQTT över TLS med autentisering/ACL per sensor; API-nyckel för POST finns via `INGEST_API_KEY`.
 - Containerisering (Docker) och CI (tester vid varje push).
-- Begränsning idag: tröskelvärdet är ett globalt värde (NTU); i produktion bör det vara per sensor/mätstorhet.
+- Tröskelvärdena är konfigurerade per mätstorhet; per sensor/plats är en möjlig senare utökning.

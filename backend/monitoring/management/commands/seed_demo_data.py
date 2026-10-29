@@ -101,10 +101,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--file", default=str(DEFAULT_FILE), help="JSON-fil med mätvärden (standard: simulatorns reservfil)")
         parser.add_argument("--repeat", type=int, default=1, help="Antal gånger serien upprepas bakåt i tiden (1 = ca 20 h)")
-        parser.add_argument("--clear", action="store_true", help="Radera befintliga mätningar för de sensorer som fylls på först")
+        parser.add_argument("--clear", action="store_true", help="Avvisas för att skydda befintliga mätningar")
         parser.add_argument("--seed", type=int, default=42, help="Slumpfrö för variation i upprepade perioder")
 
     def handle(self, *args, **opts):
+        if opts["clear"]:
+            raise CommandError("--clear är inte tillåtet: befintliga mätningar kan vara verkliga data.")
         if opts["repeat"] < 1:
             raise CommandError("--repeat måste vara minst 1")
         rows, skipped = load_series(opts["file"])
@@ -117,9 +119,6 @@ class Command(BaseCommand):
             r.timestamp = r.timestamp.replace(tzinfo=timezone.utc)
         sensor_ids = sorted({r.sensor_id for r in readings})
 
-        if opts["clear"]:
-            deleted = Reading.objects.filter(sensor_id__in=sensor_ids).delete()[0]
-            self.stdout.write(f"Raderade {deleted} befintliga mätningar för {len(sensor_ids)} sensorer.")
         before = Reading.objects.count()
         Reading.objects.bulk_create(readings, batch_size=1000, ignore_conflicts=True)  # dubbletter hoppas över
         created = Reading.objects.count() - before

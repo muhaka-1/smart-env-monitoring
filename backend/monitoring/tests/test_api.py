@@ -50,11 +50,27 @@ class ApiTests(TestCase):
         self.assertEqual((r["metric"], r["unit"], r["threshold"]), ("temperature", "°C", 25.0))
         self.assertEqual(r["results"][0]["threshold"], 25.0)
 
+    def test_mixed_history_has_no_shared_metric_or_threshold(self):
+        self.post({**make(sensor="a"), "metric": "temperature"})
+        self.post({**make(sensor="b", value=30), "metric": "turbidity"})
+        self.post({**make(sensor="a", ts="2026-01-01T11:00:00Z"), "metric": "turbidity"})
+        for order in ("asc", "desc"):
+            result = self.client.get(reverse("readings"), {"order": order}).json()
+            self.assertEqual(result["count"], 3)
+            self.assertIsNone(result["metric"])
+            self.assertIsNone(result["unit"])
+            self.assertIsNone(result["threshold"])
+
     def test_unit_must_match_metric(self):
         self.assertEqual(self.post({**make(), "unit": "<img src=x onerror=alert(1)>"}).status_code, 400)
         self.assertEqual(self.post({**make(sensor="t1"), "metric": "temperature", "unit": "NTU"}).status_code, 400)
         self.assertEqual(self.post({**make(sensor="t2"), "metric": "temperature", "unit": "°C"}).status_code, 201)
         self.assertEqual(self.post({**make(sensor="t3"), "unit": "NTU"}).status_code, 201)
+
+    @override_settings(READING_STALE_SECONDS=42)
+    def test_dashboard_includes_staleness_setting(self):
+        response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, 'data-reading-stale-seconds="42"')
 
     def test_health_and_dashboard(self):
         self.assertEqual(self.client.get(reverse("health")).status_code, 200)
