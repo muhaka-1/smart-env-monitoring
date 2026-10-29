@@ -3,6 +3,21 @@
 from django.db import migrations, models
 
 
+def classify_existing_readings(apps, schema_editor):
+    """Preserve the metric for rows created before the metric field existed."""
+    Reading = apps.get_model("monitoring", "Reading")
+    database = schema_editor.connection.alias
+
+    temperature_rows = (
+        models.Q(sensor_id__iendswith="-temperature")
+        | models.Q(unit__iexact="°C")
+        | models.Q(unit__iexact="C")
+    )
+    Reading.objects.using(database).filter(temperature_rows).update(
+        metric="temperature"
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -14,5 +29,9 @@ class Migration(migrations.Migration):
             model_name='reading',
             name='metric',
             field=models.CharField(choices=[('turbidity', 'Turbiditet'), ('temperature', 'Temperatur')], default='turbidity', max_length=20),
+        ),
+        migrations.RunPython(
+            classify_existing_readings,
+            migrations.RunPython.noop,
         ),
     ]
