@@ -1,6 +1,8 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from monitoring.models import Reading
+
 
 def make(sensor="a", ts="2026-01-01T10:00:00Z", value=5.0):
     return {"sensor_id": sensor, "timestamp": ts, "value": value}
@@ -19,6 +21,21 @@ class ApiTests(TestCase):
         self.assertEqual(self.post({"sensor_id": "a"}).status_code, 400)
         self.assertEqual(self.post(make(value="abc")).status_code, 400)
         self.assertEqual(self.post(make(sensor="Bad ID!")).status_code, 400)
+
+    def test_post_rejects_out_of_range_values_without_saving(self):
+        for metric, value in (("turbidity", -0.1), ("temperature", -5.1), ("temperature", 50.1)):
+            with self.subTest(metric=metric, value=value):
+                response = self.post({**make(), "metric": metric, "value": value})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("value", response.json())
+                self.assertEqual(Reading.objects.count(), 0)
+
+    def test_post_accepts_range_boundaries(self):
+        for index, (metric, value) in enumerate((("turbidity", 0), ("temperature", -5), ("temperature", 50))):
+            with self.subTest(metric=metric, value=value):
+                response = self.post({**make(sensor=f"boundary-{index}"), "metric": metric, "value": value})
+                self.assertEqual(response.status_code, 201)
+                self.assertEqual(Reading.objects.get(pk=response.json()["id"]).value, value)
 
     @override_settings(INGEST_API_KEY="secret")
     def test_api_key_enforced(self):
@@ -75,3 +92,10 @@ class ApiTests(TestCase):
     def test_health_and_dashboard(self):
         self.assertEqual(self.client.get(reverse("health")).status_code, 200)
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)
+
+    def test_dashboard_explains_project_status(self):
+        response = self.client.get(reverse("dashboard"))
+        self.assertContains(response, "inte aktuella mätningar på plats")
+        self.assertContains(response, "OK betyder att värdet inte överstiger den konfigurerade gränsen")
+        self.assertContains(response, "ANOMALY betyder att gränsen har överskridits")
+        self.assertContains(response, "Statusen bedömer inte om vattnet är säkert att bada i")

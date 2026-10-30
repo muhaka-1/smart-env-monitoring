@@ -8,8 +8,10 @@ from monitoring.models import Reading
 class EvaluateStatusTests(SimpleTestCase):
     @override_settings(ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25})
     def test_ok_at_threshold_and_anomaly_above(self):
-        self.assertEqual(services.evaluate_status(30, "turbidity"), "OK")
-        self.assertEqual(services.evaluate_status(30.1, "turbidity"), "ANOMALY")
+        for metric, threshold in (("turbidity", 30), ("temperature", 25)):
+            for value, expected in ((threshold - 0.1, "OK"), (threshold, "OK"), (threshold + 0.1, "ANOMALY")):
+                with self.subTest(metric=metric, value=value):
+                    self.assertEqual(services.evaluate_status(value, metric), expected)
 
     @override_settings(ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25})
     def test_threshold_is_per_metric(self):
