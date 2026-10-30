@@ -6,6 +6,57 @@
 [![License](https://img.shields.io/badge/License-Educational-lightgrey)](#license)
 
 
+## Status och omfattning
+
+Repositoryt innehåller en körbar Python-simulator, Django-backend med SQLite, REST-API och dashboard. MQTT är huvudtransport och HTTP används för lokal testning. Se [protokollbeslutet](docs/protocol-decision.md).
+
+## Uppgift och avgränsning
+
+Projektunderlaget kräver:
+
+- en simulerad IoT-enhet som läser data från ett öppet dataset,
+- tidsstämplade meddelanden med sensor-ID som skickas periodiskt,
+- felhantering i kommunikationen,
+- en Django-backend som validerar och lagrar data,
+- ett REST-API för senaste värde och historik,
+- tidsserielagring med minst `sensor_id`, `timestamp`, `value` och `quality/status`,
+- en publik dashboard med aktuellt värde, historik och status,
+- lokal körbarhet, modulär kod, arkitekturdiagram och motiverade teknikval.
+
+Projektet använder datasetet [Beach Water Quality - Automated Sensors](https://catalog.data.gov/dataset/beach-water-quality-automated-sensors) från City of Chicago.
+
+### Inte krav för MVP
+
+Följande kan utvärderas senare men ska inte blockera den första fungerande versionen:
+
+- fysisk ESP32 eller verkliga sensorer,
+- firmware/ESP-IDF och kalibrering av hårdvara,
+- två parallella transportvägar,
+- TimescaleDB, Redis, Grafana, Prometheus eller ELK/Loki,
+- JWT för den publika dashboarden,
+- produktions-TLS, ACL, nätverkssegmentering, OTA eller enhetshantering,
+- WebSockets, notifieringar eller AI/ML-baserad avvikelsedetektering.
+
+## Definition av klart
+
+MVP:n är klar när:
+
+- en ren lokal installation kan startas med dokumenterade steg,
+- simulerad data passerar hela kedjan utan manuella databasändringar,
+- ogiltig data avvisas och kommunikationsfel loggas,
+- senaste värde och filtrerad historik kan hämtas via API,
+- dashboarden visar aktuell status och historik,
+- automatiska tester täcker validering och de viktigaste API-flödena,
+- arkitekturdiagram och teknikbeslut stämmer med den implementerade lösningen.
+
+## Plan och backlog
+
+Den granskade, korrigerade backlogplanen finns i [docs/BACKLOG_REVIEW.md](docs/BACKLOG_REVIEW.md). Den beskriver hur samtliga 35 issues och fem milstolpar bör behållas, ändras, slås ihop eller flyttas ut ur MVP:n.
+
+Den beslutade sprintplanen, onsdagsleveranserna och ansvarsfördelningen för tre personer finns i [docs/SPRINT_PLAN.md](docs/SPRINT_PLAN.md).
+
+Den responsiva dashboard-wireframen och dess API-underlag finns i [docs/dashboard-wireframe.md](docs/dashboard-wireframe.md). Den körbara prototypen kan öppnas lokalt via [docs/dashboard-wireframe.html](docs/dashboard-wireframe.html).
+
 ## 📖 Bakgrund
 
 
