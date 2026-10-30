@@ -5,7 +5,11 @@ const vm = require("node:vm");
 const Chart = require("../static/monitoring/vendor/chart.umd.min.js");
 
 class Element {
-  constructor() { this.children = []; this.dataset = {}; this.hidden = false; this.textContent = ""; }
+  constructor() {
+    this.children = []; this.dataset = {}; this.hidden = false; this.textContent = ""; this.value = "";
+    this.className = "";
+    this.classList = { toggle: () => {}, add: () => {}, remove: () => {} };
+  }
   append(...items) { this.children.push(...items); }
   replaceChildren(...items) { this.children = items; }
   setAttribute() {}
@@ -16,19 +20,24 @@ class ChartMock {
   update() {}
   destroy() {}
 }
-const elements = { cards: new Element(), chart: new Element(), "history-message": new Element() };
+const elements = {
+  cards: new Element(), chart: new Element(), "history-message": new Element(),
+  "chart-explanation": new Element(), "interval-summary": new Element(),
+  from: new Element(), to: new Element(),
+};
 const main = new Element();
 main.dataset.readingStaleSeconds = "300";
 const document = {
   querySelector: () => main,
+  querySelectorAll: () => [],
   getElementById: (id) => elements[id],
   createElement: () => new Element(),
 };
 const source = fs.readFileSync(path.join(__dirname, "../static/monitoring/dashboard.js"), "utf8");
 const initIndex = source.indexOf('$("sensor").addEventListener');
 assert.notEqual(initIndex, -1);
-const context = vm.createContext({ document, Chart: ChartMock, Date, Number, Set });
-vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart };", context);
+const context = vm.createContext({ document, Chart: ChartMock, Date, Number, Set, URLSearchParams });
+vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart, validateRange };", context);
 
 const now = Date.now();
 const reading = { metric: "turbidity", unit: "NTU", value: 2, status: "OK", threshold: 30 };
@@ -44,6 +53,8 @@ const rows = [0, 1, 4].map((hour) => ({ ...reading, timestamp: new Date(Date.UTC
 context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: rows });
 const chart = vm.runInContext("chart", context);
 assert.equal(chart.options.scales.x.type, "linear");
+assert.equal(chart.options.scales.x.title.text, "Tid (lokal tid)");
+assert.equal(chart.options.scales.y.title.text, "Värde (NTU)");
 const times = chart.data.datasets[0].data.map((point) => point.x);
 assert.equal(times[2] - times[1], 3 * (times[1] - times[0]));
 const tooltipTitle = chart.options.plugins?.tooltip?.callbacks?.title || Chart.Tooltip.defaults.callbacks.title;
@@ -66,4 +77,25 @@ assert.match(elements["history-message"].textContent, /olika mätstorheter/);
 context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: rows });
 assert.equal(elements.chart.hidden, false);
 assert.equal(elements["history-message"].textContent, "");
-console.log("Dashboard staleness, time axis, tooltip timestamps and mixed metrics: OK");
+
+const anomalyRows = [
+  { ...reading, status: "OK", timestamp: new Date(Date.UTC(2026, 0, 1, 0)).toISOString() },
+  { ...reading, status: "ANOMALY", value: 55, timestamp: new Date(Date.UTC(2026, 0, 1, 1)).toISOString() },
+];
+context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: anomalyRows });
+const anomalyChart = vm.runInContext("chart", context);
+assert.deepEqual(Array.from(anomalyChart.data.datasets[0].pointStyle), ["circle", "triangle"]);
+const tooltipLabel = anomalyChart.options.plugins.tooltip.callbacks.label;
+assert.match(tooltipLabel({ datasetIndex: 0, dataset: anomalyChart.data.datasets[0], parsed: { y: 55 }, raw: anomalyChart.data.datasets[0].data[1] }), /Avvikelse/);
+assert.match(elements["chart-explanation"].textContent, /projektets konfigurerade gränsregel/);
+
+context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: [] });
+assert.equal(elements.chart.hidden, true);
+assert.match(elements["history-message"].textContent, /Inga mätvärden/);
+
+assert.equal(context.dashboard.validateRange("", "").valid, true);
+assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "").valid, false);
+assert.match(context.dashboard.validateRange("2026-01-01T11:00", "2026-01-01T10:00").message, /tidigare/);
+assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "2026-01-01T11:00").valid, true);
+
+console.log("Dashboard status, intervals, axes, empty state and anomaly markers: OK");
