@@ -1,0 +1,32 @@
+### Kräver tillägget "REST Client" i VS Code. Klicka "Send Request".
+@host = http://localhost:8000
+
+### Hälsokoll
+GET {{host}}/api/health/
+
+### Skicka giltig mätning (förvänta 201)
+POST {{host}}/api/readings/
+Content-Type: application/json
+
+{"sensor_id": "test-beach-turbidity", "timestamp": "2026-01-01T12:00:00Z", "value": 12.3, "unit": "NTU", "quality": "good"}
+
+### Avvikande värde (status ANOMALY)
+POST {{host}}/api/readings/
+Content-Type: application/json
+
+{"sensor_id": "test-beach-turbidity", "timestamp": "2026-01-01T12:05:00Z", "value": 55}
+
+### Ogiltig data (förvänta 400)
+POST {{host}}/api/readings/
+Content-Type: application/json
+
+{"sensor_id": "test-beach-turbidity"}
+
+### Alla sensorer
+GET {{host}}/api/sensors/
+
+### Senaste värde (en sensor / alla)
+GET {{host}}/api/readings/latest/?sensor_id=test-beach-turbidity
+
+### Historik med tidsfilter
+GET {{host}}/api/readings/?sensor_id=test-beach-turbidity&start=2026-01-01T00:00:00Z&end=2026-12-31T00:00:00Z&order=desc&limit=100

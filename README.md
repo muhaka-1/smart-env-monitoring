@@ -6,6 +6,57 @@
 [![License](https://img.shields.io/badge/License-Educational-lightgrey)](#license)
 
 
+## Status och omfattning
+
+Repositoryt innehåller en körbar Python-simulator, Django-backend med SQLite, REST-API och dashboard. MQTT är huvudtransport och HTTP används för lokal testning. Se [protokollbeslutet](docs/protocol-decision.md).
+
+## Uppgift och avgränsning
+
+Projektunderlaget kräver:
+
+- en simulerad IoT-enhet som läser data från ett öppet dataset,
+- tidsstämplade meddelanden med sensor-ID som skickas periodiskt,
+- felhantering i kommunikationen,
+- en Django-backend som validerar och lagrar data,
+- ett REST-API för senaste värde och historik,
+- tidsserielagring med minst `sensor_id`, `timestamp`, `value` och `quality/status`,
+- en publik dashboard med aktuellt värde, historik och status,
+- lokal körbarhet, modulär kod, arkitekturdiagram och motiverade teknikval.
+
+Projektet använder datasetet [Beach Water Quality - Automated Sensors](https://catalog.data.gov/dataset/beach-water-quality-automated-sensors) från City of Chicago.
+
+### Inte krav för MVP
+
+Följande kan utvärderas senare men ska inte blockera den första fungerande versionen:
+
+- fysisk ESP32 eller verkliga sensorer,
+- firmware/ESP-IDF och kalibrering av hårdvara,
+- två parallella transportvägar,
+- TimescaleDB, Redis, Grafana, Prometheus eller ELK/Loki,
+- JWT för den publika dashboarden,
+- produktions-TLS, ACL, nätverkssegmentering, OTA eller enhetshantering,
+- WebSockets, notifieringar eller AI/ML-baserad avvikelsedetektering.
+
+## Definition av klart
+
+MVP:n är klar när:
+
+- en ren lokal installation kan startas med dokumenterade steg,
+- simulerad data passerar hela kedjan utan manuella databasändringar,
+- ogiltig data avvisas och kommunikationsfel loggas,
+- senaste värde och filtrerad historik kan hämtas via API,
+- dashboarden visar aktuell status och historik,
+- automatiska tester täcker validering och de viktigaste API-flödena,
+- arkitekturdiagram och teknikbeslut stämmer med den implementerade lösningen.
+
+## Plan och backlog
+
+Den granskade, korrigerade backlogplanen finns i [docs/BACKLOG_REVIEW.md](docs/BACKLOG_REVIEW.md). Den beskriver hur samtliga 35 issues och fem milstolpar bör behållas, ändras, slås ihop eller flyttas ut ur MVP:n.
+
+Den beslutade sprintplanen, onsdagsleveranserna och ansvarsfördelningen för tre personer finns i [docs/SPRINT_PLAN.md](docs/SPRINT_PLAN.md).
+
+Den responsiva dashboard-wireframen och dess API-underlag finns i [docs/dashboard-wireframe.md](docs/dashboard-wireframe.md). Den körbara prototypen kan öppnas lokalt via [docs/dashboard-wireframe.html](docs/dashboard-wireframe.html).
+
 ## 📖 Bakgrund
 
 
@@ -41,13 +92,16 @@ För att nå projekten mål vi ska bygga en end-to-end IoT system for collecting
 
 Projektet är uppbyggt kring **fem huvudmoduler**:
 
-| Modul | Beskrivning |
-| --- | --- |
-| **1. ESP32‑sensor** | Fysisk turbidity‑sensor som mäter vattengrumlighet i NTU |
-| **2. Datakommunikation** | MQTT (Mosquitto) eller HTTP för transport av mätdata |
-| **3. Backend / API (Django)** | Validering, lagring, avvikelsedetektering, REST‑API |
-| **4. Databas (SQLite)** | Tidsserielagring med index och duplicatskydd |
-| **5. Frontend / Dashboard** | Visualisering av realtidsdata och historiska trender |
+## Moduler
+| # | Modul | Mapp |
+|---|---|---|
+| 1 | Simulerad sensor | `sensor/sensor_sim/` |
+| 2 | Datakommunikation (MQTT/HTTP) | `sensor/sensor_sim/publishers.py`, `backend/monitoring/mqtt_consumer.py` |
+| 3 | Backend / API (Django) | `backend/monitoring/` |
+| 4 | Databas (SQLite) | `backend/monitoring/models.py`, `migrations/` |
+| 5 | Frontend / Dashboard | `backend/monitoring/templates/`, `static/` |
+
+Arkitektur och gränssnitt: `docs/ARCHITECTURE.md`. Testdokumentation: `docs/testing.md`.
 
 
 
@@ -63,6 +117,8 @@ Projektet är uppbyggt kring **fem huvudmoduler**:
 
 
 # Project Structure
+
+Strukturen nedan innehåller även framtida idéer. Simulatorn är den använda sensorkällan; firmware och fysisk utrustning är inte del av detta projekt.
 
        smart-env-monitoring/
     │
@@ -91,7 +147,8 @@ Projektet är uppbyggt kring **fem huvudmoduler**:
     │   │   ├── publishers.py
     │   │   ├── simulator.py
     │   │   └── __main__.py
-    │   ├── data/sample_readings.json              # Offline fallback data
+    │   ├── data/chicago_sample.json               # Offline kopia av datasetet
+    │   ├── data/sample_readings.json              # Separat demodata
     │   └── tests/
     │
     ├── firmware/                                  # ESP32 firmware (ESP-IDF)
@@ -128,6 +185,9 @@ Projektet är uppbyggt kring **fem huvudmoduler**:
     ├── requirements.txt                           # Python dependencies
     ├── .env.example                               # Environment variables template
     └── README.md                                  # Main documentation
+## Dashboard-wireframe
+
+Den responsiva dashboard-wireframen och dess API-underlag finns i [docs/dashboard-wireframe.md](docs/dashboard-wireframe.md). Den körbara prototypen kan öppnas lokalt via [docs/dashboard-wireframe.html](docs/dashboard-wireframe.html).
 
 ```text
 ```
@@ -139,19 +199,19 @@ Detta är vår fullständiga tekniskt ramverk som har vi använt för den projek
 
 
 ## ⚙️ Systemmoduler – Smart Environmental Monitoring
-### 1️⃣ IoT‑enhet – Sensor (ESP32 + Turbidity‑sensor)
-Den fysiska IoT‑enheten mäter vattengrumlighet (NTU) och skickar data till backend.
-I utvecklingsmiljön används en Python‑baserad sensor‑simulator som ersättning för hårdvaran.
+### 1️⃣ Simulerad IoT-enhet
+Simulatorn skickar vattengrumlighet (NTU) och temperatur från datasetet till backend.
+Projektet använder en Python-baserad sensor-simulator som läser datasetet; fysisk hårdvara ingår inte i projektet.
 
 Funktioner
 
-        ADC‑mätning av turbidity (NTU)
+        Datasetbaserade mätvärden för turbiditet och temperatur
         
         Sensor‑ID och tidsstämpel (UTC)
         
         Klassificering av kvalitet (good/moderate/bad)
         
-        Publicering via MQTT (TLS, Auth, ACL)
+        Publicering via MQTT (lokal broker)
         
         Alternativ transport via HTTP/REST
         
@@ -159,7 +219,7 @@ Funktioner
         
         Offline‑läge med lokal fallback‑data
         
-        OTA‑uppdateringar och device management (produktion)
+
 
 Exempel på sensorvärde:
 
@@ -419,3 +479,17 @@ Technologies:
 
 Python • IoT • MQTT • Django • REST API • SQLite • Time-Series Data • JavaScript • Bootstrap • Chart.js • Docker • ESP32 • ESP-IDF • FreeRTOS
 
+## Dataset och lokal dashboard
+
+Simulatorns offline-reservfil `sensor/data/chicago_sample.json` innehåller 25 observationer från Ohio Street Beach i City of Chicagos dataset, hämtade 2026-10-29. Källan, tidsintervallet och kolumnmappningen beskrivs i `docs/sensors.md`. Kör `python -m sensor_sim --offline` från `sensor/` för att använda den lokala kopian.
+
+Bootstrap 5.3.3 och Chart.js 4.4.3 levereras lokalt med sina licenser, så dashboardens bibliotek inte kräver CDN. `READING_STALE_SECONDS` bestämmer när en mätning markeras som inaktuell; standardvärdet är 300 sekunder och bör anpassas till simulatorns sändningsintervall och antal sensorer.
+
+## Demodata för diagrammet
+```bash
+cd backend
+python manage.py seed_demo_data --repeat 7
+```
+Fyller databasen med cirka 6 dygn historik för alla 6 sensorer. Se `docs/sensors.md` och `docs/data-rules.md`.
+
+Innan temperaturdata skickas ska backend och dess migration för `metric` vara installerade. Granska befintliga °C-mätningar före migrationen: äldre rader kan inte alltid klassificeras säkert automatiskt. Flaggan `--clear` avvisas för att skydda befintliga mätningar. Ange `ANOMALY_THRESHOLD_TURBIDITY` och `ANOMALY_THRESHOLD_TEMPERATURE` i backend. Äldre miljövariabler `BEACH_LIMIT_*` stöds när de nya namnen saknas.

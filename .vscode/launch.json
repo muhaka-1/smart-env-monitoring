@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1. Django: runserver",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver", "8000", "--noreload"],
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "2. Django: MQTT-konsument",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["run_mqtt_consumer"],
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "3. Sensor (MQTT)",
+      "type": "debugpy", "request": "launch",
+      "module": "sensor_sim",
+      "args": ["--transport", "mqtt", "--interval", "3"],
+      "cwd": "${workspaceFolder}/sensor"
+    },
+    {
+      "name": "3b. Sensor (HTTP, ingen broker, offline-data)",
+      "type": "debugpy", "request": "launch",
+      "module": "sensor_sim",
+      "args": ["--transport", "http", "--interval", "3", "--offline"],
+      "cwd": "${workspaceFolder}/sensor"
+    },
+    {
+      "name": "Tester: backend",
+      "type": "debugpy", "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["test"],
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Tester: sensor",
+      "type": "debugpy", "request": "launch",
+      "module": "unittest",
+      "args": ["discover", "-s", "tests", "-t", "."],
+      "cwd": "${workspaceFolder}/sensor"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Kör hela systemet (MQTT)",
+      "configurations": ["1. Django: runserver", "2. Django: MQTT-konsument", "3. Sensor (MQTT)"]
+    },
+    {
+      "name": "Kör utan broker (HTTP)",
+      "configurations": ["1. Django: runserver", "3b. Sensor (HTTP, ingen broker, offline-data)"]
+    }
+  ]
+}
