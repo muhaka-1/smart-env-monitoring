@@ -78,4 +78,3 @@ Innan den riktiga dashboarden implementeras behöver teamet besluta:
 - [x] Senaste värde, tid, status och historik visas.
 - [x] Tomt läge, felläge och mobilvy finns.
 - [x] Status kommuniceras med symbol, text och färg.
-
