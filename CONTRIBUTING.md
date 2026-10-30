@@ -1,76 +1,150 @@
-# Arbetssätt (Development Workflow)
+# Bidra till projektet
 
-## Grenar
-```
-feature/*  →  development  →  testing  →  main
-```
+Det här dokumentet beskriver teamets gemensamma arbetssätt. Målet är små, granskbara ändringar som kan integreras utan att arbete skrivs över.
 
-| Gren | Syfte | Hur ändras den |
+## Teamets huvudområden
+
+| Person | Huvudområde | Vanliga filer |
 |---|---|---|
-| `feature/*` | Ett avgränsat arbete (en funktion eller fix) | Direkt av utvecklaren |
-| `development` | Integration av färdiga features | Pull Request från `feature/*` (squash and merge) |
-| `testing` | Verifiering innan release | Pull Request från `development` (merge commit) |
-| `main` | Stabil, inlämningsbar version | Pull Request från `testing` (merge commit) |
+| Pat | Frontend, UX, dashboard, dokumentation och demo | `backend/monitoring/templates/`, `backend/monitoring/static/`, `docs/`, `README.md` |
+| Muhammad | Simulator, dataset, MQTT/HTTP-kommunikation och lokal start | `sensor/`, `infra/`, `docker-compose.yml` |
+| Khaled | Backend, datamodell, validering, REST-API och backendtester | `backend/monitoring/models.py`, `serializers.py`, `services.py`, `views.py`, `tests/`, `migrations/` |
 
-Ingen pushar direkt till `development`, `testing` eller `main`.
+Huvudansvar betyder samordningsansvar, inte ensamrätt till filer. Den som behöver ändra någon annans område meddelar personen först och ber om granskning i PR:n.
 
-## Dagligt arbete
-```bash
-git checkout development && git pull
-git checkout -b feature/<kort-beskrivning>
-# ... arbeta, committa ofta ...
-git push -u origin feature/<kort-beskrivning>
-```
-Öppna en Pull Request mot `development`, be en kollega granska, merga och radera grenen.
-Håll grenen uppdaterad: `git fetch origin && git merge origin/development`.
+## Grenflöde
 
-## Namngivning av grenar
-`feature/sensor-turbidity`, `feature/mqtt-retry`, `fix/api-validation`, `docs/architecture`.
-
-## Commit-meddelanden
-Format: `typ(scope): beskrivning` i imperativ, gemener, utan punkt.
-
-**Typer:** `feat`, `fix`, `test`, `docs`, `refactor`, `chore`
-
-**Scopes:**
-| Scope | Modul |
-|---|---|
-| `sensor`, `firmware` | 1. ESP32-sensor |
-| `mqtt`, `http` | 2. Datakommunikation |
-| `api`, `backend` | 3. Backend / API |
-| `database` | 4. Databas |
-| `dashboard` | 5. Frontend |
-
-**Exempel:**
-```
-feat(sensor): add sensor simulator
-feat(mqtt): add MQTT publisher
-feat(api): add readings endpoint
-feat(database): add time-series reading model
-feat(dashboard): add monitoring chart
-fix(mqtt): retry transient errors
-test(api): add readings tests
-docs: update IoT architecture
+```text
+feature/* → development → Testing → main
 ```
 
-## Ansvarsfördelning
-| Ansvarig | Moduler | Främst filer |
+| Gren | Syfte | Ändras genom |
 |---|---|---|
-| Muhammad | 1 ESP32-sensor, 2 Datakommunikation, 3 Backend/API | `sensor/`, `firmware/`, `mqtt_consumer.py`, `services.py`, `serializers.py`, `views.py`, `urls.py` |
-| Pat | 4 Databas, 5 Frontend/Dashboard | `models.py`, `migrations/`, `admin.py`, `templates/`, `static/` |
+| `feature/*` | En avgränsad issue eller nära relaterade issues | Egna commits |
+| `development` | Integration av färdiga funktioner | PR från `feature/*` |
+| `Testing` | Samlad verifiering inför release | PR från `development` |
+| `main` | Stabil och inlämningsbar version | PR från `Testing` |
 
-**Regler för att undvika konflikter**
-- Bara databasansvarig ändrar `models.py` och skapar migrationer. Behövs ett nytt fält, be om det i en issue eller PR.
-- Committa alltid genererade migrationer och kör `python manage.py makemigrations --check` före PR.
-- Kör `git pull` på `development` innan du skapar en ny feature-gren.
+Push aldrig direkt till `development`, `Testing` eller `main`. Observera att `Testing` skrivs med stort T.
 
-## Innan du öppnar en Pull Request
+## Starta ett arbete
+
+Utgå alltid från senaste `development`:
+
 ```bash
-cd backend && python manage.py test
-cd ../sensor && python -m unittest discover -s tests -t .
+git switch development
+git pull --ff-only origin development
+git switch -c feature/<kort-beskrivning>
 ```
-CI kör samma tester automatiskt, och en PR med röda tester ska inte mergas.
 
-## Release
-1. `development` → `testing`: kör tester och prova hela flödet (sensor → API → dashboard).
-2. `testing` → `main`: när allt är verifierat. Sätt gärna en tagg: `git tag v1.0.0 && git push --tags`.
+Alla nya arbetsgrenar använder prefixet `feature/`, även när ändringen främst är en fix eller dokumentation.
+
+Exempel:
+
+- `feature/mqtt-consumer`
+- `feature/dashboard-history-filter`
+- `feature/clean-readme-contributing`
+
+Koppla normalt en PR till en huvudissue. Flera issues får kombineras endast när de är nära beroende av varandra och PR-beskrivningen visar vad som hör till varje issue.
+
+## Under arbetet
+
+Gör små commits med formatet:
+
+```text
+typ(scope): kort beskrivning
+```
+
+Vanliga typer är `feat`, `fix`, `test`, `docs`, `refactor` och `chore`.
+
+Exempel:
+
+```text
+feat(sensor): add MQTT publisher
+fix(api): validate reading date range
+test(dashboard): cover anomaly markers
+docs: align README with current MVP
+```
+
+Synkronisera en längre arbetsgren utan att skriva över andras arbete:
+
+```bash
+git fetch origin
+git merge origin/development
+```
+
+Lös eventuella konflikter lokalt och kör testerna igen innan du pushar.
+
+## Delade filer som kräver samordning
+
+Meddela teamet innan större ändringar i:
+
+- `README.md`, `CONTRIBUTING.md` och `docs/SPRINT_PLAN.md`,
+- `backend/monitoring/models.py` och migrationsfiler,
+- `backend/monitoring/templates/monitoring/dashboard.html`,
+- `backend/monitoring/static/monitoring/dashboard.js`,
+- `.github/workflows/ci.yml`.
+
+Skapa aldrig en ny migration utan att först kontrollera befintliga migrationsfiler. Genererade migrationer ska alltid committas tillsammans med modelländringen.
+
+## Tester före en PR
+
+Från projektets rot, med den virtuella Python-miljön skapad enligt README:
+
+```powershell
+.\.venv\Scripts\python.exe backend\manage.py makemigrations --check --dry-run
+.\.venv\Scripts\python.exe backend\manage.py test monitoring
+Set-Location sensor
+..\.venv\Scripts\python.exe -m unittest discover -s tests -t .
+Set-Location ..
+node backend\monitoring\tests\dashboard.test.cjs
+```
+
+Kör minst de tester som berör ändringen. Före en release-PR ska hela sviten vara grön.
+
+För en synlig dashboardändring ska dator-, mellan- och mobilbredd kontrolleras, till exempel cirka 1400, 1024 och 390 pixlar. Lägg gärna skärmbilder i PR:n när layouten ändras.
+
+## Pull request
+
+En PR ska:
+
+- ha `development` som bas för en feature-gren,
+- ha en kort titel som förklarar resultatet,
+- länka relevanta issues med exempelvis `Closes #25` eller `Refs #30`,
+- beskriva vad som ändrats och varför,
+- redovisa automatiska och manuella tester,
+- nämna kända begränsningar eller återstående arbete,
+- begära granskning från minst en annan teammedlem.
+
+Använd `Closes #...` bara när hela issuens checklista är verifierad. Annars används `Refs #...`, och issuen lämnas öppen.
+
+### Kontrollista
+
+- [ ] Ändringen är avgränsad och innehåller inga orelaterade filer.
+- [ ] Berörda tester är gröna.
+- [ ] `makemigrations --check --dry-run` rapporterar inga nya migrationer.
+- [ ] Dokumentationen stämmer med faktisk funktion.
+- [ ] Synliga ändringar är kontrollerade på relevanta skärmstorlekar.
+- [ ] CI är grön.
+- [ ] Minst en teammedlem har granskat.
+
+## Merge-strategi
+
+- `feature/*` till `development`: **Squash and merge**.
+- `development` till `Testing`: vanlig merge commit så integrationshistoriken bevaras.
+- `Testing` till `main`: vanlig merge commit efter gemensam verifiering.
+
+Stäng inte en PR utan merge om ändringen ska behållas. Om PR:n ersätts av en annan ska det förklaras och den nya PR:n länkas.
+
+## Release och demo
+
+Inför `development → Testing`:
+
+1. Kör hela testsviten.
+2. Prova HTTP-flödet från simulator till dashboard.
+3. Prova MQTT-flödet om sprintens mål kräver det.
+4. Kontrollera dashboard på dator och mobil.
+5. Kontrollera att README-kommandona fortfarande fungerar.
+6. Dokumentera resultat och eventuella avvikelser i PR:n.
+
+`Testing → main` görs först när teamet har verifierat den samlade versionen och inga blockerande fel återstår.
