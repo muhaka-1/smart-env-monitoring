@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Badvattenkvalitet – Dashboard</title>
+  <title>Badvattenkvalitet - Dashboard</title>
   <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -13,7 +13,9 @@
     <span class="navbar-text" id="updated">Laddar…</span></div>
 </nav>
 <main class="container" data-reading-stale-seconds="{{ reading_stale_seconds }}">
-  <p class="mb-3">Mätvärdena kommer från en simulator som återspelar verkliga datasetvärden, inte aktuella mätningar på plats. OK betyder att värdet inte överstiger den konfigurerade gränsen; ANOMALY betyder att gränsen har överskridits. Statusen bedömer inte om vattnet är säkert att bada i.</p>
+  <div class="alert alert-info text-break mb-4" role="note">
+    Mätvärdena kommer från en simulator som återspelar verkliga datasetvärden, inte aktuella mätningar på plats. OK betyder att värdet inte överstiger den konfigurerade gränsen; ANOMALY betyder att gränsen har överskridits. Statusen bedömer inte om vattnet är säkert att bada i.
+  </div>
   <div id="error" class="alert alert-danger d-none"></div>
   <div class="row g-3 mb-4" id="cards"></div>
   <div class="card shadow-sm">
@@ -25,9 +27,10 @@
           <input id="from" type="datetime-local" class="form-control"></div>
         <div class="col-md-3"><label class="form-label">Till</label>
           <input id="to" type="datetime-local" class="form-control"></div>
-        <div class="col-md-2 d-flex gap-2">
-          <button id="apply" class="btn btn-primary w-100">Filtrera</button>
-          <button id="reset" class="btn btn-outline-secondary">Nollställ</button></div>
+        <div class="col-md-2 d-flex flex-wrap gap-2">
+          <button id="apply" class="btn btn-primary flex-grow-1">Filtrera</button>
+          <button id="reset" class="btn btn-outline-secondary flex-grow-1">Nollställ</button>
+        </div>
       </div>
       <p id="history-message" class="text-muted" role="status"></p>
       <canvas id="chart" height="110"></canvas>
