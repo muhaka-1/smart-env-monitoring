@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Badvattenkvalitet - Dashboard</title>
+  <title>Badvattenkvalitet – Dashboard</title>
   <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -32,8 +32,16 @@
           <button id="reset" class="btn btn-outline-secondary flex-grow-1">Nollställ</button>
         </div>
       </div>
+      <div class="d-flex flex-wrap gap-2 mb-2" role="group" aria-label="Snabbval för tidsintervall">
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset" data-range="hour">Senaste timmen</button>
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset" data-range="day">Senaste dygnet</button>
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset" data-range="week">Senaste 7 dagarna</button>
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset active" data-range="all" aria-pressed="true">All historik</button>
+      </div>
+      <p id="interval-summary" class="small text-muted mb-2" role="status">Intervall: all historik, högst 200 mätningar.</p>
       <p id="history-message" class="text-muted" role="status"></p>
       <canvas id="chart" height="110"></canvas>
+      <p id="chart-explanation" class="small text-muted mt-2" hidden></p>
     </div>
   </div>
 </main>
