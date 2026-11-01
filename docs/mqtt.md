@@ -63,3 +63,18 @@ Kör med riktig Mosquitto och fyll i kolumnen "Faktiskt".
 | M-16.1 | #16 | brokern stoppad, kör simulatorn med `--count 1` | `Försök 1/5` ... `5/5` (1, 2, 4, 8 s), sedan `Gav upp ... förlorad` | |
 | M-16.2 | #16 | kör simulatorn, stoppa brokern en stund mitt i, starta den igen | `Försök`-varningar, därefter `Skickade` igen utan omstart | |
 | M-16.3 | #16 | skicka mot fel URL (`--transport http`, fel port) | `Avvisad (ingen retry): HTTP 404` | |
+
+## 7. Testresultat (Windows, Mosquitto 2 i Docker, 2026-10-29 till 2026-11-01)
+| ID | Resultat |
+|---|---|
+| M-14.1 | Godkänt: `docker compose ps` visar mosquitto som `Up`, port 1883 |
+| M-14.2 | Godkänt: `mosquitto_sub -t "beach/#" -v` visade tre meddelanden med alla fält, och mottagaren sparade dem |
+| M-15.1 | Godkänt: `Sparade ...` för båda sensorerna, värdena syns i API:t och på dashboarden |
+| M-15.2 | Godkänt: `Avvisade data` (saknade fält) och `Ogiltig JSON` loggades, mottagaren fortsatte och sparade nästa mätning |
+| M-15.3 | Godkänt: `Bortkopplad från broker`, därefter `Ansluten till broker` (23 s efter bortkopplingen), och tre nya mätningar sparades |
+| M-15.4 | Godkänt: mottagaren startad utan broker avslutades inte, anslöt efter `docker compose start`, och tre mätningar sparades |
+| M-16.1 | Godkänt: 5 försök, därefter `Gav upp ... datapunkt förlorad`. På Windows tar varje misslyckat anslutningsförsök cirka 4 s extra, så pauserna blir längre än 1, 2, 4 och 8 s |
+| M-16.2 | Godkänt: sändningen återupptogs utan omstart. 19 skickade, 1 förlorad (avbrottet var längre än retry-fönstret) |
+| M-16.3 | Godkänt (2026-10-29): `Avvisad (ingen retry): HTTP 404` |
+
+Begränsning: det finns ingen buffring i sändaren. Ett mätvärde går förlorat om brokern är borta längre än retry-fönstret (cirka 15 s plus anslutningstid).
