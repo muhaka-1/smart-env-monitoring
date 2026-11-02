@@ -43,11 +43,53 @@ class ApiTests(TestCase):
         self.assertEqual(self.post(make(), HTTP_X_API_KEY="secret").status_code, 201)
 
     def test_latest(self):
-        self.post(make(ts="2026-01-01T10:00:00Z", value=1))
-        self.post(make(ts="2026-01-01T11:00:00Z", value=2))
+        for payload in (
+            make(ts="2026-01-01T11:00:00Z", value=2),
+            make(ts="2026-01-01T10:00:00Z", value=1),
+            make(sensor="b", ts="2026-01-01T12:00:00Z", value=3),
+        ):
+            self.assertEqual(self.post(payload).status_code, 201)
         r = self.client.get(reverse("readings-latest"), {"sensor_id": "a"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["sensor_id"], "a")
         self.assertEqual(r.json()["value"], 2)
-        self.assertEqual(self.client.get(reverse("readings-latest"), {"sensor_id": "x"}).status_code, 404)
+        self.assertEqual(r.json()["timestamp"], "2026-01-01T11:00:00Z")
+
+    def test_latest_compares_timezone_offsets_as_instants(self):
+        self.assertEqual(self.post(make(ts="2026-01-01T10:30:00Z", value=2)).status_code, 201)
+        self.assertEqual(self.post(make(ts="2026-01-01T12:00:00+02:00", value=1)).status_code, 201)
+        response = self.client.get(reverse("readings-latest"), {"sensor_id": "a"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["value"], 2)
+        self.assertEqual(response.json()["timestamp"], "2026-01-01T10:30:00Z")
+
+    def test_latest_without_sensor_returns_latest_for_each_sensor(self):
+        for payload in (
+            make(sensor="b", ts="2026-01-01T12:00:00Z", value=4),
+            make(ts="2026-01-01T11:00:00Z", value=2),
+            make(sensor="b", ts="2026-01-01T09:00:00Z", value=3),
+            make(ts="2026-01-01T10:00:00Z", value=1),
+        ):
+            self.assertEqual(self.post(payload).status_code, 201)
+        response = self.client.get(reverse("readings-latest"))
+        self.assertEqual(response.status_code, 200)
+        results = response.json()["results"]
+        self.assertEqual(len(results), 2)
+        self.assertEqual({r["sensor_id"]: r["value"] for r in results}, {"a": 2, "b": 4})
+
+    def test_latest_empty_database_returns_empty_results(self):
+        response = self.client.get(reverse("readings-latest"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"results": []})
+
+    def test_latest_missing_sensor_returns_not_found(self):
+        for has_other_sensor in (False, True):
+            with self.subTest(has_other_sensor=has_other_sensor):
+                if has_other_sensor:
+                    self.assertEqual(self.post(make()).status_code, 201)
+                response = self.client.get(reverse("readings-latest"), {"sensor_id": "x"})
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(response.json(), {"detail": "Inga mätvärden hittades."})
 
     def test_history_filter_and_sort(self):
         for h in (10, 11, 12):
