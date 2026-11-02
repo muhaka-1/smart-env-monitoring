@@ -36,7 +36,7 @@ function renderCards(items) {
     const anomaly = isAnomaly(r.status);
     const measuredAt = Date.parse(r.timestamp);
     const stale = !Number.isFinite(measuredAt) || Date.now() - measuredAt > STALE_MS;
-    const col = el("div", "col-md-4");
+    const col = el("div", "col-md-6 col-xl-4");
     const card = el("div", `card shadow-sm h-100 border-${stale ? "warning" : anomaly ? "danger" : "success"}${r.sensor_id === selected ? " border-3" : ""}`);
     card.setAttribute("role", "button");
     card.dataset.sensor = r.sensor_id;
@@ -48,9 +48,11 @@ function renderCards(items) {
       el("div", "fw-semibold", LABELS[r.metric] || r.metric),
       el("div", "text-muted small", r.sensor_id),
       value,
-      el("span", `badge fs-6 bg-${stale ? "secondary" : anomaly ? "danger" : "success"}`,
+      el(
+  "span",
+  `badge fs-6 d-inline-block text-wrap text-start mw-100 bg-${stale ? "secondary" : anomaly ? "danger" : "success"}`,
         `${stale ? "Senaste status: " : ""}${anomaly ? "⚠ Avvikelse" : "✔ OK"}`),
-      el("div", "text-muted small mt-2", `${fmt(r.timestamp)} · gräns ${r.threshold ?? "–"} ${r.unit}`),
+      el("div", "text-muted small mt-2", `${fmt(r.timestamp)} · gräns ${r.threshold ?? "-"} ${r.unit}`),
     );
     if (stale) body.append(el("div", "text-warning fw-bold mt-2", "Mätningen är inaktuell eller saknar giltig tid."));
     card.append(body);

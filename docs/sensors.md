@@ -41,6 +41,24 @@ Den äldre filen `sample_readings.json` används separat för demodata. Tabellen
 
 Gränsvärden: `ANOMALY_THRESHOLD_TURBIDITY` / `ANOMALY_THRESHOLD_TEMPERATURE` i backend. Projektet använder simulerade sensorer.
 
+## Gränsvärden och statusens innebörd (issue #13)
+
+Standardgränserna är 30 NTU för turbiditet och 25 °C för temperatur. Enligt motiveringen som Pat dokumenterade i [issue #13](https://github.com/muhaka-1/smart-env-monitoring/issues/13) är de konfigurerbara standardvärden för projektets demonstration, inte myndighetsgränser eller dokumenterade verksamhetskrav. De är inte beräknade från den nuvarande reservdatan.
+
+30 NTU gör att den äldre demodatan visar både `OK` och `ANOMALY`: 24 av 240 turbiditetsvärden ligger över gränsen. Temperaturen i samma demodata ligger på 17–24 °C och ger därför inga avvikelser vid 25 °C. Temperaturgränsen används i stället för att verifiera avvikelsefunktionen i tester och manuellt skapad demodata. Detta är motiveringen för demonstrationsvärdena, inte en vetenskaplig bedömning av badvattenkvalitet.
+
+`ANOMALY` betyder att värdet är **större än** den konfigurerade gränsen för sin mätstorhet. Ett värde på eller under gränsen ger `OK`. Statusen anger endast resultatet av denna jämförelse, inte en statistiskt fastställd avvikelse eller att vattnet är säkert att bada i. Simulatorn skickar värden från verkliga datasetrader med nya sändningstidsstämplar; det är inte en aktuell mätning på plats.
+
+### Källor och tillämpningsgränser
+
+- [Chicago Park District – Beach FAQs](https://www.chicagoparkdistrict.com/beach-faqs): badvattenövervakningen använder indikatorbakterien Enterococci. Turbiditet och temperatur ersätter inte denna bedömning.
+- [US EPA – Recreational Water Quality Criteria and Methods](https://www.epa.gov/wqc/recreational-water-quality-criteria-and-methods): kriterierna behandlar bland annat indikatorer för fekal förorening och cyanotoxiner. De ger inte stöd för projektets gränser 30 NTU och 25 °C.
+- [Health Canada – Physical, Aesthetic and Chemical Characteristics](https://www.canada.ca/en/services/health/publications/healthy-living/guidelines-canadian-recreational-water-physical-aesthetic-chemical-characteristics.html), tabell 1 och avsnitt 2.3: turbiditet under 50 NTU anges för klarhet och estetisk acceptans, medan ett generellt exakt temperaturgränsvärde inte fastställs. Detta är kanadensisk vägledning och motiverar inte att automatiskt ändra projektets gränser för Chicago.
+
+Källorna granskades 2026-10-29. De förklarar begränsningarna i bedömningen; de är inte källor till projektets demonstrationsvärden. För användning som faktiska verksamhetsgränser krävs en separat motivering utifrån användningsfall och platsens förutsättningar.
+
+Reservfilens turbiditet (0,00–0,99 NTU) och temperatur (22,4–23,1 °C) ligger under standardgränserna. För att demonstrera en avvikelse utan att ändra datasetet kan backend startas med en tillfällig lokal gräns, exempelvis `ANOMALY_THRESHOLD_TEMPERATURE=23`. Nya temperaturmätningar över 23 °C får då `ANOMALY`; redan lagrade statusvärden räknas inte om. Ta bort den tillfälliga miljövariabeln och starta om backend för att återgå till standardgränsen. Tester använder separata testvärden under, på och över båda gränserna.
+
 ## Enheter
 - **Turbiditet: alltid NTU.** Temperatur: °C. Enheten följer med i varje meddelande (`unit`). Om `unit` saknas sätter backend rätt enhet utifrån `metric`; en annan enhet än den som hör till mätstorheten avvisas med HTTP 400.
 - Temperatur är ett tillägg till kravet om turbiditet. Den kan tas bort utan att övriga delar påverkas.
