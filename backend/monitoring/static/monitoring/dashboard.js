@@ -5,7 +5,7 @@ const RANGE_PRESETS = {
   hour: { hours: 1, label: "senaste timmen" },
   day: { hours: 24, label: "senaste dygnet" },
   week: { hours: 24 * 7, label: "senaste 7 dagarna" },
-  all: { hours: null, label: "all historik" },
+  all: { hours: null, label: "senaste 200 mätningarna" },
 };
 const $ = (id) => document.getElementById(id);
 let chart = null;
@@ -116,8 +116,11 @@ function renderChart(data) {
     } },
     y: { title: { display: true, text: data.unit ? `Värde (${data.unit})` : "Värde" } },
   } };
-  if (chart) { chart.data = cfg; chart.update("none"); }
-  else chart = new Chart($("chart"), { type: "line", data: cfg, options });
+  if (chart) {
+    chart.data = cfg;
+    chart.options = options;
+    chart.update("none");
+  } else chart = new Chart($("chart"), { type: "line", data: cfg, options });
 }
 
 function toLocalInput(date) {
@@ -160,7 +163,7 @@ function updateRangeInputs(now = new Date()) {
 function updateIntervalSummary(range) {
   const summary = $("interval-summary");
   if (activeRange && RANGE_PRESETS[activeRange]) {
-    summary.textContent = `Intervall: ${RANGE_PRESETS[activeRange].label}${activeRange === "all" ? ", högst 200 mätningar" : ""}.`;
+    summary.textContent = `Intervall: ${RANGE_PRESETS[activeRange].label}.`;
     return;
   }
   summary.textContent = range.valid && range.start

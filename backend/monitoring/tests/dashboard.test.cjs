@@ -57,6 +57,13 @@ assert.equal(chart.options.scales.x.title.text, "Tid (lokal tid)");
 assert.equal(chart.options.scales.y.title.text, "Värde (NTU)");
 const times = chart.data.datasets[0].data.map((point) => point.x);
 assert.equal(times[2] - times[1], 3 * (times[1] - times[0]));
+context.dashboard.renderChart({ metric: "temperature", unit: "°C", threshold: 25, results: rows });
+assert.equal(chart.options.scales.y.title.text, "Värde (°C)");
+const switchedTooltipLabel = chart.options.plugins.tooltip.callbacks.label;
+assert.match(
+  switchedTooltipLabel({ datasetIndex: 0, parsed: { y: 22 }, raw: chart.data.datasets[0].data[0] }),
+  /Temperatur \(°C\): 22 °C/
+);
 const tooltipTitle = chart.options.plugins?.tooltip?.callbacks?.title || Chart.Tooltip.defaults.callbacks.title;
 const scale = { chart: { options: { locale: "sv-SE" } }, options: { ticks: { format: {} } } };
 for (const dataset of chart.data.datasets) {
