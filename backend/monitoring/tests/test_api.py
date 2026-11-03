@@ -22,6 +22,39 @@ class ApiTests(TestCase):
         self.assertEqual(self.post(make(value="abc")).status_code, 400)
         self.assertEqual(self.post(make(sensor="Bad ID!")).status_code, 400)
 
+    def test_post_duplicate_is_rejected_without_changing_saved_reading(self):
+        created = self.post(make())
+        self.assertEqual(created.status_code, 201)
+        response = self.post(make(value=99))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("non_field_errors", response.json())
+        self.assertEqual(Reading.objects.count(), 1)
+        reading = Reading.objects.get(pk=created.json()["id"])
+        self.assertEqual(reading.value, 5.0)
+        self.assertEqual(reading.status, "OK")
+
+    def test_post_rejects_invalid_timestamps_without_saving(self):
+        for timestamp in ("nope", "2026-02-30T10:00:00Z", "", None):
+            with self.subTest(timestamp=timestamp):
+                response = self.post(make(ts=timestamp))
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("timestamp", response.json())
+                self.assertEqual(Reading.objects.count(), 0)
+
+    def test_post_rejects_unknown_metric_without_saving(self):
+        response = self.post({**make(), "metric": "ph"})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("metric", response.json())
+        self.assertEqual(Reading.objects.count(), 0)
+
+    def test_post_rejects_non_finite_values_without_saving(self):
+        for value in ("NaN", "Infinity", "-Infinity", "1e309"):
+            with self.subTest(value=value):
+                response = self.post(make(value=value))
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("value", response.json())
+                self.assertEqual(Reading.objects.count(), 0)
+
     def test_post_rejects_out_of_range_values_without_saving(self):
         for metric, value in (("turbidity", -0.1), ("temperature", -5.1), ("temperature", 50.1)):
             with self.subTest(metric=metric, value=value):
@@ -39,8 +72,13 @@ class ApiTests(TestCase):
 
     @override_settings(INGEST_API_KEY="secret")
     def test_api_key_enforced(self):
-        self.assertEqual(self.post(make()).status_code, 401)
+        for headers in ({}, {"HTTP_X_API_KEY": "wrong-key"}):
+            with self.subTest(headers=headers):
+                response = self.post(make(), **headers)
+                self.assertEqual(response.status_code, 401)
+                self.assertEqual(Reading.objects.count(), 0)
         self.assertEqual(self.post(make(), HTTP_X_API_KEY="secret").status_code, 201)
+        self.assertEqual(Reading.objects.count(), 1)
 
     def test_latest(self):
         for payload in (
