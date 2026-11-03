@@ -20,13 +20,29 @@ Följande delar finns och kan köras lokalt:
 
 Dashboardens status är en teknisk projektregel. Den avgör inte om vattnet är säkert att bada i. Standardvärdena 30 NTU och 25 °C är konfigurerbara demo-/projektgränser, inte officiella badvattenkrav.
 
+## Nya beslutade krav
+
+Följande funktioner är planerade men ännu inte färdigimplementerade:
+
+- olika publika och inloggade vyer,
+- en fortsatt publik sida för aktuella mätvärden,
+- inloggning och utloggning för åtkomst till historik och meddelanden,
+- serverbaserat skydd så att obehöriga inte kan läsa skyddade sidor eller API-data,
+- glömt lösenord och byte av lösenord,
+- administratörsskapade konton med e-postinbjudan som ska användas inom tre dagar och därefter kunna skickas om,
+- nedladdning av historiska data som PDF,
+- e-postvarningar vid upptäckta dataproblem samt sparade meddelanden för inloggade användare,
+- felrapport på skärmen och som PDF.
+
+Teamet rättar först kvarvarande fel och öppna pull requests. Därefter genomförs de nya kraven i separata issues och feature-grenar.
+
 ## Team och ansvar
 
 | Person | Hittills genomfört | Fortsatt huvudansvar |
 |---|---|---|
-| Pat | Projektplanering, issue- och sprintstruktur, sensorunderlag, wireframe, responsiv dashboard, dataset-/protokolldokumentation och demoarbete | Frontend, UX, dashboard, README och demosamordning |
-| Muhammad | Grundstruktur, simulator, datasetintegration, kommunikationsdelar, temperaturstöd och säker hantering av data i dashboard/API | Simulator, MQTT, kommunikation, lokal start och end-to-end-flöde |
-| Khaled | Backendgranskning, intervallvalidering, avvikelsestatus, dokumentationssynkronisering och release-/CI-arbete | Django, datamodell, validering, REST-API och backendtester |
+| Pat | Projektplanering, issue- och sprintstruktur, sensorunderlag, wireframe, responsiv dashboard, dataset-/protokolldokumentation och demoarbete | Publik och skyddad dashboard, åtkomstkontroll för sidor och data, historik- och felrapporter samt PDF-export |
+| Jubayer | Grundstruktur, simulator, datasetintegration, MQTT/HTTP, temperaturstöd och säker hantering av data i dashboard/API | Backend för autentisering, inloggning, utloggning, lösenordsflöden och administratörsskapade konton |
+| Khaled | Backendgranskning, intervallvalidering, avvikelsestatus, dokumentationssynkronisering och release-/CI-arbete | E-posttjänst, kontoinbjudningar, datavarningar och sparade användarmeddelanden |
 
 En person är huvudansvarig för ett område, men teamet granskar och hjälper varandra. Aktuell issuefördelning finns i [sprintplanen](docs/SPRINT_PLAN.md).
 
@@ -188,11 +204,14 @@ firmware/   Tidig ESP32-prototyp; ingår inte i MVP-kravet
 
 ## Nästa arbete
 
-- slutföra MQTT-publicering, mottagning och end-to-end-verifiering,
-- slutföra dashboardens diagram, tidsfilter och avvikelsemarkering,
-- genomföra användartest på dator och mobil,
-- verifiera en ren lokal installation,
-- färdigställa arkitekturdiagram, teknikreflektion och slutdemo.
+- rätta och granska kvarvarande öppna pull requests innan nytt funktionsarbete påbörjas,
+- införa inloggning, utloggning och lösenordshantering,
+- skilja på publik dashboard och skyddad historik, meddelanden och rapporter,
+- införa administratörsskapade konton och tidsbegränsade e-postinbjudningar,
+- skicka och spara datavarningar för behöriga användare,
+- skapa PDF-export för historik och felrapporter,
+- verifiera säkerhet, e-postflöden och responsivitet med automatiska och manuella tester,
+- verifiera en ren lokal installation och fortsätta dokumentera veckodemon.
 
 Öppna issues och milstolpar är projektets källa för aktuell status. Arbetssätt, grenar och PR-regler finns i [CONTRIBUTING.md](CONTRIBUTING.md).
 

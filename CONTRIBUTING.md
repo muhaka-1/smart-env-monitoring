@@ -6,11 +6,22 @@ Det här dokumentet beskriver teamets gemensamma arbetssätt. Målet är små, g
 
 | Person | Huvudområde | Vanliga filer |
 |---|---|---|
-| Pat | Frontend, UX, dashboard, dokumentation och demo | `backend/monitoring/templates/`, `backend/monitoring/static/`, `docs/`, `README.md` |
-| Muhammad | Simulator, dataset, MQTT/HTTP-kommunikation och lokal start | `sensor/`, `infra/`, `docker-compose.yml` |
-| Khaled | Backend, datamodell, validering, REST-API och backendtester | `backend/monitoring/models.py`, `serializers.py`, `services.py`, `views.py`, `tests/`, `migrations/` |
+| Pat | Dashboard, skyddade vyer, dataåtkomst, historik- och felrapporter, PDF, dokumentation och demo | `backend/monitoring/templates/`, `backend/monitoring/static/`, dashboard-/rapportvyer, `docs/`, `README.md` |
+| Jubayer | Autentisering, inloggning, utloggning, lösenordsflöden, konton, simulator och MQTT/HTTP-kommunikation | Django auth-/konto-/URL-konfiguration, `sensor/`, `infra/`, `docker-compose.yml` |
+| Khaled | E-posttjänst, kontoinbjudningar, datavarningar, sparade meddelanden och tillhörande tester | E-postkonfiguration och mallar, meddelandemodeller/-tjänster, backendtester och migrationer |
 
 Huvudansvar betyder samordningsansvar, inte ensamrätt till filer. Den som behöver ändra någon annans område meddelar personen först och ber om granskning i PR:n.
+
+## Arbetsfördelning för de nya kraven
+
+| Kravområde | Huvudansvarig | Samordning |
+|---|---|---|
+| Inloggning, utloggning, glömt/ändrat lösenord och administratörsskapade konton | Jubayer | Khaled granskar alla delar som skickar e-post |
+| Publik respektive skyddad dashboard och skydd av historik, meddelanden och API-data | Pat | Jubayer granskar autentisering och backendbehörighet |
+| Historik som PDF samt felrapport på skärm och som PDF | Pat | Khaled tillhandahåller sparade varningar och meddelanden |
+| E-postinfrastruktur, tredagars kontoinbjudningar och datavarningar | Khaled | Jubayer tillhandahåller konto- och tokenlogik |
+
+Ett gränssnitt som bara döljer en knapp eller sektion räknas inte som åtkomstskydd. Skyddade sidor och API-endpoints ska även neka obehöriga anrop på serversidan och täckas av tester.
 
 ## Grenflöde
 
@@ -81,6 +92,7 @@ Meddela teamet innan större ändringar i:
 
 - `README.md`, `CONTRIBUTING.md` och `docs/SPRINT_PLAN.md`,
 - `backend/monitoring/models.py` och migrationsfiler,
+- Django-inställningar, URL-konfiguration, autentisering och e-postkonfiguration,
 - `backend/monitoring/templates/monitoring/dashboard.html`,
 - `backend/monitoring/static/monitoring/dashboard.js`,
 - `.github/workflows/ci.yml`.
@@ -145,6 +157,8 @@ Inför `development → Testing`:
 3. Prova MQTT-flödet om sprintens mål kräver det.
 4. Kontrollera dashboard på dator och mobil.
 5. Kontrollera att README-kommandona fortfarande fungerar.
-6. Dokumentera resultat och eventuella avvikelser i PR:n.
+6. När de nya kraven berörs: prova både publik och inloggad vy samt verifiera att obehöriga nekas skyddad data.
+7. När de nya kraven berörs: prova relevanta e-post- och PDF-flöden utan att använda riktiga mottagare i utvecklingsmiljön.
+8. Dokumentera resultat och eventuella avvikelser i PR:n.
 
 `Testing → main` görs först när teamet har verifierat den samlade versionen och inga blockerande fel återstår.
