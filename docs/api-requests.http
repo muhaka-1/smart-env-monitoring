@@ -25,8 +25,23 @@ Content-Type: application/json
 ### Alla sensorer
 GET {{host}}/api/sensors/
 
-### Senaste värde (en sensor / alla)
+### Senaste värde för vald sensor (sensor_id, förvänta 200 om mätningar finns)
+# Senaste avser störst timestamp, oavsett i vilken ordning mätningarna sparades.
+# Om sensorn saknar mätningar: 404 med {"detail": "Inga mätvärden hittades."}.
 GET {{host}}/api/readings/latest/?sensor_id=test-beach-turbidity
 
+### Senaste värde per sensor (utan sensor_id, förvänta 200)
+# Returnerar {"results": [...]} med en mätning per sensor; tom databas ger {"results": []}.
+GET {{host}}/api/readings/latest/
+
 ### Historik med tidsfilter
+# sensor_id väljer sensor; utan parametern ingår alla sensorer.
+# start/end är valfria ISO 8601-tider med inkluderade gränser; utan tidszon tolkas tiden som UTC.
+# De senaste N mätningarna i intervallet returneras: order=asc (standard) eller desc.
+# limit är ett positivt heltal, standard 500; värden över 5000 begränsas till 5000.
+# Inga träffar ger 200 med count=0 och results=[].
 GET {{host}}/api/readings/?sensor_id=test-beach-turbidity&start=2026-01-01T00:00:00Z&end=2026-12-31T00:00:00Z&order=desc&limit=100
+
+### Ogiltigt tidsintervall (förvänta 400 med fältet end)
+# Ogiltigt datum, sensor-ID, order eller limit ger också 400 med respektive fältnamn.
+GET {{host}}/api/readings/?start=2026-01-02T00:00:00Z&end=2026-01-01T00:00:00Z
