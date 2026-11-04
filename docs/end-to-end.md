@@ -13,6 +13,7 @@ cd smart-env-monitoring
 git checkout development
 python -m venv .venv
 source .venv/Scripts/activate            # macOS/Linux: source .venv/bin/activate
+Om `.venv/Scripts/activate` saknas (Python från MSYS/MinGW), använd `source .venv/bin/activate`.
 pip install -r backend/requirements.txt
 cd backend
 python manage.py migrate                 # skapar en tom lokal databas
