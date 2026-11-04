@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -9,6 +10,7 @@ from monitoring.models import Reading
 class HistoryApiTests(TestCase):
     @classmethod
     def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_user(username="history-reader", password="test-password")
         for sensor in ("a", "b"):
             for hour in (12, 10, 11):
                 Reading.objects.create(
@@ -16,6 +18,9 @@ class HistoryApiTests(TestCase):
                     timestamp=datetime(2026, 1, 1, hour, tzinfo=timezone.utc),
                     value=hour,
                 )
+
+    def setUp(self):
+        self.client.force_login(self.user)
 
     def test_sensor_and_inclusive_time_range(self):
         response = self.client.get(reverse("readings"), {

@@ -1,5 +1,7 @@
 const REFRESH_MS = 5000;
-const STALE_MS = Number(document.querySelector("main").dataset.readingStaleSeconds) * 1000;
+const MAIN = document.querySelector("main");
+const STALE_MS = Number(MAIN.dataset.readingStaleSeconds) * 1000;
+const CAN_VIEW_HISTORY = MAIN.dataset.canViewHistory === "true";
 const LABELS = { turbidity: "Turbiditet", temperature: "Temperatur" };
 const RANGE_PRESETS = {
   hour: { hours: 1, label: "senaste timmen" },
@@ -45,7 +47,6 @@ function renderCards(items) {
     const stale = !Number.isFinite(measuredAt) || Date.now() - measuredAt > STALE_MS;
     const col = el("div", "col-md-6 col-xl-4");
     const card = el("div", `card shadow-sm h-100 border-${stale ? "warning" : anomaly ? "danger" : "success"}${r.sensor_id === selected ? " border-3" : ""}`);
-    card.setAttribute("role", "button");
     card.dataset.sensor = r.sensor_id;
 
     const body = el("div", "card-body");
@@ -66,11 +67,14 @@ function renderCards(items) {
     col.append(card);
     container.append(col);
 
-    card.addEventListener("click", () => {
-      selected = r.sensor_id;
-      $("sensor").value = selected;
-      refresh();
-    });
+    if (CAN_VIEW_HISTORY) {
+      card.setAttribute("role", "button");
+      card.addEventListener("click", () => {
+        selected = r.sensor_id;
+        $("sensor").value = selected;
+        refresh();
+      });
+    }
   }
 }
 
@@ -202,13 +206,15 @@ async function refresh() {
   if (inFlight) { pendingRefresh = true; return; }   // kör om direkt efter pågående anrop
   inFlight = true;
   try {
-    const sensors = (await getJSON("/api/sensors/")).results;
-    renderSensorOptions(sensors);
-    if (!selected && sensors.length) selected = sensors[0];
-    if (selected) $("sensor").value = selected;
+    if (CAN_VIEW_HISTORY) {
+      const sensors = (await getJSON("/api/sensors/")).results;
+      renderSensorOptions(sensors);
+      if (!selected && sensors.length) selected = sensors[0];
+      if (selected) $("sensor").value = selected;
+    }
     latestReadings = (await getJSON("/api/readings/latest/")).results;
     renderCards(latestReadings);
-    if (selected) {
+    if (CAN_VIEW_HISTORY && selected) {
       const history = historyUrl();
       if (history.error) renderRangeError(history.error);
       else renderChart(await getJSON(history.url));
@@ -225,24 +231,26 @@ async function refresh() {
   }
 }
 
-$("sensor").addEventListener("change", (e) => { selected = e.target.value; refresh(); });
-$("apply").addEventListener("click", refresh);
-for (const id of ["from", "to"]) {
-  $(id).addEventListener("input", () => { activeRange = null; markActiveRange(); });
-}
-document.querySelectorAll(".range-preset").forEach((button) => {
-  button.addEventListener("click", () => {
-    activeRange = button.dataset.range;
+if (CAN_VIEW_HISTORY) {
+  $("sensor").addEventListener("change", (e) => { selected = e.target.value; refresh(); });
+  $("apply").addEventListener("click", refresh);
+  for (const id of ["from", "to"]) {
+    $(id).addEventListener("input", () => { activeRange = null; markActiveRange(); });
+  }
+  document.querySelectorAll(".range-preset").forEach((button) => {
+    button.addEventListener("click", () => {
+      activeRange = button.dataset.range;
+      markActiveRange();
+      updateRangeInputs();
+      refresh();
+    });
+  });
+  $("reset").addEventListener("click", () => {
+    activeRange = "all";
     markActiveRange();
     updateRangeInputs();
     refresh();
   });
-});
-$("reset").addEventListener("click", () => {
-  activeRange = "all";
-  markActiveRange();
-  updateRangeInputs();
-  refresh();
-});
+}
 refresh();
 setInterval(refresh, REFRESH_MS);

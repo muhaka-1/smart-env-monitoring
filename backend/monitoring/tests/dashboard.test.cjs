@@ -27,6 +27,7 @@ const elements = {
 };
 const main = new Element();
 main.dataset.readingStaleSeconds = "300";
+main.dataset.canViewHistory = "true";
 const document = {
   querySelector: () => main,
   querySelectorAll: () => [],
@@ -34,7 +35,7 @@ const document = {
   createElement: () => new Element(),
 };
 const source = fs.readFileSync(path.join(__dirname, "../static/monitoring/dashboard.js"), "utf8");
-const initIndex = source.indexOf('$("sensor").addEventListener');
+const initIndex = source.lastIndexOf("if (CAN_VIEW_HISTORY) {");
 assert.notEqual(initIndex, -1);
 const context = vm.createContext({ document, Chart: ChartMock, Date, Number, Set, URLSearchParams });
 vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart, validateRange };", context);
@@ -105,4 +106,43 @@ assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "").valid, fals
 assert.match(context.dashboard.validateRange("2026-01-01T11:00", "2026-01-01T10:00").message, /tidigare/);
 assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "2026-01-01T11:00").valid, true);
 
-console.log("Dashboard status, intervals, axes, empty state and anomaly markers: OK");
+const publicElements = {
+  cards: new Element(), error: new Element(), updated: new Element(),
+};
+const publicMain = new Element();
+publicMain.dataset.readingStaleSeconds = "300";
+publicMain.dataset.canViewHistory = "false";
+const publicCalls = [];
+const publicDocument = {
+  querySelector: () => publicMain,
+  querySelectorAll: () => [],
+  getElementById: (id) => publicElements[id],
+  createElement: () => new Element(),
+};
+const publicSource = source.replace(
+  /refresh\(\);\r?\nsetInterval\(refresh, REFRESH_MS\);\s*$/,
+  "globalThis.publicRefresh = refresh();"
+);
+const publicContext = vm.createContext({
+  document: publicDocument,
+  Chart: ChartMock,
+  Date,
+  Number,
+  Set,
+  URLSearchParams,
+  setInterval: () => {},
+  fetch: async (url) => {
+    publicCalls.push(url);
+    return { ok: true, json: async () => ({ results: [] }) };
+  },
+});
+
+(async () => {
+  vm.runInContext(publicSource, publicContext);
+  await publicContext.publicRefresh;
+  assert.deepEqual(publicCalls, ["/api/readings/latest/"]);
+  console.log("Dashboard status, intervals, access control and anomaly markers: OK");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

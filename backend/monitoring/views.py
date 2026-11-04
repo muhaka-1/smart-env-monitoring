@@ -7,7 +7,9 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.generic import TemplateView
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -64,6 +66,13 @@ class LatestReadingView(APIView):
 
 
 class ReadingListCreateView(APIView):
+    authentication_classes = [SessionAuthentication]
+
+    def get_permissions(self):
+        if self.request.method in ("GET", "HEAD"):
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
     def get(self, request):
         q = request.query_params
         start = _parse_dt(q["start"], "start") if "start" in q else None
