@@ -13,7 +13,7 @@ Beslutet gäller MVP:n med Python-simulator. Fysisk sensor, ESP32 och firmware i
 ## Jämförelse mot projektets krav
 
 | Krav | MQTT | HTTP |
-|---|---|---|
+| --- | --- | --- |
 | Periodisk överföring av små IoT-meddelanden | Låg overhead och byggt för återkommande publicering | Fungerar, men en ny request görs för varje mätning |
 | Lös koppling mellan simulator och backend | Broker kopplar isär producent och konsument | Simulatorn anropar backend direkt |
 | Leveranssäkerhet | QoS 1 ger minst-en-gång-leverans | Kräver egen retry; statuskod visar resultatet direkt |

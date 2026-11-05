@@ -45,7 +45,7 @@ Avsluta med #29-#34: reproducerbar lokal start, README, diagram, teknikreflektio
 ## Granskning av samtliga issues
 
 | Issue | Rekommenderad åtgärd | Konkret korrigering |
-|---|---|---|
+| --- | --- | --- |
 | #1 Skapa repo och grundstruktur | Behåll, skriv om | Kontrollera verklig struktur, `.gitignore`, PR-flöde och eventuell branch protection. Ta bort krav på tomma mappar; skapa mappar när kod tillkommer. |
 | #2 Projekttavla, labels och milstolpar | Behåll, uppdatera | Ändra 34 till 35 issues. Skapa och applicera labels; vid granskningen hade alla issues tom labellista. Rebasera sprintdatum efter verklig start. |
 | #3 Utforska datasetet | Behåll, högsta prioritet | Dokumentera kolumner, enheter, tidsluckor, avvikande värden och vald mätserie från Chicago-datasetet. Ingen fysisk sensor ska väljas här. |
@@ -87,7 +87,7 @@ Avsluta med #29-#34: reproducerbar lokal start, README, diagram, teknikreflektio
 Alla fem befintliga milstolpar kan behållas, men deras innehåll och datum behöver rebaseras. Uppdatera dem först när gruppen har bestämt en realistisk ny startpunkt.
 
 | Milstolpe | Nuvarande problem | Föreslagen klar-definition |
-|---|---|---|
+| --- | --- | --- |
 | Sprint 0 - Uppstart och beslut | 9 öppna, 0 stängda; förfallet datum | #1-#7 klara, verklig repo-struktur, låst schema/protokoll/datamodell och startande Django. |
 | Sprint 1 - Simulator och datamodell | 5 öppna, 0 stängda; slutdag vid granskning | Simulatorn producerar kontraktsenlig data och en giltig datapunkt kan sparas och läsas tillbaka. Ta bort fysisk hårdvara ur formuleringen. |
 | Sprint 2 - Kommunikation och API | 8 öppna, 0 stängda | En datapunkt går hela vägen; felaktig data stoppas; senaste värde och historik fungerar och testas. |
@@ -113,5 +113,3 @@ Undvik att använda både issue-nummer i titeln och GitHubs egna nummer som enda
 4. Flytta allt som gäller fysisk sensor, ESP-IDF och produktionstjänster till en tydligt märkt framtidslista.
 5. Sätt nya milstolpsdatum först när teamet har uppskattat återstående arbete och ägarskap.
 6. Stäng varje issue först efter verifiering av dess kriterier; stäng inte backloggen administrativt bara för att datumen har passerat.
-
-

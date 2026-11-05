@@ -35,6 +35,8 @@ GET {{host}}/api/readings/latest/?sensor_id=test-beach-turbidity
 GET {{host}}/api/readings/latest/
 
 ### Historik med tidsfilter
+# Kräver en giltig Django-session. Utan session förväntas 401 eller 403 och ingen historikdata.
+# Logga in via /accounts/login/ när issue #62/PR #74 är integrerad. REST Client återanvänder cookies för samma host.
 # sensor_id väljer sensor; utan parametern ingår alla sensorer.
 # start/end är valfria ISO 8601-tider med inkluderade gränser; utan tidszon tolkas tiden som UTC.
 # De senaste N mätningarna i intervallet returneras: order=asc (standard) eller desc.
@@ -42,6 +44,11 @@ GET {{host}}/api/readings/latest/
 # Inga träffar ger 200 med count=0 och results=[].
 GET {{host}}/api/readings/?sensor_id=test-beach-turbidity&start=2026-01-01T00:00:00Z&end=2026-12-31T00:00:00Z&order=desc&limit=100
 
+### Historik utan session (förvänta 401 eller 403)
+# Kör i en REST Client-session utan inloggningscookie.
+GET {{host}}/api/readings/?sensor_id=test-beach-turbidity&limit=10
+
 ### Ogiltigt tidsintervall (förvänta 400 med fältet end)
+# Kräver inloggad session; annars kontrolleras autentiseringen först och svaret blir 401/403.
 # Ogiltigt datum, sensor-ID, order eller limit ger också 400 med respektive fältnamn.
 GET {{host}}/api/readings/?start=2026-01-02T00:00:00Z&end=2026-01-01T00:00:00Z
