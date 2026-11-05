@@ -6,9 +6,15 @@ kontrollerar att varje skickad mätning kan läsas tillbaka oförändrad via /ap
 
 Körs från mappen sensor/ med backend igång:
     python -m tools.verify_flow --base-url http://localhost:8001
+
+Om API:t kräver inloggning (Django-session) loggar verktyget in först. Ange kontot med
+--username (lösenordet frågas efter) eller miljövariablerna VERIFY_USERNAME och VERIFY_PASSWORD:
+    VERIFY_USERNAME=anna VERIFY_PASSWORD=... python -m tools.verify_flow --base-url http://localhost:8001
+Utan konto körs verifieringen anonymt, som tidigare.
 """
 import argparse
 import dataclasses
+import getpass
 import os
 import sys
 from dataclasses import dataclass
@@ -43,14 +49,41 @@ class RecordingPublisher(HttpPublisher):
         self.sent.append(message)
 
 
+def login(session: requests.Session, base: str, username: str, password: str) -> Check:
+    """Loggar in via Djangos inloggningssida (CSRF-token + session-cookie)."""
+    name = "Inloggning (Django-session)"
+    url = f"{base}/accounts/login/"
+    try:
+        page = session.get(url, timeout=5)
+        token = session.cookies.get("csrftoken")
+        if not page.ok or not token:
+            return Check(name, False, f"inloggningssidan svarade inte som väntat (HTTP {page.status_code})")
+        response = session.post(url, data={"username": username, "password": password, "csrfmiddlewaretoken": token},
+                                headers={"Referer": url}, allow_redirects=False, timeout=5)
+    except requests.RequestException as exc:
+        return Check(name, False, f"ingen kontakt med {url}: {exc}")
+    ok = response.status_code == 302 and "sessionid" in session.cookies
+    return Check(name, ok, "inloggad" if ok else f"inloggningen misslyckades (HTTP {response.status_code})")
+
+
+def auth_hint(status_code: int) -> str:
+    if status_code in (401, 403):
+        return " - API:t kräver inloggning, ange VERIFY_USERNAME och VERIFY_PASSWORD"
+    return ""
+
+
 def parse_ts(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
 def run_flow(base_url: str, count: int = 3, offline: bool = True, interval: float = 0.2,
-             api_key: str | None = None) -> list[Check]:
+             api_key: str | None = None, username: str | None = None,
+             password: str | None = None) -> list[Check]:
     base = base_url.rstrip("/")
     checks: list[Check] = []
+    username = username or os.environ.get("VERIFY_USERNAME") or None
+    password = password if password is not None else os.environ.get("VERIFY_PASSWORD", "")
+    session = requests.Session()
 
     try:
         health = requests.get(f"{base}/api/health/", timeout=5)
@@ -59,6 +92,10 @@ def run_flow(base_url: str, count: int = 3, offline: bool = True, interval: floa
     checks.append(Check("Backend svarar (/api/health/)", health.ok, f"HTTP {health.status_code}"))
     if not health.ok:
         return checks
+    if username:
+        checks.append(login(session, base, username, password))
+        if not checks[-1].ok:
+            return checks
 
     cfg = dataclasses.replace(
         Config.from_env(), api_url=f"{base}/api/readings/", interval=interval, max_retries=2, retry_base_delay=0.2,
@@ -84,20 +121,20 @@ def run_flow(base_url: str, count: int = 3, offline: bool = True, interval: floa
 
     for sensor_id, messages in by_sensor.items():
         last = messages[-1]
-        r = requests.get(f"{base}/api/readings/latest/", params={"sensor_id": sensor_id}, timeout=5)
+        r = session.get(f"{base}/api/readings/latest/", params={"sensor_id": sensor_id}, timeout=5)
         data = r.json() if r.ok else {}
         same = (r.ok and abs(data["value"] - last["value"]) < 1e-9 and data["unit"] == last["unit"]
                 and data["quality"] == last["quality"] and parse_ts(data["timestamp"]) == parse_ts(last["timestamp"]))
         checks.append(Check(f"latest: {sensor_id} returnerar senast skickade mätning", same,
-                            f"värde {data.get('value')} {data.get('unit')}, status {data.get('status')}" if r.ok else f"HTTP {r.status_code}"))
+                            f"värde {data.get('value')} {data.get('unit')}, status {data.get('status')}" if r.ok else f"HTTP {r.status_code}{auth_hint(r.status_code)}"))
 
-        r = requests.get(f"{base}/api/readings/", params={"sensor_id": sensor_id, "start": started.isoformat(), "limit": 5000}, timeout=5)
+        r = session.get(f"{base}/api/readings/", params={"sensor_id": sensor_id, "start": started.isoformat(), "limit": 5000}, timeout=5)
         results = r.json().get("results", []) if r.ok else []
         stamps = [parse_ts(x["timestamp"]) for x in results]
         expected = [parse_ts(m["timestamp"]) for m in messages]
         ok = r.ok and stamps == sorted(stamps) and stamps[-len(expected):] == expected
         checks.append(Check(f"history: {sensor_id} innehåller alla {len(expected)} skickade mätningar i tidsordning", ok,
-                            f"{len(results)} rader i API:t"))
+                            f"{len(results)} rader i API:t" if r.ok else f"HTTP {r.status_code}{auth_hint(r.status_code)}"))
     return checks
 
 
@@ -112,10 +149,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base-url", default="http://localhost:8000", help="backendens adress (standard http://localhost:8000)")
     parser.add_argument("--count", type=int, default=3, help="antal mätningar som skickas")
+    parser.add_argument("--username", help="konto att logga in med om API:t kräver inloggning (lösenord via VERIFY_PASSWORD eller fråga)")
     parser.add_argument("--online", action="store_true", help="hämta riktiga datasetet i stället för lokal reservfil")
     args = parser.parse_args()
 
-    checks = run_flow(args.base_url, args.count, offline=not args.online)
+    password = None
+    if args.username and "VERIFY_PASSWORD" not in os.environ:
+        password = getpass.getpass(f"Lösenord för {args.username}: ")
+    checks = run_flow(args.base_url, args.count, offline=not args.online, username=args.username, password=password)
     print(format_report(checks))
     sys.exit(0 if all(c.ok for c in checks) else 1)
 
