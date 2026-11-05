@@ -64,7 +64,15 @@ python manage.py test monitoring.tests.test_end_to_end
 ## Verifieringsprotokoll (fylls i per dator)
 | Dator | Operativsystem | Python | Datum | Resultat från `verify_flow` | Utfört av |
 |---|---|---|---|---|---|
-| 1 | | | | | |
-| 2 | | | | | |
+| 1 (ren klon) | Windows (Git Bash) | 3.12.12 | 2026-11-03 | RESULTAT: 7/7 kontroller godkända | Muhammad |
+| 2 | – | – | – | Ej utförd | – |
 
-Gör så här på varje dator: en helt ny klon (inte den gamla arbetsmappen), stegen under "Ren lokal start", och klistra in raden `RESULTAT: ...` i tabellen.
+> Verifiering på en andra fysisk dator är inte utförd. Kedjan har körts från en ny klon på dator 1
+> och i CI (`test_end_to_end.py`, ren Ubuntu-miljö). Uppföljning: #<issuenummer>.
+
+### Om API:t kräver inloggning (efter #62/#65)
+Historik och data kan vara skyddade med Django-session. Logga då in med ett testkonto:
+```bash
+VERIFY_USERNAME=anna python -m tools.verify_flow --base-url http://localhost:8001
+```
+Lösenordet frågas efter (eller sätt `VERIFY_PASSWORD`). Utan konto körs verifieringen anonymt.
