@@ -20,6 +20,42 @@ Följande delar finns och kan köras lokalt:
 
 Dashboardens status är en teknisk projektregel. Den avgör inte om vattnet är säkert att bada i. Standardvärdena 30 NTU och 25 °C är konfigurerbara demo-/projektgränser, inte officiella badvattenkrav.
 
+## Enkel lokal start
+
+Allt körs lokalt med simulerad data. Inga hemligheter behövs.
+
+### 1. Installera (en gång)
+```bash
+python -m venv .venv
+source .venv/Scripts/activate || source .venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+### 2. Konfiguration (valfritt)
+Alla variabler har standardvärden. Vill du ändra något:
+```bash
+cp .env.example .env
+set -a; source .env; set +a      # måste göras i varje terminal
+```
+`DJANGO_SECRET_KEY` har en osäker standard som bara är avsedd för lokal körning.
+Sätt ett eget värde i alla andra miljöer.
+
+### 3. Starta, i denna ordning (en terminal per steg)
+1. Broker: `docker compose up -d`
+2. Databas: `cd backend && python manage.py migrate`
+3. Webb/API: `cd backend && python manage.py runserver`
+4. Consumer: `cd backend && python manage.py run_mqtt_consumer`
+5. Sensor: `cd sensor && python -m sensor_sim --transport mqtt --offline`
+6. Öppna http://localhost:8000/
+
+Utan MQTT: hoppa över steg 1 och 4 och kör sensorn med `--transport http`.
+
+### 4. Stoppa och starta om
+- Stoppa: `Ctrl+C` i varje terminal, sedan `docker compose down`.
+- Starta om: gör steg 3 igen (migrate behövs bara om modellerna ändrats).
+- Datan ligger kvar i `backend/db.sqlite3`. Vill du börja om från noll: ta bort filen och kör `migrate`.
+- Consumern återansluter själv om brokern startas om.
+
 ## Nya beslutade krav
 
 Följande funktioner är planerade men ännu inte färdigimplementerade:
