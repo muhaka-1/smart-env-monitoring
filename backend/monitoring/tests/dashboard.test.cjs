@@ -14,6 +14,7 @@ class Element {
   replaceChildren(...items) { this.children = items; }
   setAttribute() {}
   addEventListener() {}
+  get options() { return this.children; }
 }
 class ChartMock {
   constructor(canvas, config) { this.data = config.data; this.options = config.options; }
@@ -23,7 +24,7 @@ class ChartMock {
 const elements = {
   cards: new Element(), chart: new Element(), "history-message": new Element(),
   "chart-explanation": new Element(), "interval-summary": new Element(),
-  from: new Element(), to: new Element(),
+  from: new Element(), to: new Element(), sensor: new Element(),
 };
 const main = new Element();
 main.dataset.readingStaleSeconds = "300";
@@ -37,7 +38,7 @@ const source = fs.readFileSync(path.join(__dirname, "../static/monitoring/dashbo
 const initIndex = source.indexOf('$("sensor").addEventListener');
 assert.notEqual(initIndex, -1);
 const context = vm.createContext({ document, Chart: ChartMock, Date, Number, Set, URLSearchParams });
-vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart, validateRange };", context);
+vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart, renderSensorOptions, sensorDisplayName, sensorOptionLabel, validateRange };", context);
 
 const now = Date.now();
 const reading = { metric: "turbidity", unit: "NTU", value: 2, status: "OK", threshold: 30 };
@@ -48,6 +49,17 @@ context.dashboard.renderCards([
 const text = (element) => typeof element === "string" ? element : element.textContent + element.children.map(text).join("");
 assert.doesNotMatch(text(elements.cards.children[0]), /inaktuell/);
 assert.match(text(elements.cards.children[1]), /inaktuell/);
+
+assert.equal(context.dashboard.sensorDisplayName("63rd-street-beach-turbidity"), "63rd Street Beach");
+assert.equal(context.dashboard.sensorOptionLabel("oak-street-beach-temperature"), "Oak Street Beach – Temperatur");
+context.dashboard.renderCards([
+  { ...reading, sensor_id: "oak-street-beach-turbidity", timestamp: new Date(now - 1000).toISOString() },
+]);
+assert.match(text(elements.cards.children[0]), /Oak Street Beach/);
+assert.match(text(elements.cards.children[0]), /Turbiditet/);
+context.dashboard.renderSensorOptions(["oak-street-beach-temperature"]);
+assert.equal(elements.sensor.options[0].value, "oak-street-beach-temperature");
+assert.equal(elements.sensor.options[0].textContent, "Oak Street Beach – Temperatur");
 
 const rows = [0, 1, 4].map((hour) => ({ ...reading, timestamp: new Date(Date.UTC(2026, 0, 1, hour)).toISOString() }));
 context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: rows });
@@ -105,4 +117,4 @@ assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "").valid, fals
 assert.match(context.dashboard.validateRange("2026-01-01T11:00", "2026-01-01T10:00").message, /tidigare/);
 assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "2026-01-01T11:00").valid, true);
 
-console.log("Dashboard status, intervals, axes, empty state and anomaly markers: OK");
+console.log("Dashboard labels, status, intervals, axes, empty state and anomaly markers: OK");
