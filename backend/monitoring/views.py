@@ -12,11 +12,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import services
-from .serializers import ReadingSerializer
+from .serializers import SENSOR_ID_RE, ReadingSerializer
 
 
 def _parse_dt(raw, field):
-    dt = parse_datetime(raw) if raw else None
+    try:
+        dt = parse_datetime(raw) if raw else None
+    except ValueError:
+        dt = None
     if dt is None:
         raise ValidationError({field: "Ogiltigt datumformat, använd ISO 8601."})
     return timezone.make_aware(dt, dt_timezone.utc) if timezone.is_naive(dt) else dt
@@ -65,15 +68,22 @@ class ReadingListCreateView(APIView):
         q = request.query_params
         start = _parse_dt(q["start"], "start") if "start" in q else None
         end = _parse_dt(q["end"], "end") if "end" in q else None
+        if start is not None and end is not None and start > end:
+            raise ValidationError({"end": "Måste vara samma tid som eller senare än start."})
+        sensor_id = q.get("sensor_id")
+        if sensor_id is not None and not SENSOR_ID_RE.fullmatch(sensor_id):
+            raise ValidationError({"sensor_id": "Använd 1–100 tecken: a-z, 0-9, '-' eller '_', med bokstav eller siffra först."})
         try:
             limit = int(q.get("limit", settings.HISTORY_DEFAULT_LIMIT))
         except ValueError:
             raise ValidationError({"limit": "Måste vara ett heltal."})
-        limit = max(1, min(limit, settings.HISTORY_MAX_LIMIT))
+        if limit < 1:
+            raise ValidationError({"limit": "Måste vara ett positivt heltal."})
+        limit = min(limit, settings.HISTORY_MAX_LIMIT)
         order = q.get("order", "asc")
         if order not in ("asc", "desc"):
             raise ValidationError({"order": "Använd 'asc' eller 'desc'."})
-        rows = services.query_history(q.get("sensor_id"), start, end, limit, order == "desc")
+        rows = services.query_history(sensor_id, start, end, limit, order == "desc")
         first = rows[0] if rows and len({(r.metric, r.unit) for r in rows}) == 1 else None
         return Response(
             {

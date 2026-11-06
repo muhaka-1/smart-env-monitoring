@@ -1,0 +1,14 @@
+{% autoescape off %}En datavarning har registrerats i Smart Environmental Monitoring.
+
+Sensor: {{ sensor_id }}
+Mätstorhet: {{ metric }}
+Tid: {{ timestamp }}
+Värde: {{ value }} {{ unit }}
+Gränsvärde: {{ threshold }} {{ unit }}
+Status: {{ status }}
+
+Logga in på plattformen för att läsa meddelandet:
+{{ action_url }}
+
+Statusen är projektets gränsregel, inte en myndighetsbedömning av badvattenkvalitet.
+{% endautoescape %}

@@ -1,0 +1,11 @@
+{% autoescape off %}Hej!
+
+Du har bjudits in till Smart Environmental Monitoring.
+Välj ditt lösenord via länken:
+{{ action_url }}
+
+Inbjudan gäller i högst tre dagar. Om länken har gått ut, kontakta administratören för en ny inbjudan.
+
+Hälsningar,
+Smart Environmental Monitoring
+{% endautoescape %}
