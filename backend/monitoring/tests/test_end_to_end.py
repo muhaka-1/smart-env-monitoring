@@ -11,7 +11,8 @@ import unittest
 from pathlib import Path
 
 from django.conf import settings
-from django.test import LiveServerTestCase, TestCase
+from django.contrib.auth import get_user_model
+from django.test import LiveServerTestCase, TestCase, override_settings
 
 from monitoring.mqtt_consumer import MqttIngestor
 
@@ -33,10 +34,19 @@ class SensorPathMixin:
 
 @unittest.skipUnless(HAS_SENSOR, "sensor/ saknas i checkouten")
 class HttpChainTests(SensorPathMixin, LiveServerTestCase):
+    @override_settings(INGEST_API_KEY="test-ingest-key")
     def test_simulator_to_api_over_http(self):
         from tools.verify_flow import format_report, run_flow
 
-        checks = run_flow(self.live_server_url, count=4, interval=0.05)
+        user = get_user_model().objects.create_user(username="flow-reader", password="test-flow-password")
+        checks = run_flow(
+            self.live_server_url,
+            count=4,
+            interval=0.05,
+            api_key="test-ingest-key",
+            username=user.get_username(),
+            password="test-flow-password",
+        )
         self.assertTrue(all(c.ok for c in checks), "\n" + format_report(checks))
         self.assertGreaterEqual(len(checks), 4)   # backend, leverans, fält + minst en latest/history
 
