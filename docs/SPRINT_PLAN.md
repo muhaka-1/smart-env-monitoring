@@ -5,7 +5,7 @@ Planen gäller från 2026-10-23. Sprintarna avslutas på onsdagar så att result
 ## Roller
 
 | Roll | Huvudområde | Ansvar |
-|---|---|---|
+| --- | --- | --- |
 | Person 1 | Backend och databas | Django, datamodell, validering, REST-API och backendtester |
 | Person 2 | Simulator och kommunikation | Dataset, simulator, MQTT, mottagare, felhantering och lokal start |
 | Person 3 | Frontend, UX och dokumentation | Wireframe, dashboard, diagram, filter, README och demosamordning |
@@ -15,12 +15,26 @@ Varje issue har en huvudansvarig. Vid integrations-, kvalitets- och demouppgifte
 ## Milstolpar
 
 | Sprint | Slutdatum | Mål | Demonstration |
-|---|---:|---|---|
+| --- | ---: | --- | --- |
 | Sprint 0 - Scope, beslut och första körbara delar | 2026-10-28 | Avgränsning, datasetanalys, teknikbeslut, JSON/API-kontrakt, startande Django, enkel simulator och wireframe | Django startsida/health check, simulator som skriver normaliserad JSON, API-kontrakt och wireframe |
 | Sprint 1 - Simulator, datamodell och ingestion | 2026-11-04 | Periodisk simulator, Django-modell/migrering, tröskelregel och validerad POST-endpoint | En simulerad datapunkt sparas i SQLite och syns i Django admin |
 | Sprint 2 - Kommunikation och läs-API | 2026-11-11 | MQTT, mottagare, felhantering, senaste värde, historik och automatiska API-tester | Komplett flöde från simulator till databas och tillbaka via API |
 | Sprint 3 - Dashboard | 2026-11-18 | Responsiv dashboard med aktuellt värde, historik, filter, automatisk uppdatering och avvikelsemarkering | Användaren kan förstå aktuell status och historik utan att öppna admin |
 | Sprint 4 - Kvalitet, dokumentation och demo | 2026-11-25 | Reproducerbar lokal start, korrekt README, arkitekturdiagram, teknikreflektion, kodgranskning och slutdemo | Ren installation, gröna tester och en sammanhängande end-to-end-demo |
+
+## Planuppdatering för nya krav
+
+Efter de nya kraven delas åtkomst- och användarfunktionerna upp så att varje del kan utvecklas och granskas separat:
+
+| Issue | Huvudansvar | Leverans och beroende |
+| --- | --- | --- |
+| #62 Inloggning och utloggning | Jubayer | Django-session, säkert `next`, synlig in-/utloggning; ska integreras före slutkontroll av #65 |
+| #65 Publik och skyddad dashboard/data | Pat | Publika senaste värden, skyddad historik och serverkontroller; se `access-control.md` |
+| #66 Historik-PDF | Pat | Skyddad export med samma sensor- och tidsfilter som dashboarden |
+| #68 Datavarningar och sparade meddelanden | Khaled | Meddelandedata som #65 senare ska åtkomsttesta |
+| #69 Felrapport på skärm och som PDF | Pat | Skyddad rapport baserad på sparade varningar från #68 |
+
+Issue #65 är en integrationsissue och lämnas öppen tills #62, #66, #68 och #69 är integrerade och åtkomsten har verifierats på mobil-, mellan- och datorbredd.
 
 ## Leverans onsdag 2026-10-28
 
@@ -61,7 +75,7 @@ Målet är inte ett färdigt system. Målet är att visa tre konkreta delar som 
 ## Issuefördelning
 
 | Person | Issues | Kommentar |
-|---|---|---|
+| --- | --- | --- |
 | Person 1 | #5, #6, #7, #12, #13, #17, #18, #19, #20, #32, #33 | Leder backend, data och testbarhet |
 | Person 2 | #3, #4, #9, #10, #11, #14, #15, #16, #21, #29, #31, #35 | Leder datakälla, transport och integration; #35 stängs som ej planerad |
 | Person 3 | #1, #2, #8, #22, #23, #24, #25, #26, #27, #28, #30, #34 | Leder användarupplevelse, dokumentation och demo |

@@ -39,7 +39,7 @@ Teamet rättar först kvarvarande fel och öppna pull requests. Därefter genomf
 ## Team och ansvar
 
 | Person | Hittills genomfört | Fortsatt huvudansvar |
-|---|---|---|
+| --- | --- | --- |
 | Pat | Projektplanering, issue- och sprintstruktur, sensorunderlag, wireframe, responsiv dashboard, dataset-/protokolldokumentation och demoarbete | Publik och skyddad dashboard, åtkomstkontroll för sidor och data, historik- och felrapporter samt PDF-export |
 | Jubayer | Grundstruktur, simulator, datasetintegration, MQTT/HTTP, temperaturstöd och säker hantering av data i dashboard/API | Backend för autentisering, inloggning, utloggning, lösenordsflöden och administratörsskapade konton |
 | Khaled | Backendgranskning, intervallvalidering, avvikelsestatus, dokumentationssynkronisering och release-/CI-arbete | E-posttjänst, kontoinbjudningar, datavarningar och sparade användarmeddelanden |
@@ -132,7 +132,7 @@ MQTT använder topic-formatet `beach/<sensor_id>/readings` och QoS 1. Se [protok
 ## API
 
 | Metod | Sökväg | Syfte |
-|---|---|---|
+| --- | --- | --- |
 | `GET` | `/api/health/` | Kontrollerar att backend och databas svarar |
 | `GET` | `/api/sensors/` | Returnerar kända sensor-ID:n |
 | `POST` | `/api/readings/` | Validerar och sparar en mätning |
@@ -159,7 +159,7 @@ Historik kan filtreras med `sensor_id`, `start`, `end`, `order` och `limit`. Fä
 Django och simulatorn läser miljövariabler från den process där de startas. [.env.example](.env.example) visar vanliga värden, men filen läses inte automatiskt.
 
 | Variabel | Standard | Syfte |
-|---|---:|---|
+| --- | ---: | --- |
 | `ANOMALY_THRESHOLD_TURBIDITY` | `30` | Projektgräns i NTU |
 | `ANOMALY_THRESHOLD_TEMPERATURE` | `25` | Projektgräns i °C |
 | `READING_STALE_SECONDS` | `300` | Tid innan en mätning markeras som inaktuell |

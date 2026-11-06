@@ -9,7 +9,7 @@ Konton, inloggning, token, giltighetstid, omskickade inbjudningar, mottagarurval
 Variablerna läses från processens miljö. `.env.example` är endast en exempelkonfiguration; Django läser inte automatiskt en `.env`-fil.
 
 | Variabel | Lokalt standardvärde | Betydelse |
-|---|---|---|
+| --- | --- | --- |
 | `EMAIL_BACKEND` | `django.core.mail.backends.console.EmailBackend` | Console lokalt, locmem i tester eller SMTP för verklig leverans |
 | `EMAIL_HOST` | `localhost` | SMTP-värd |
 | `EMAIL_PORT` | `25` | SMTP-port |
@@ -38,7 +38,7 @@ send_platform_email(
 `activation_path` kommer från kontoflödet, exempelvis genom `reverse()` med dess skapade token. Anroparen skickar en lokal sökväg som börjar med `/`, inklusive eventuell URL-kodad query. Tjänsten lägger till `PLATFORM_BASE_URL`; externa adresser avvisas. Med basen `https://example.com/platform` och sökvägen `/activate/.../` blir länken `https://example.com/platform/activate/.../`.
 
 | `kind` | Obligatorisk `context` |
-|---|---|
+| --- | --- |
 | `invitation` | Ingen; aktiveringslänken ges som `action_path` |
 | `password_reset` | Ingen; återställningslänken ges som `action_path` |
 | `data_alert` | `sensor_id`, `metric`, `timestamp`, `value`, `unit`, `threshold`, `status` |

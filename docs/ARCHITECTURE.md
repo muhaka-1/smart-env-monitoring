@@ -17,18 +17,23 @@ flowchart LR
         SVC --> DB[(SQLite<br/>tidsserietabell Reading)]
         API --> DB
     end
-    DASH[Dashboard<br/>Bootstrap + Chart.js] -->|GET latest / history var 5:e s| API
-    USER((Miljöansvarig / analytiker / medborgare)) --> DASH
+    PUBLIC((Publik användare)) --> DASH[Dashboard<br/>Bootstrap + Chart.js]
+    AUTH((Inloggad användare)) -->|Django-session| DASH
+    DASH -->|GET latest var 5:e s, publikt| API
+    DASH -->|GET sensors / history, session krävs| API
 ```
 
-**Dataflöde:** dataset → simulator (ny tidsstämpel + sensor_id) → MQTT → konsument → validering → databas → REST-API → dashboard.
+**Dataflöde:** dataset → simulator (ny tidsstämpel + sensor_id) → MQTT eller HTTP → validering → databas → REST-API → dashboard.
+
+Den publika dashboarden läser endast senaste mätvärden. Historikens `GET`- och `HEAD`-anrop kräver en giltig Django-session. Ingest via `POST` är ett separat maskinflöde och använder `INGEST_API_KEY` när nyckeln är konfigurerad.
 
 Det dokumenterade transportbeslutet och jämförelsen mellan MQTT och HTTP finns i [`protocol-decision.md`](protocol-decision.md).
+Åtkomstmatris, beroenden och verifieringssteg finns i [`access-control.md`](access-control.md).
 
 ## Modulseparation
 
 | Modul | Ansvar | Mapp |
-|---|---|---|
+| --- | --- | --- |
 | Sensor-simulering | datakälla, meddelande, transport, retry | `sensor/sensor_sim/` |
 | Backend | validering, statuslogik, API, MQTT-ingest | `backend/monitoring/` |
 | Databas | modell, index, constraints | `backend/monitoring/models.py` |
@@ -42,6 +47,7 @@ Det dokumenterade transportbeslutet och jämförelsen mellan MQTT och HTTP finns
 - **Django + DRF:** krav i uppgiften; ORM, migrationer, admin och serializers ger validering och ren separation.
 - **SQLite (lokalt):** noll installation. Tidsserieegenskaper uppnås med index på `timestamp` och `(sensor_id, -timestamp)` samt unik constraint `(sensor_id, timestamp)` mot dubletter.
 - **Bootstrap + Chart.js:** snabb, responsiv och lättbegriplig dashboard utan byggsteg.
+- **Django-sessioner:** används för mänskliga användare och skyddad historik. Behörighet kontrolleras i backend; gränssnittet är inte den enda skyddsnivån.
 - **Felhantering:** exponentiell backoff vid tillfälliga fel, ingen retry vid avvisad data (HTTP 400), allt loggas. Backend avvisar ogiltig data.
 
 ## Reflektion kring skalbarhet

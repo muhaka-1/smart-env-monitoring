@@ -5,7 +5,7 @@ Det här dokumentet beskriver teamets gemensamma arbetssätt. Målet är små, g
 ## Teamets huvudområden
 
 | Person | Huvudområde | Vanliga filer |
-|---|---|---|
+| --- | --- | --- |
 | Pat | Dashboard, skyddade vyer, dataåtkomst, historik- och felrapporter, PDF, dokumentation och demo | `backend/monitoring/templates/`, `backend/monitoring/static/`, dashboard-/rapportvyer, `docs/`, `README.md` |
 | Jubayer | Autentisering, inloggning, utloggning, lösenordsflöden, konton, simulator och MQTT/HTTP-kommunikation | Django auth-/konto-/URL-konfiguration, `sensor/`, `infra/`, `docker-compose.yml` |
 | Khaled | E-posttjänst, kontoinbjudningar, datavarningar, sparade meddelanden och tillhörande tester | E-postkonfiguration och mallar, meddelandemodeller/-tjänster, backendtester och migrationer |
@@ -15,7 +15,7 @@ Huvudansvar betyder samordningsansvar, inte ensamrätt till filer. Den som behö
 ## Arbetsfördelning för de nya kraven
 
 | Kravområde | Huvudansvarig | Samordning |
-|---|---|---|
+| --- | --- | --- |
 | Inloggning, utloggning, glömt/ändrat lösenord och administratörsskapade konton | Jubayer | Khaled granskar alla delar som skickar e-post |
 | Publik respektive skyddad dashboard och skydd av historik, meddelanden och API-data | Pat | Jubayer granskar autentisering och backendbehörighet |
 | Historik som PDF samt felrapport på skärm och som PDF | Pat | Khaled tillhandahåller sparade varningar och meddelanden |
@@ -30,7 +30,7 @@ feature/* → development → Testing → main
 ```
 
 | Gren | Syfte | Ändras genom |
-|---|---|---|
+| --- | --- | --- |
 | `feature/*` | En avgränsad issue eller nära relaterade issues | Egna commits |
 | `development` | Integration av färdiga funktioner | PR från `feature/*` |
 | `Testing` | Samlad verifiering inför release | PR från `development` |

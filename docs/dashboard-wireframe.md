@@ -1,6 +1,6 @@
 # Dashboard-wireframe
 
-Den här wireframen beskriver den publika dashboarden innan den kopplas till det riktiga API:t. Öppna [`dashboard-wireframe.html`](dashboard-wireframe.html) direkt i en webbläsare.
+Den här wireframen är ett historiskt designunderlag från innan dashboarden kopplades till det riktiga API:t. Öppna [`dashboard-wireframe.html`](dashboard-wireframe.html) direkt i en webbläsare. Den körbara dashboarden finns i Django och följer den senare åtkomstmodellen i [`access-control.md`](access-control.md).
 
 ## Förhandsvisningar
 
@@ -17,10 +17,10 @@ Den här wireframen beskriver den publika dashboarden innan den kopplas till det
 Wireframen använder följande verifierade endpoints och fält:
 
 | Endpoint | Användning i dashboarden |
-|---|---|
+| --- | --- |
 | `GET /api/health/` | Visar om backend är tillgänglig |
-| `GET /api/sensors/` | Fyller sensorväljaren |
-| `GET /api/readings/` | Hämtar historiska mätvärden |
+| `GET /api/sensors/` | Fyller sensorväljaren för inloggade användare |
+| `GET /api/readings/` | Hämtar skyddad historik; session krävs |
 | `GET /api/readings/latest/` | Hämtar senaste värdet per sensor |
 
 Verifierade sensorer:
@@ -62,16 +62,17 @@ Wireframen visar:
 
 Knapparna **Normal**, **Ingen data** och **API-fel** används endast för att demonstrera wireframens olika tillstånd. Sensor- och tidsfilter är också lokala prototypkontroller.
 
-## API-frågor som måste bekräftas
+## Beslut efter wireframen
 
-Innan den riktiga dashboarden implementeras behöver teamet besluta:
+Följande frågor är nu beslutade i den körbara implementationen:
 
-1. Hur `from`, `to`, sensorfilter och eventuell paginering skickas till `/api/readings/`.
-2. Om `/api/readings/latest/` alltid returnerar en lista eller kan filtreras till en sensor.
-3. Om `threshold` alltid är globalt eller kan skilja sig mellan sensorer.
-4. Vilka möjliga värden `quality` och `status` kan ha.
-5. När en mätning ska visas som gammal eller inaktuell.
-6. Om CORS behöver aktiveras när frontend och Django körs på olika adresser.
+1. `sensor_id`, `start`, `end`, `order` och `limit` skickas som query-parametrar till `/api/readings/`.
+2. `/api/readings/latest/` returnerar senaste värde per sensor och kan filtreras med `sensor_id`.
+3. Tröskeln väljs per mätstorhet: turbiditet eller temperatur.
+4. Dashboarden visar `OK` eller `ANOMALY`; `quality` lagras separat.
+5. `READING_STALE_SECONDS` avgör när ett värde visas som inaktuellt.
+6. Django serverar både dashboard och API lokalt, så CORS behövs inte i nuvarande upplägg.
+7. Senaste värden är publika. Historik, sensorval och tidsfilter visas endast för inloggade användare och historik-API:t skyddas på serversidan.
 
 ## Acceptanskriterier för issue #8
 

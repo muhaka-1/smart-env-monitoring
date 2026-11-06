@@ -28,14 +28,17 @@ const elements = {
 };
 const main = new Element();
 main.dataset.readingStaleSeconds = "300";
+const body = new Element();
+body.dataset.canViewHistory = "true";
 const document = {
+  body,
   querySelector: () => main,
   querySelectorAll: () => [],
   getElementById: (id) => elements[id],
   createElement: () => new Element(),
 };
 const source = fs.readFileSync(path.join(__dirname, "../static/monitoring/dashboard.js"), "utf8");
-const initIndex = source.indexOf('$("sensor").addEventListener');
+const initIndex = source.lastIndexOf("if (CAN_VIEW_HISTORY) {");
 assert.notEqual(initIndex, -1);
 const context = vm.createContext({ document, Chart: ChartMock, Date, Number, Set, URLSearchParams });
 vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart, renderSensorOptions, sensorDisplayName, sensorOptionLabel, validateRange };", context);
@@ -111,6 +114,48 @@ assert.match(elements["chart-explanation"].textContent, /projektets konfigurerad
 context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: [] });
 assert.equal(elements.chart.hidden, true);
 assert.match(elements["history-message"].textContent, /Inga mätvärden/);
+
+const publicElements = {
+  cards: new Element(), error: new Element(), updated: new Element(),
+};
+const publicMain = new Element();
+publicMain.dataset.readingStaleSeconds = "300";
+const publicBody = new Element();
+publicBody.dataset.canViewHistory = "false";
+const publicCalls = [];
+const publicDocument = {
+  body: publicBody,
+  querySelector: () => publicMain,
+  querySelectorAll: () => [],
+  getElementById: (id) => publicElements[id],
+  createElement: () => new Element(),
+};
+const publicSource = source.replace(
+  /refresh\(\);\r?\nsetInterval\(refresh, REFRESH_MS\);\s*$/,
+  "globalThis.publicRefresh = refresh();"
+);
+const publicContext = vm.createContext({
+  document: publicDocument,
+  Chart: ChartMock,
+  Date,
+  Number,
+  Set,
+  URLSearchParams,
+  setInterval: () => {},
+  fetch: async (url) => {
+    publicCalls.push(url);
+    return { ok: true, json: async () => ({ results: [] }) };
+  },
+});
+
+(async () => {
+  vm.runInContext(publicSource, publicContext);
+  await publicContext.publicRefresh;
+  assert.deepEqual(publicCalls, ["/api/readings/latest/"]);
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
 
 assert.equal(context.dashboard.validateRange("", "").valid, true);
 assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "").valid, false);

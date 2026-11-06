@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -11,6 +12,10 @@ def make(sensor="a", ts="2026-01-01T10:00:00Z", value=5.0):
 class ApiTests(TestCase):
     def post(self, data, **extra):
         return self.client.post(reverse("readings"), data, content_type="application/json", **extra)
+
+    def login_for_history(self):
+        user = get_user_model().objects.create_user(username="history-reader", password="test-password")
+        self.client.force_login(user)
 
     def test_post_valid_returns_201(self):
         r = self.post(make())
@@ -132,17 +137,20 @@ class ApiTests(TestCase):
     def test_history_filter_and_sort(self):
         for h in (10, 11, 12):
             self.post(make(ts=f"2026-01-01T{h}:00:00Z", value=h))
+        self.login_for_history()
         r = self.client.get(reverse("readings"), {"sensor_id": "a", "start": "2026-01-01T10:30:00Z"}).json()
         self.assertEqual([x["value"] for x in r["results"]], [11, 12])
         d = self.client.get(reverse("readings"), {"order": "desc"}).json()
         self.assertEqual([x["value"] for x in d["results"]], [12, 11, 10])
 
     def test_history_bad_params(self):
+        self.login_for_history()
         self.assertEqual(self.client.get(reverse("readings"), {"start": "nope"}).status_code, 400)
         self.assertEqual(self.client.get(reverse("readings"), {"limit": "x"}).status_code, 400)
 
     def test_history_returns_metric_unit_threshold(self):
         self.post({"sensor_id": "t1", "metric": "temperature", "timestamp": "2026-01-01T10:00:00Z", "value": 20})
+        self.login_for_history()
         r = self.client.get(reverse("readings"), {"sensor_id": "t1"}).json()
         self.assertEqual((r["metric"], r["unit"], r["threshold"]), ("temperature", "°C", 25.0))
         self.assertEqual(r["results"][0]["threshold"], 25.0)
@@ -151,6 +159,7 @@ class ApiTests(TestCase):
         self.post({**make(sensor="a"), "metric": "temperature"})
         self.post({**make(sensor="b", value=30), "metric": "turbidity"})
         self.post({**make(sensor="a", ts="2026-01-01T11:00:00Z"), "metric": "turbidity"})
+        self.login_for_history()
         for order in ("asc", "desc"):
             result = self.client.get(reverse("readings"), {"order": order}).json()
             self.assertEqual(result["count"], 3)
