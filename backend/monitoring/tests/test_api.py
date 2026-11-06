@@ -185,6 +185,6 @@ class ApiTests(TestCase):
     def test_dashboard_explains_project_status(self):
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, "inte aktuella mätningar på plats")
-        self.assertContains(response, "OK betyder att värdet inte överstiger den konfigurerade gränsen")
-        self.assertContains(response, "ANOMALY betyder att gränsen har överskridits")
-        self.assertContains(response, "Statusen bedömer inte om vattnet är säkert att bada i")
+        self.assertContains(response, "OK</strong> betyder att värdet inte överstiger projektets gräns")
+        self.assertContains(response, "Avvikelse</strong> betyder att gränsen har överskridits")
+        self.assertContains(response, "Informationen är inte ett badråd")

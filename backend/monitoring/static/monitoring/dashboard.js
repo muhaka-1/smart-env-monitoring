@@ -26,6 +26,25 @@ async function getJSON(url) {
 const isAnomaly = (s) => s === "ANOMALY";
 const fmt = (iso) => new Date(iso).toLocaleString("sv-SE");
 
+function sensorDisplayName(sensorId) {
+  return sensorId
+    .replace(/-(turbidity|temperature)$/, "")
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function sensorMetricLabel(sensorId) {
+  if (sensorId.endsWith("-turbidity")) return LABELS.turbidity;
+  if (sensorId.endsWith("-temperature")) return LABELS.temperature;
+  return "Mätvärde";
+}
+
+function sensorOptionLabel(sensorId) {
+  return `${sensorDisplayName(sensorId)} – ${sensorMetricLabel(sensorId)}`;
+}
+
 // Bygger element med textContent. Data från API:t tolkas aldrig som HTML (issue #43).
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -53,8 +72,8 @@ function renderCards(items) {
     const value = el("div", "display-5 fw-bold");
     value.append(Number(r.value).toFixed(1), " ", el("small", "fs-6", r.unit));
     body.append(
-      el("div", "fw-semibold", LABELS[r.metric] || r.metric),
-      el("div", "text-muted small", r.sensor_id),
+      el("h3", "h5 mb-1", sensorDisplayName(r.sensor_id)),
+      el("div", "text-muted small", `${LABELS[r.metric] || r.metric} · ${r.sensor_id}`),
       value,
       el(
         "span",
@@ -198,7 +217,7 @@ function renderSensorOptions(sensors) {
   const sel = $("sensor");
   const current = Array.from(sel.options).map((o) => o.value).join("|");
   if (current !== sensors.join("|")) {
-    sel.replaceChildren(...sensors.map((s) => { const o = el("option", "", s); o.value = s; return o; }));
+    sel.replaceChildren(...sensors.map((s) => { const o = el("option", "", sensorOptionLabel(s)); o.value = s; return o; }));
   }
 }
 

@@ -68,6 +68,11 @@ class LatestReadingView(APIView):
 class ReadingListCreateView(APIView):
     authentication_classes = [SessionAuthentication]
 
+    def get_authenticators(self):
+        if self.request.method == "POST":
+            return []  # Inmatning autentiseras med API-nyckel, oberoende av webbläsarens session.
+        return super().get_authenticators()
+
     def get_permissions(self):
         if self.request.method in ("GET", "HEAD"):
             return [IsAuthenticated()]
