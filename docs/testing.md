@@ -8,6 +8,8 @@ Tester: validering (HTTP 400), API-nyckel, senaste värde, historik med datumfil
 
 Åtkomsttesterna i `test_access_control.py` verifierar att senaste värden är publika, att anonym historik nekas för både `GET` och `HEAD`, att inloggad historik fungerar och att historikpanelen inte skickas i den publika sidans HTML. Se [`access-control.md`](access-control.md).
 
+Lösenordstesterna i `test_password.py` verifierar glömt lösenord (neutral bekräftelse, giltig, ogiltig, använd och utgången token) och lösenordsbyte med Djangos lösenordsvalidering. Se [`password.md`](password.md).
+
 ## Sensorsimulator (`python -m unittest discover -s tests -t .`)
 
 Tester: normalisering och felregler för datasetet (NaN, Infinity, tomt strandnamn, ogiltig tid), giltig reservfil, retry/backoff, HTTP-statusmappning.
