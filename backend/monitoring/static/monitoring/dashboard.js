@@ -1,7 +1,7 @@
 const REFRESH_MS = 5000;
 const MAIN = document.querySelector("main");
 const STALE_MS = Number(MAIN.dataset.readingStaleSeconds) * 1000;
-const CAN_VIEW_HISTORY = MAIN.dataset.canViewHistory === "true";
+const CAN_VIEW_HISTORY = document.body.dataset.canViewHistory === "true";
 const LABELS = { turbidity: "Turbiditet", temperature: "Temperatur" };
 const RANGE_PRESETS = {
   hour: { hours: 1, label: "senaste timmen" },

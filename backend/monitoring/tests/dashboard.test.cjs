@@ -28,8 +28,10 @@ const elements = {
 };
 const main = new Element();
 main.dataset.readingStaleSeconds = "300";
-main.dataset.canViewHistory = "true";
+const body = new Element();
+body.dataset.canViewHistory = "true";
 const document = {
+  body,
   querySelector: () => main,
   querySelectorAll: () => [],
   getElementById: (id) => elements[id],
@@ -118,9 +120,11 @@ const publicElements = {
 };
 const publicMain = new Element();
 publicMain.dataset.readingStaleSeconds = "300";
-publicMain.dataset.canViewHistory = "false";
+const publicBody = new Element();
+publicBody.dataset.canViewHistory = "false";
 const publicCalls = [];
 const publicDocument = {
+  body: publicBody,
   querySelector: () => publicMain,
   querySelectorAll: () => [],
   getElementById: (id) => publicElements[id],

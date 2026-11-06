@@ -7,7 +7,7 @@
   <title>Badvattenkvalitet – Dashboard</title>
   <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body class="bg-light" data-can-view-history="{{ user.is_authenticated|yesno:'true,false' }}">
 <nav class="navbar navbar-dark bg-primary mb-4">
   <div class="container"><h1 class="navbar-brand mb-0 h1">🌊 Badvattenkvalitet</h1>
     <span class="navbar-text" id="updated">Laddar…</span></div>
@@ -23,9 +23,7 @@
     {% endif %}
   </div>
 </nav>
-<main class="container"
-      data-reading-stale-seconds="{{ reading_stale_seconds }}"
-      data-can-view-history="{{ user.is_authenticated|yesno:'true,false' }}">
+<main class="container" data-reading-stale-seconds="{{ reading_stale_seconds }}">
   <div class="alert alert-info text-break mb-4" role="note">
     <h2 class="h5 alert-heading">Om mätvärdena</h2>
     <p>Mätvärdena kommer från en simulator som återspelar verkliga datasetvärden, inte aktuella mätningar på plats.</p>
