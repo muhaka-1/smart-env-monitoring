@@ -11,6 +11,17 @@
 <nav class="navbar navbar-dark bg-primary mb-4">
   <div class="container"><h1 class="navbar-brand mb-0 h1">🌊 Badvattenkvalitet</h1>
     <span class="navbar-text" id="updated">Laddar…</span></div>
+  <div class="container justify-content-end gap-2">
+    {% if user.is_authenticated %}
+      <span class="navbar-text text-break">Inloggad som {{ user.get_username }}</span>
+      <form method="post" action="{% url 'logout' %}" class="m-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-light">Logga ut</button>
+      </form>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn btn-sm btn-outline-light">Logga in</a>
+    {% endif %}
+  </div>
 </nav>
 <main class="container" data-reading-stale-seconds="{{ reading_stale_seconds }}">
   <div class="alert alert-info text-break mb-4" role="note">
