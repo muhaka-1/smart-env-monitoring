@@ -65,7 +65,9 @@ class LoginLogoutTests(TestCase):
         self.assertEqual(r.status_code, 403)
 
     def test_public_dashboard_works_without_login(self):
-        self.assertEqual(self.client.get("/").status_code, 200)
+        r = self.client.get("/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, '<h1 class="navbar-brand mb-0 h1">🌊 Badvattenkvalitet</h1>', html=True)
 
     def test_public_dashboard_shows_login_link(self):
         r = self.client.get(reverse("dashboard"))
