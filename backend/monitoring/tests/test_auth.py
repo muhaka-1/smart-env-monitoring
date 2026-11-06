@@ -66,3 +66,30 @@ class LoginLogoutTests(TestCase):
 
     def test_public_dashboard_works_without_login(self):
         self.assertEqual(self.client.get("/").status_code, 200)
+
+    def test_public_dashboard_shows_login_link(self):
+        r = self.client.get(reverse("dashboard"))
+        self.assertContains(r, f'href="{reverse("login")}"')
+        self.assertNotContains(r, f'action="{reverse("logout")}"')
+
+    def test_authenticated_dashboard_shows_logout_form(self):
+        self.client.force_login(self.user)
+        r = self.client.get(reverse("dashboard"))
+        self.assertContains(r, "Inloggad som anna")
+        self.assertContains(r, f'action="{reverse("logout")}"')
+        self.assertContains(r, "csrfmiddlewaretoken")
+        self.assertNotContains(r, f'href="{reverse("login")}"')
+
+    def test_dashboard_logout_requires_csrf_and_ends_session(self):
+        strict = Client(enforce_csrf_checks=True)
+        strict.force_login(self.user)
+        dashboard = strict.get(reverse("dashboard"))
+        csrf_token = dashboard.cookies["csrftoken"].value
+
+        self.assertEqual(strict.post(reverse("logout")).status_code, 403)
+        self.assertIn("_auth_user_id", strict.session)
+
+        r = strict.post(reverse("logout"), {"csrfmiddlewaretoken": csrf_token})
+        self.assertRedirects(r, reverse("dashboard"), fetch_redirect_response=False)
+        self.assertNotIn("_auth_user_id", strict.session)
+        self.assertContains(strict.get(reverse("dashboard")), f'href="{reverse("login")}"')
