@@ -105,3 +105,13 @@ LOGGING = {
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+# Lösenord (issue #63): Djangos validering används vid återställning och byte.
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 10}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+# Återställningslänkens giltighetstid i sekunder (standard 1 timme).
+PASSWORD_RESET_TIMEOUT = int(os.getenv("PASSWORD_RESET_TIMEOUT", "3600"))

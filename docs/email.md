@@ -43,7 +43,7 @@ send_platform_email(
 | `password_reset` | Ingen; återställningslänken ges som `action_path` |
 | `data_alert` | `sensor_id`, `metric`, `timestamp`, `value`, `unit`, `threshold`, `status` |
 
-Varje anrop skickar till en mottagare, så användares e-postadresser exponeras inte för andra mottagare. Data i `context` visas som vanlig text. Användaren av tjänsten ansvarar för att länken leder till rätt funktion och att destinationen kontrollerar behörighet och token. Vid integration av #63 kan Djangos återställningsflöde återanvändas; inbjudningar till konton utan användbart lösenord behöver det separata flödet i #64.
+Varje anrop skickar till en mottagare, så användares e-postadresser exponeras inte för andra mottagare. Data i `context` visas som vanlig text. Användaren av tjänsten ansvarar för att länken leder till rätt funktion och att destinationen kontrollerar behörighet och token. #63 använder Djangos återställningsflöde med denna tjänst, se [`password.md`](password.md); inbjudningar till konton utan användbart lösenord behöver det separata flödet i #64.
 
 En lyckad leverans till vald backend returnerar `None`. SMTP- och nätverksfel, eller noll skickade meddelanden, loggas med meddelandetyp och ger `EmailDeliveryError` med en neutral feltext. Innehåll, mottagare, token och serverns feltext loggas inte. Validerings- och konfigurationsfel avvisas före leverans. Anroparen hanterar felet utan att rapportera falsk framgång. #68 ansvarar för att mätningen och varningen bevaras vid leveransfel samt för leveransstatus och eventuell återförsökning.
 
