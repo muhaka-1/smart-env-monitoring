@@ -9,6 +9,11 @@ SETTINGS = Path(__file__).resolve().parents[2] / "config" / "settings.py"
 
 
 class ThresholdConfigurationTests(SimpleTestCase):
+    def setUp(self):
+        loader = patch("dotenv.load_dotenv", return_value=False)
+        loader.start()
+        self.addCleanup(loader.stop)
+
     def test_legacy_environment_variables_are_supported(self):
         with patch.dict(os.environ, {"BEACH_LIMIT_TURBIDITY_NTU": "41", "BEACH_LIMIT_WATER_TEMP_C": "19"}, clear=True):
             thresholds = runpy.run_path(str(SETTINGS))["ANOMALY_THRESHOLDS"]
