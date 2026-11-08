@@ -4,8 +4,10 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core import mail
+from django.template.loader import render_to_string
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -257,6 +259,37 @@ class PasswordChangeTests(TestCase):
         self.assertEqual(r.status_code, 403)
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(OLD_PASSWORD))
+
+
+class PasswordFieldRenderingTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user("anna", "anna@example.test", OLD_PASSWORD)
+
+    def assert_field_descriptions_resolve(self, form):
+        markup = "".join(render_to_string("accounts/_field.html", {"field": field}) for field in form)
+        ids = re.findall(r'\sid="([^"]+)"', markup)
+        descriptions = re.findall(r'\saria-describedby="([^"]+)"', markup)
+        self.assertTrue(descriptions)
+        self.assertEqual(len(ids), len(set(ids)), "Fältgrupper får inte skapa dubbla HTML-id:n.")
+        for description in descriptions:
+            for target in description.split():
+                self.assertIn(target, ids, f"aria-describedby saknar målelement: {target}")
+
+    def test_help_text_is_connected_to_password_fields(self):
+        for form_class in (SetPasswordForm, PasswordChangeForm):
+            with self.subTest(form=form_class.__name__):
+                self.assert_field_descriptions_resolve(form_class(self.user))
+
+    def test_multiple_errors_are_connected_without_duplicate_ids(self):
+        for form_class in (SetPasswordForm, PasswordChangeForm):
+            with self.subTest(form=form_class.__name__):
+                form = form_class(self.user, {
+                    "old_password": "fel-losenord", "new_password1": "1", "new_password2": "1",
+                })
+                self.assertFalse(form.is_valid())
+                self.assertGreater(len(form.errors["new_password2"]), 1)
+                self.assert_field_descriptions_resolve(form)
 
 
 class ReferrerPolicyTests(TestCase):
