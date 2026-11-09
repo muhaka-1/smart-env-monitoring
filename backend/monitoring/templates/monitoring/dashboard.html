@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Badvattenkvalitet – Dashboard</title>
+  <title>Badvattenkvalitet - Dashboard</title>
   <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
 </head>
 <body class="bg-light" data-can-view-history="{{ user.is_authenticated|yesno:'true,false' }}">
@@ -15,6 +15,12 @@
     {% if user.is_authenticated %}
       <span class="navbar-text text-break">Inloggad som {{ user.get_username }}</span>
       <a href="{% url 'password_change' %}" class="btn btn-sm btn-outline-light">Byt lösenord</a>
+      {% if user.is_staff %}
+        <a href="{% url 'admin:index' %}"
+          class="btn btn-sm btn-outline-light">
+          Admin
+        </a>
+      {% endif %}
       <form method="post" action="{% url 'logout' %}" class="m-0">
         {% csrf_token %}
         <button type="submit" class="btn btn-sm btn-outline-light">Logga ut</button>
@@ -61,6 +67,11 @@
         <button type="button" class="btn btn-sm btn-outline-primary range-preset active" data-range="all" aria-pressed="true">Senaste 200</button>
       </div>
       <p id="interval-summary" class="small text-muted mb-2" role="status">Intervall: senaste 200 mätningarna.</p>
+      <div class="d-flex justify-content-end mb-3">
+        <button id="download-pdf" type="button" class="btn btn-success">
+          Ladda ned PDF
+        </button>
+      </div>
       <p id="history-message" class="text-muted" role="status"></p>
       <canvas id="chart" height="110"></canvas>
       <p id="chart-explanation" class="small text-muted mt-2" hidden></p>
