@@ -127,13 +127,12 @@ Kända begränsningar: sändaren har ingen buffring, så en mätning går förlo
 ## Utanför dataflödet
 
 - **Fysisk sensor, ESP32 och firmware** ingår inte i MVP:n. Mappen `firmware/` finns i repot men används inte i flödet ovan.
-- **E-posttjänsten** (`backend/monitoring/emails.py`, [`email.md`](email.md)) är en separat tjänst. Inget i dataflödet ovan skickar e-post ännu; varningar via e-post och inbjudningar byggs i separata issues.
+- **E-posttjänsten** (`backend/monitoring/emails.py`, [`email.md`](email.md)) används för inbjudningar, lösenordsåterställning och datavarningar via konfigurerad SMTP. Vid en avvikelse skapar `ingest_reading` en `Alert` och användarspecifika `Notification`-poster i samma transaktion som mätningen. Efter commit försöker `notifications.py` skicka e-post. Dessa sidoflöden visas inte i diagrammet.
 
 De nya kraven kompletterar mätdataflödet med konton, meddelanden och rapporter. Diagrammet ovan gör inte anspråk på att visa hela den utökade plattformen.
 
-- **Implementerat på denna gren:** inloggning och utloggning, publik dashboard och sessionsskyddad historik (se [`access-control.md`](access-control.md)), lösenordsåterställning och lösenordsbyte (se [`password.md`](password.md)) samt den gemensamma e-posttjänsten (se [`email.md`](email.md)).
-- **Implementerat i `development` efter merge av PR #80:** PDF-export av historiska mätvärden för inloggade användare via `/api/reports/history.pdf`, med sensor- och tidsfilter. Se [PDF-dokumentationen i `development`](https://github.com/muhaka-1/smart-env-monitoring/blob/development/docs/history-pdf.md). Funktionen finns i målgrenen men ingår inte i denna dokumentationsgrens kod.
-- **Återstår i de nya kraven:** administratörsskapade kontoinbjudningar med tre dagars giltighet och omskick, automatiska datavarningar via e-post med sparade användarmeddelanden samt felrapporter på skärm och som PDF. Dessa funktioner ska inte visas som implementerade i diagrammet.
+- **Implementerade kontofunktioner:** inloggning och POST-baserad utloggning, publik dashboard och sessionsskyddad historik (se [`access-control.md`](access-control.md)), lösenordsåterställning och lösenordsbyte (se [`password.md`](password.md)) samt administratörsskapade kontoinbjudningar med tre dagars giltighet och omskick (se [`invitations.md`](invitations.md)).
+- **Implementerade rapporter och meddelanden:** PDF-export av historik via `/api/reports/history.pdf` med sensor- och tidsfilter (se [`history-pdf.md`](history-pdf.md)), automatiska datavarningar med sparade användarmeddelanden (se [`notifications.md`](notifications.md)) samt felrapport på skärm och som PDF (se [`error-reports.md`](error-reports.md)). Historik, meddelanden och rapporter kräver inloggning; meddelanden och felrapporter avgränsas till den aktuella användaren.
 
 ## Så hänger diagrammet ihop med koden
 
@@ -165,16 +164,37 @@ Hela kedjan körs och verifieras med `python -m tools.verify_flow` och testet `t
 
 - **MQTT (protokoll):** lättviktigt publish/subscribe-protokoll byggt för IoT. Låg overhead, QoS 1 (minst-en-gång-leverans), brokern kopplar loss sensor från backend, och fler sensorer kan läggas till utan ändrad backend. HTTP-läget är ett manuellt valt alternativ för enkel lokal testning utan broker.
 - **Django + DRF:** krav i uppgiften; ORM, migrationer, admin och serializers ger validering och ren separation.
-- **SQLite (lokalt):** noll installation. Tidsserieegenskaper uppnås med index på `timestamp` och `(sensor_id, -timestamp)` samt unik constraint `(sensor_id, timestamp)` mot dubletter.
+- **SQLite (lokalt):** kräver ingen separat databasserver och förenklar en ren lokal start. Index på `timestamp` och `(sensor_id, -timestamp)` stödjer tidsfiltrering och senaste värde; en unik constraint på `(sensor_id, timestamp)` stoppar dubletter. Det passar MVP:ns lokala datalagring, men är inte ett belägg för kapacitet vid hög skrivbelastning.
 - **Bootstrap + Chart.js:** snabb, responsiv och lättbegriplig dashboard utan byggsteg.
 - **Django-sessioner:** används för mänskliga användare och skyddad historik. Behörighet kontrolleras i backend; gränssnittet är inte den enda skyddsnivån.
-- **Felhantering:** exponentiell backoff vid tillfälliga fel, ingen retry vid avvisad data (HTTP 4xx), allt loggas. Backend avvisar ogiltig data. Alla felvägar beskrivs i avsnittet *Felvägar* ovan.
+- **Felhantering:** exponentiell backoff vid tillfälliga transportfel, inklusive HTTP 408, 429 och 5xx. Övriga HTTP 4xx avvisas utan retry. Backend avvisar ogiltig data. Mätdataflödets felvägar beskrivs ovan; kontoflödenas och rapporternas hantering beskrivs i respektive länkad dokumentation.
 
-## Reflektion kring skalbarhet
+## Begränsningar och skalbarhet (#32)
 
-- Byt SQLite mot **PostgreSQL + TimescaleDB** (hypertables, kompression, retention, continuous aggregates); Django-modellen fungerar i princip oförändrad.
-- Flera konsument-instanser med **MQTT shared subscriptions**, eller Kafka vid mycket hög volym; skriv i batchar (`bulk_create`).
-- Nedsampling/aggregering för långa historikperioder, cache (Redis) för "senaste värde", paginering av historik.
-- MQTT över TLS med autentisering/ACL per sensor; API-nyckel för POST finns via `INGEST_API_KEY`.
-- Containerisering (Docker) och CI (tester vid varje push).
-- Tröskelvärdena är konfigurerade per mätstorhet; per sensor/plats är en möjlig senare utökning.
+### Befintliga skydd och verktyg
+
+Historik-API:t begränsar svaret till högst 5 000 mätningar. Dashboarden och historik-PDF visar högst de senaste 200 mätningarna i valt intervall. Meddelanden och felrapport på skärm är sidindelade. Index och unika databasregler finns redan; detta ersätter inte belastningstestning.
+
+Docker Compose startar den lokala Mosquitto-brokern, inte hela applikationen. GitHub Actions kontrollerar migrationer och kör backend-, simulator- och dashboardtester för pull requests och pushar till `development`, `Testing` och `main`. Automatiserade tester visar funktionell korrekthet men fastställer ingen maximal kapacitet.
+
+### Nuvarande begränsningar
+
+| Område | Begränsning i implementationen | Konsekvens vid ökad belastning |
+| --- | --- | --- |
+| Databas | HTTP-servern och MQTT-mottagaren delar en lokal SQLite-fil. | Samtidig skrivning kan ge låsväntan; fler processer ger inte automatiskt högre skrivkapacitet. |
+| Senaste värde | `get_latest_per_sensor` hämtar sensor-ID:n och gör därefter en fråga per sensor. Dashboarden frågar var femte sekund per öppen webbläsare. | Databasarbete ökar med både antalet sensorer och antalet besökare. |
+| Leverans av mätdata | Ingen beständig buffert hos simulatorn; MQTT använder ren session hos mottagaren. | Data kan gå förlorad vid längre avbrott, även om QoS 1 används mellan simulator och broker. |
+| E-post | Leveransförsöken körs sekventiellt i den anropande processen efter databascommit, utan bakgrundskö. | Fler mottagare eller långsam SMTP kan fördröja nästa mätning eller HTTP-svar. Sparade meddelanden finns kvar vid leveransfel. |
+| Felrapport som PDF | Alla matchande händelser tas med och dokumentet byggs i minnet. | Stora intervall kan kräva mer minne och längre svarstid än den sidindelade skärmvyn. |
+| Lokal drift | MQTT-konfigurationen tillåter anonym åtkomst på port 1883 utan TLS; Django körs med `runserver` i lokalstarten. | Lokalstarten ska inte likställas med en färdig produktionsmiljö. |
+
+### Nästa steg vid ett konstaterat behov
+
+1. **Mät före teknikbyte:** kör ett reproducerbart belastningstest i en isolerad miljö med fler simulerade sensor-ID:n och samtidiga läsare. Dokumentera datamängd, svarstider, databasfrågor, minnesåtgång och eventuella skrivfel. Inga sådana kapacitetsvärden är fastställda här.
+2. **Vid långsam läsning:** optimera först frågan för senaste värde och kontrollera indexanvändningen. Utvärdera aggregering för längre historik och begränsning eller separat generering av stora PDF-rapporter. Redis-cache är ett senare alternativ om mätningarna visar kvarstående behov.
+3. **Vid skrivkonflikter eller behov av flera applikationsinstanser:** utvärdera PostgreSQL. Migrering, constraints, transaktioner och frågor måste då verifieras. TimescaleDB är ett separat alternativ om tidsseriens storlek motiverar det; ett byte antas inte fungera utan anpassning och tester.
+4. **Vid långsamma utskick:** utvärdera en bakgrundskö för sparade meddelanden med kontrollerad retry och skydd mot dubbla leveransförsök. Bevara att mätning och meddelande sparas före e-postförsöket.
+5. **Vid högre MQTT-volym eller krav på avbrottstålighet:** utvärdera beständig buffring och sessionshantering. Shared subscriptions kan utvärderas för flera mottagare; Kafka är ett alternativ först om volym och krav motiverar ett annat meddelandesystem. Batchskrivning med `bulk_create` är inte en direkt ersättning för `ingest_reading`: validering, statusberäkning, dubblettskydd samt skapande av varningar och meddelanden måste bevaras.
+6. **Före drift utanför lokal miljö:** konfigurera MQTT med TLS, autentisering och ACL samt en lämplig applikationsserver och verifierade driftinställningar. API-nyckelskyddet för HTTP POST finns redan via `INGEST_API_KEY`, men måste vara konfigurerat för att krävas.
+
+Dessa steg är villkorade alternativ, inte redan implementerade funktioner eller krav på att utöka MVP:n. Per sensor/plats konfigurerade gränser är också ett möjligt senare verksamhetsbehov; nuvarande gränser gäller per mätstorhet. Projektet fortsätter använda simulerade sensorer.
