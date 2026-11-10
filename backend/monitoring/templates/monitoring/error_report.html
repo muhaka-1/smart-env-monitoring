@@ -1,0 +1,66 @@
+{% load static tz %}
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Felrapport – Smart Environmental Monitoring</title>
+  <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container py-4">
+  <h1>Felrapport</h1>
+  <p class="alert alert-info">Rapporten visar dina sparade projektavvikelser, inte en myndighetsbedömning av badvattenkvalitet.</p>
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-outline-primary" href="{% url 'dashboard' %}">Till dashboarden</a>
+    <a class="btn btn-outline-secondary" href="{% url 'message-list' %}">Meddelanden</a>
+  </div>
+  <form method="get" class="card card-body mb-3" novalidate>
+    <div class="row g-3">
+      {% for field in form %}
+      {% if field.is_hidden %}
+      {{ field }}
+      {% for error in field.errors %}<p class="text-danger" role="alert">{{ error }}</p>{% endfor %}
+      {% else %}
+      <div class="col-lg-4">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<p class="text-danger mb-0" role="alert">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button class="btn btn-primary" type="submit">Filtrera</button>
+      <a class="btn btn-outline-secondary" href="{% url 'error-report' %}">Nollställ</a>
+    </div>
+  </form>
+  {% if filters %}
+  <p class="text-break">Sensor: {{ filters.sensor_id|default:"Alla sensorer" }}. Tidsintervall (UTC): {{ start_text }} – {{ end_text }}.</p>
+  <p>Rapport skapad (UTC): {{ generated_at }}. Totalt {{ total }} händelser.</p>
+  <p><a class="btn btn-success" href="{{ pdf_url }}">Ladda ned PDF</a> PDF innehåller alla händelser som matchar filtret.</p>
+  {% for alert in page_obj %}
+  <article class="card shadow-sm p-3 mb-3 text-break" aria-labelledby="alert-{{ alert.pk }}">
+    <h2 class="h4" id="alert-{{ alert.pk }}">{{ alert.sensor_id }}</h2>
+    <dl class="row mb-0">
+      <dt class="col-sm-5">Mätstorhet</dt><dd class="col-sm-7">{{ alert.get_metric_display }}</dd>
+      <dt class="col-sm-5">Tid (UTC)</dt><dd class="col-sm-7">{% timezone "UTC" %}{{ alert.timestamp|date:"Y-m-d H:i:s" }}{% endtimezone %}</dd>
+      <dt class="col-sm-5">Värde</dt><dd class="col-sm-7">{{ alert.value }} {{ alert.unit }}</dd>
+      <dt class="col-sm-5">Gränsvärde vid mätningen</dt><dd class="col-sm-7">{{ alert.threshold }} {{ alert.unit }}</dd>
+      <dt class="col-sm-5">Status</dt><dd class="col-sm-7">{{ alert.status }}</dd>
+    </dl>
+  </article>
+  {% empty %}
+  <p role="status">Inga sparade avvikelser finns för valt filter.</p>
+  {% endfor %}
+  {% if page_obj.has_other_pages %}
+  <nav class="d-flex flex-wrap align-items-center gap-3" aria-label="Rapportsidor">
+    {% if page_obj.has_previous %}<a class="btn btn-outline-primary" href="?{{ filter_query }}&amp;page={{ page_obj.previous_page_number }}">Föregående</a>{% endif %}
+    <span>Sida {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn btn-outline-primary" href="?{{ filter_query }}&amp;page={{ page_obj.next_page_number }}">Nästa</a>{% endif %}
+  </nav>
+  {% endif %}
+  {% endif %}
+</main>
+</body>
+</html>
