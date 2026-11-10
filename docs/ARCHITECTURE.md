@@ -1,10 +1,10 @@
 # Arkitektur & teknikval
 
-Det här dokumentet beskriver det **implementerade** systemet: dataflödet från dataset till dashboard, komponentgränserna och vad som händer när något går fel. Det gäller MVP:n med **simulerad sensordata**. Fysisk sensor, ESP32 och firmware (`firmware/`) ingår inte i flödet nedan.
+Det här dokumentet beskriver det **implementerade mätdataflödet** från dataset till dashboard, komponentgränserna och vad som händer när något går fel. Kontoflöden och rapporter avgränsas separat i avsnittet *Utanför dataflödet*. Det gäller MVP:n med **simulerad sensordata**. Fysisk sensor, ESP32 och firmware (`firmware/`) ingår inte i flödet nedan.
 
 ## Dataflöde
 
-Varje pil är namngiven med protokoll eller anropstyp. Tjocka pilar är huvudflödet över MQTT, streckade pilar är reservvägar.
+Varje pil är namngiven med protokoll eller anropstyp. Tjocka pilar är huvudflödet över MQTT. Streckade pilar visar datasetets reservfil respektive det manuellt valda HTTP-alternativet.
 
 ```mermaid
 flowchart LR
@@ -36,7 +36,7 @@ flowchart LR
     LOAD -->|"Python-anrop: Measurement"| SIM
     SIM -->|"Python-anrop: JSON-meddelande"| PUB
     PUB ==>|"MQTT publish, QoS 1<br/>topic beach/ID/readings"| BR
-    PUB -.->|"HTTP POST /api/readings/<br/>JSON + X-API-Key (reserv)"| API
+    PUB -.->|"HTTP POST /api/readings/<br/>JSON + X-API-Key (manuellt alternativ)"| API
     BR ==>|"MQTT subscribe, QoS 1<br/>beach/+/readings"| CON
     CON -->|"Python-anrop"| SVC
     API -->|"Python-anrop (POST)"| SVC
@@ -44,10 +44,11 @@ flowchart LR
     API -->|"Django ORM: SELECT"| DB
     USER -->|"HTTP GET /<br/>HTML + JavaScript"| WEB
     USER -->|"HTTP GET /api/readings/latest/<br/>var 5:e sekund, publikt"| API
-    USER -->|"HTTP GET /api/sensors/ och /api/readings/<br/>session-cookie, endast inloggad"| API
+    USER -->|"HTTP GET /api/sensors/<br/>publikt"| API
+    USER -->|"HTTP GET /api/readings/<br/>session-cookie, endast inloggad"| API
 ```
 
-**Meddelandeformat** (samma för MQTT och HTTP): JSON med `sensor_id`, `metric` (`turbidity` eller `temperature`), `timestamp` (UTC, ISO 8601), `value`, `unit` och `quality`. Backend lägger till `status` (`OK` eller `ANOMALY`) och `threshold` när värdet sparas och läses.
+**Meddelandeformat** (samma för MQTT och HTTP): JSON med `sensor_id`, `metric` (`turbidity` eller `temperature`), `timestamp` (UTC, ISO 8601), `value`, `unit` och `quality`. Backend beräknar och lagrar `status` (`OK` eller `ANOMALY`) tillsammans med mätningen. `threshold` lagras inte med mätningen utan hämtas från aktuell konfiguration vid serialisering av API-svaret.
 
 ### Komponenter och gränser
 
@@ -61,7 +62,7 @@ flowchart LR
 | Databas | filen `backend/db.sqlite3` | Delas av process 3 och 4. Unik regel på `(sensor_id, timestamp)` stoppar dubbletter | `backend/monitoring/models.py` |
 | Dashboard (webbläsare) | körs hos användaren | Hämtar data via API:t var 5:e sekund. Skyddet ligger i backend, inte i gränssnittet | `static/monitoring/dashboard.js` |
 
-Med HTTP som transport hoppar flödet över process 2 och 3: simulatorn skickar direkt till API:t i process 4.
+Med HTTP som transport hoppar flödet över process 2 och 3: simulatorn skickar direkt till API:t i process 4. Transporten väljs uttryckligen med `--transport http` eller `SENSOR_TRANSPORT=http`; simulatorn byter inte automatiskt till HTTP vid MQTT-fel.
 
 ### Åtkomst
 
@@ -128,6 +129,12 @@ Kända begränsningar: sändaren har ingen buffring, så en mätning går förlo
 - **Fysisk sensor, ESP32 och firmware** ingår inte i MVP:n. Mappen `firmware/` finns i repot men används inte i flödet ovan.
 - **E-posttjänsten** (`backend/monitoring/emails.py`, [`email.md`](email.md)) är en separat tjänst. Inget i dataflödet ovan skickar e-post ännu; varningar via e-post och inbjudningar byggs i separata issues.
 
+De nya kraven kompletterar mätdataflödet med konton, meddelanden och rapporter. Diagrammet ovan gör inte anspråk på att visa hela den utökade plattformen.
+
+- **Implementerat på denna gren:** inloggning och utloggning, publik dashboard och sessionsskyddad historik (se [`access-control.md`](access-control.md)), lösenordsåterställning och lösenordsbyte (se [`password.md`](password.md)) samt den gemensamma e-posttjänsten (se [`email.md`](email.md)).
+- **Implementerat i `development` efter merge av PR #80:** PDF-export av historiska mätvärden för inloggade användare via `/api/reports/history.pdf`, med sensor- och tidsfilter. Se [PDF-dokumentationen i `development`](https://github.com/muhaka-1/smart-env-monitoring/blob/development/docs/history-pdf.md). Funktionen finns i målgrenen men ingår inte i denna dokumentationsgrens kod.
+- **Återstår i de nya kraven:** administratörsskapade kontoinbjudningar med tre dagars giltighet och omskick, automatiska datavarningar via e-post med sparade användarmeddelanden samt felrapporter på skärm och som PDF. Dessa funktioner ska inte visas som implementerade i diagrammet.
+
 ## Så hänger diagrammet ihop med koden
 
 | Pil | Implementation |
@@ -156,7 +163,7 @@ Hela kedjan körs och verifieras med `python -m tools.verify_flow` och testet `t
 
 ## Teknikval
 
-- **MQTT (protokoll):** lättviktigt publish/subscribe-protokoll byggt för IoT. Låg overhead, QoS 1 (minst-en-gång-leverans), brokern kopplar loss sensor från backend, och fler sensorer kan läggas till utan ändrad backend. HTTP-läget finns som fallback för enkel lokal testning utan broker.
+- **MQTT (protokoll):** lättviktigt publish/subscribe-protokoll byggt för IoT. Låg overhead, QoS 1 (minst-en-gång-leverans), brokern kopplar loss sensor från backend, och fler sensorer kan läggas till utan ändrad backend. HTTP-läget är ett manuellt valt alternativ för enkel lokal testning utan broker.
 - **Django + DRF:** krav i uppgiften; ORM, migrationer, admin och serializers ger validering och ren separation.
 - **SQLite (lokalt):** noll installation. Tidsserieegenskaper uppnås med index på `timestamp` och `(sensor_id, -timestamp)` samt unik constraint `(sensor_id, timestamp)` mot dubletter.
 - **Bootstrap + Chart.js:** snabb, responsiv och lättbegriplig dashboard utan byggsteg.
