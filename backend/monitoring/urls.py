@@ -7,4 +7,5 @@ urlpatterns = [
     path("sensors/", views.SensorListView.as_view(), name="sensors"),
     path("readings/", views.ReadingListCreateView.as_view(), name="readings"),
     path("readings/latest/", views.LatestReadingView.as_view(), name="readings-latest"),
+    path("reports/history.pdf", views.history_pdf, name="history-pdf"),
 ]

@@ -163,3 +163,44 @@ assert.match(context.dashboard.validateRange("2026-01-01T11:00", "2026-01-01T10:
 assert.equal(context.dashboard.validateRange("2026-01-01T10:00", "2026-01-01T11:00").valid, true);
 
 console.log("Dashboard labels, status, intervals, axes, empty state and anomaly markers: OK");
+
+(async () => {
+  const controls = Object.fromEntries(
+    [...Object.keys(elements), "apply", "reset", "download-pdf", "error", "updated"]
+      .map((id) => [id, new Element()])
+  );
+  for (const control of Object.values(controls)) {
+    control.listeners = {};
+    control.addEventListener = (event, handler) => {
+      (control.listeners[event] ||= []).push(handler);
+    };
+  }
+  const downloads = [];
+  const authenticatedContext = vm.createContext({
+    document: { ...document, getElementById: (id) => controls[id] },
+    Chart: ChartMock, Date, Number, Set, URLSearchParams,
+    window: { location: { assign: (url) => downloads.push(url) } },
+    setInterval: () => {},
+    fetch: async (url) => ({
+      ok: true,
+      json: async () => ({ results: url === "/api/sensors/" ? ["test-sensor"] : [] }),
+    }),
+  });
+  vm.runInContext(
+    source.replace("refresh();\nsetInterval", "globalThis.initialRefresh = refresh();\nsetInterval") +
+      "\nglobalThis.refreshDashboard = refresh;",
+    authenticatedContext
+  );
+  await authenticatedContext.initialRefresh;
+  for (let i = 0; i < 3; i++) await authenticatedContext.refreshDashboard();
+  assert.equal(controls.sensor.listeners.change.length, 1);
+  assert.equal(controls.apply.listeners.click.length, 1);
+  assert.equal(controls["download-pdf"].listeners.click.length, 1);
+  for (const handler of controls["download-pdf"].listeners.click) handler();
+  assert.equal(downloads.length, 1);
+  assert.equal(new URL(downloads[0], "http://localhost").searchParams.get("sensor_id"), "test-sensor");
+  console.log("Dashboard event handlers remain single after repeated refreshes: OK");
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

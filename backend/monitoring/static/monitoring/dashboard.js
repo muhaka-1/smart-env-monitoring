@@ -205,6 +205,30 @@ function historyUrl() {
   return { url: `/api/readings/?${p}` };
 }
 
+function reportUrl() {
+  if (!selected) {
+    return { error: "Välj en sensor innan rapporten skapas." };
+  }
+
+  if (activeRange) updateRangeInputs();
+
+  const range = validateRange($("from").value, $("to").value);
+  updateIntervalSummary(range);
+
+  if (!range.valid) {
+    return { error: range.message };
+  }
+
+  const params = new URLSearchParams({ sensor_id: selected });
+
+  if (range.start) params.set("start", range.start.toISOString());
+  if (range.end) params.set("end", range.end.toISOString());
+
+  return {
+    url: `/api/reports/history.pdf?${params}`,
+  };
+}
+
 function renderRangeError(message) {
   $("history-message").textContent = message;
   $("history-message").className = "alert alert-warning";
@@ -253,6 +277,16 @@ async function refresh() {
 if (CAN_VIEW_HISTORY) {
   $("sensor").addEventListener("change", (e) => { selected = e.target.value; refresh(); });
   $("apply").addEventListener("click", refresh);
+  $("download-pdf").addEventListener("click", () => {
+    const report = reportUrl();
+
+    if (report.error) {
+      renderRangeError(report.error);
+      return;
+    }
+
+    window.location.assign(report.url);
+  });
   for (const id of ["from", "to"]) {
     $(id).addEventListener("input", () => { activeRange = null; markActiveRange(); });
   }
