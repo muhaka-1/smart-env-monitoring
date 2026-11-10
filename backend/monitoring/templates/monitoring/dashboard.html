@@ -15,6 +15,7 @@
     {% if user.is_authenticated %}
       <span class="navbar-text text-break">Inloggad som {{ user.get_username }}</span>
       <a href="{% url 'message-list' %}" class="btn btn-sm btn-outline-light">Meddelanden</a>
+      <a href="{% url 'error-report' %}" class="btn btn-sm btn-outline-light">Felrapport</a>
       <a href="{% url 'password_change' %}" class="btn btn-sm btn-outline-light">Byt lösenord</a>
       {% if user.is_staff %}
         <a href="{% url 'admin:index' %}"

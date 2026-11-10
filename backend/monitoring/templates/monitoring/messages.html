@@ -12,6 +12,7 @@
 <h1>Meddelanden</h1>
 <p class="alert alert-info">Avvikelser enligt projektets gränser. Detta är inte en myndighetsbedömning av badvattenkvalitet.</p>
 <p><a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Till dashboarden</a></p>
+<p><a href="{% url 'error-report' %}" class="btn btn-outline-primary">Felrapport</a></p>
 {% for message in notifications %}
 <article class="card shadow-sm p-3 mb-3 text-break" aria-labelledby="message-{{ message.pk }}">
   <h2 class="h4" id="message-{{ message.pk }}">Avvikelse: {{ message.alert.sensor_id }}</h2>
