@@ -250,23 +250,6 @@ async function refresh() {
   inFlight = true;
   try {
     if (CAN_VIEW_HISTORY) {
-      $("sensor").addEventListener("change", (e) => {
-        selected = e.target.value;
-        refresh();
-      });
-
-      $("apply").addEventListener("click", refresh);
-
-      $("download-pdf").addEventListener("click", () => {
-        const report = reportUrl();
-
-        if (report.error) {
-          renderRangeError(report.error);
-          return;
-        }
-
-        window.location.assign(report.url);
-      });
       const sensors = (await getJSON("/api/sensors/")).results;
       renderSensorOptions(sensors);
       if (!selected && sensors.length) selected = sensors[0];
@@ -294,6 +277,16 @@ async function refresh() {
 if (CAN_VIEW_HISTORY) {
   $("sensor").addEventListener("change", (e) => { selected = e.target.value; refresh(); });
   $("apply").addEventListener("click", refresh);
+  $("download-pdf").addEventListener("click", () => {
+    const report = reportUrl();
+
+    if (report.error) {
+      renderRangeError(report.error);
+      return;
+    }
+
+    window.location.assign(report.url);
+  });
   for (const id of ["from", "to"]) {
     $(id).addEventListener("input", () => { activeRange = null; markActiveRange(); });
   }
