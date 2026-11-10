@@ -1,0 +1,40 @@
+{% load static %}
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meddelanden – Smart Environmental Monitoring</title>
+  <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container py-4">
+<h1>Meddelanden</h1>
+<p class="alert alert-info">Avvikelser enligt projektets gränser. Detta är inte en myndighetsbedömning av badvattenkvalitet.</p>
+<p><a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Till dashboarden</a></p>
+{% for message in notifications %}
+<article class="card shadow-sm p-3 mb-3 text-break" aria-labelledby="message-{{ message.pk }}">
+  <h2 class="h4" id="message-{{ message.pk }}">Avvikelse: {{ message.alert.sensor_id }}</h2>
+  <dl class="row mb-0">
+    <dt class="col-sm-5">Mätstorhet</dt><dd class="col-sm-7">{{ message.alert.get_metric_display }}</dd>
+    <dt class="col-sm-5">Tid (UTC)</dt><dd class="col-sm-7">{{ message.alert.timestamp|date:"Y-m-d H:i:s" }}</dd>
+    <dt class="col-sm-5">Värde</dt><dd class="col-sm-7">{{ message.alert.value }} {{ message.alert.unit }}</dd>
+    <dt class="col-sm-5">Gränsvärde vid mätningen</dt><dd class="col-sm-7">{{ message.alert.threshold }} {{ message.alert.unit }}</dd>
+    <dt class="col-sm-5">Status</dt><dd class="col-sm-7">{{ message.alert.status }}</dd>
+    <dt class="col-sm-5">E-post</dt><dd class="col-sm-7">{{ message.get_delivery_status_display }}</dd>
+  </dl>
+  {% if message.delivery_error %}<p>{{ message.delivery_error }}</p>{% endif %}
+</article>
+{% empty %}
+<p>Du har inga sparade meddelanden.</p>
+{% endfor %}
+{% if is_paginated %}
+<nav class="d-flex flex-wrap gap-3 align-items-center" aria-label="Meddelandesidor">
+  {% if page_obj.has_previous %}<a class="btn btn-outline-primary" href="?page={{ page_obj.previous_page_number }}">Föregående</a>{% endif %}
+  <span>Sida {{ page_obj.number }} av {{ paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a class="btn btn-outline-primary" href="?page={{ page_obj.next_page_number }}">Nästa</a>{% endif %}
+</nav>
+{% endif %}
+</main>
+</body>
+</html>
