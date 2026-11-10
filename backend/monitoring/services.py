@@ -1,7 +1,9 @@
 """Affärslogik, oberoende av transport (HTTP eller MQTT)."""
 from django.conf import settings
+from django.db import transaction
 
 from .models import Reading
+from .notifications import create_alert
 from .serializers import ReadingSerializer
 
 
@@ -23,7 +25,11 @@ def ingest_reading(payload: dict) -> Reading:
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
     metric = data.get("metric", Reading.Metric.TURBIDITY)
-    return serializer.save(status=evaluate_status(data["value"], metric))
+    threshold = get_threshold(metric)
+    with transaction.atomic():
+        reading = serializer.save(status=evaluate_status(data["value"], metric, threshold))
+        create_alert(reading, threshold)
+    return reading
 
 
 def get_latest(sensor_id: str):
