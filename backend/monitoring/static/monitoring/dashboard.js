@@ -275,6 +275,11 @@ async function refresh() {
 }
 
 if (CAN_VIEW_HISTORY) {
+  window.addEventListener("resize", () => {
+    requestAnimationFrame(() => {
+      if (chart) chart.resize();
+    });
+  });
   $("sensor").addEventListener("change", (e) => { selected = e.target.value; refresh(); });
   $("apply").addEventListener("click", refresh);
   $("download-pdf").addEventListener("click", () => {
