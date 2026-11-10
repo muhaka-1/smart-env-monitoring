@@ -18,6 +18,7 @@ class Element {
 }
 class ChartMock {
   constructor(canvas, config) { this.data = config.data; this.options = config.options; }
+  resize() { this.resizeCount = (this.resizeCount || 0) + 1; }
   update() {}
   destroy() {}
 }
@@ -176,10 +177,17 @@ console.log("Dashboard labels, status, intervals, axes, empty state and anomaly 
     };
   }
   const downloads = [];
+  const resizeHandlers = [];
   const authenticatedContext = vm.createContext({
     document: { ...document, getElementById: (id) => controls[id] },
     Chart: ChartMock, Date, Number, Set, URLSearchParams,
-    window: { location: { assign: (url) => downloads.push(url) } },
+    requestAnimationFrame: (callback) => callback(),
+    window: {
+      location: { assign: (url) => downloads.push(url) },
+      addEventListener: (event, handler) => {
+        if (event === "resize") resizeHandlers.push(handler);
+      },
+    },
     setInterval: () => {},
     fetch: async (url) => ({
       ok: true,
@@ -188,11 +196,21 @@ console.log("Dashboard labels, status, intervals, axes, empty state and anomaly 
   });
   vm.runInContext(
     source.replace("refresh();\nsetInterval", "globalThis.initialRefresh = refresh();\nsetInterval") +
-      "\nglobalThis.refreshDashboard = refresh;",
+      "\nglobalThis.refreshDashboard = refresh; globalThis.renderChart = renderChart;",
     authenticatedContext
   );
   await authenticatedContext.initialRefresh;
   for (let i = 0; i < 3; i++) await authenticatedContext.refreshDashboard();
+  assert.equal(resizeHandlers.length, 1);
+  resizeHandlers[0]();
+  authenticatedContext.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: rows });
+  const resizedChart = vm.runInContext("chart", authenticatedContext);
+  resizeHandlers[0]();
+  resizeHandlers[0]();
+  assert.equal(resizedChart.resizeCount, 2);
+  authenticatedContext.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: [] });
+  resizeHandlers[0]();
+  assert.equal(resizedChart.resizeCount, 2);
   assert.equal(controls.sensor.listeners.change.length, 1);
   assert.equal(controls.apply.listeners.click.length, 1);
   assert.equal(controls["download-pdf"].listeners.click.length, 1);
