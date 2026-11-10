@@ -27,6 +27,12 @@ SMTP är standard; inget meddelande skrivs automatiskt till terminalen om levera
 
 Använd `PLATFORM_BASE_URL=http://127.0.0.1:8000` för länkar som öppnas på samma utvecklingsdator. I drift ska basadressen vara plattformens riktiga HTTPS-adress. Lägg aldrig autentiseringsuppgifter i Git. SMTP-transporten är inte bunden till en viss leverantör.
 
+## Konfigurationskontroll vid start
+
+Djangos systemkontroller stoppar `runserver` vid saknad SMTP-värd, inloggning eller nyckel, lokala/exempelvärdar, saknad eller motstridig TLS/SSL, ogiltig port eller timeout samt saknad eller ogiltig avsändare. Felen visar inställningarnas namn utan deras värden. Kör `python backend/manage.py check --tag email` för samma kontroll. Kontrollen gör inget nätverksanrop och bevisar inte att nyckeln eller avsändaren godkänns av leverantören.
+
+SMTP är fortfarande standard. CI använder uttryckligen minnesbackend för kontroller och tester utan riktiga nycklar eller utskick. Även andra startmetoder än `runserver` ska köra `manage.py check` före trafik; `django.setup()` ensamt kör inte systemkontrollerna.
+
 ## Anrop från andra funktioner
 
 ```python

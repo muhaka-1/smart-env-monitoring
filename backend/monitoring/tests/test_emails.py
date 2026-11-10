@@ -56,7 +56,7 @@ class EmailConfigurationTests(SimpleTestCase):
         self.assertEqual(config["EMAIL_PORT"], 587)
         self.assertTrue(config["EMAIL_USE_TLS"])
 
-    def test_missing_env_file_does_not_prevent_startup(self):
+    def test_missing_env_file_keeps_smtp_defaults_for_system_checks(self):
         with TemporaryDirectory() as directory:
             env_file = Path(directory) / ".env"
             self.env_loader.side_effect = lambda path, **kwargs: load_dotenv(env_file, **kwargs)
@@ -80,6 +80,27 @@ class EmailConfigurationTests(SimpleTestCase):
                     self.assertEqual(config[key], int(value) if key in ("EMAIL_PORT", "EMAIL_TIMEOUT") else value)
                 self.assertEqual(config["EMAIL_USE_TLS"], tls == "1")
                 self.assertEqual(config["EMAIL_USE_SSL"], ssl == "1")
+
+    def test_empty_and_non_numeric_email_integers_raise_safe_errors(self):
+        for field in ("EMAIL_PORT", "EMAIL_TIMEOUT"):
+            for value in ("", "   ", "private-invalid-number", "1.5"):
+                with self.subTest(field=field, value=value), patch.dict(os.environ, {field: value}, clear=True):
+                    try:
+                        runpy.run_path(str(SETTINGS))
+                    except ImproperlyConfigured as exc:
+                        self.assertEqual(str(exc), f"{field} måste vara ett heltal och får inte vara tomt.")
+                        rendered = traceback.format_exc()
+                    else:
+                        self.fail("Ogiltig SMTP-inställning accepterades.")
+                self.assertNotIn("ValueError:", rendered)
+                if value.strip():
+                    self.assertNotIn(value, rendered)
+
+    def test_valid_email_integers_are_preserved(self):
+        with patch.dict(os.environ, {"EMAIL_PORT": "465", "EMAIL_TIMEOUT": "20"}, clear=True):
+            config = runpy.run_path(str(SETTINGS))
+        self.assertEqual(config["EMAIL_PORT"], 465)
+        self.assertEqual(config["EMAIL_TIMEOUT"], 20)
 
 
 @override_settings(
