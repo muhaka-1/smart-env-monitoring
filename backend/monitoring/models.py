@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -38,3 +39,9 @@ class Reading(models.Model):
 
     def __str__(self):
         return f"{self.sensor_id} @ {self.timestamp:%Y-%m-%d %H:%M:%S} = {self.value}"
+
+
+class AccountInvitation(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token_digest = models.CharField(max_length=64, blank=True)
+    issued_at = models.DateTimeField()

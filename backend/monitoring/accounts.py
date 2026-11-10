@@ -12,6 +12,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.urls import path, reverse, reverse_lazy
 
 from .emails import EmailDeliveryError, send_platform_email
+from .invitations import InvitationAcceptView, InvitationCompleteView
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +41,8 @@ class PlatformPasswordResetForm(PasswordResetForm):
 _T = "accounts/"
 
 urlpatterns = [
+    path("invite/complete/", InvitationCompleteView.as_view(), name="invitation_complete"),
+    path("invite/<uidb64>/<token>/", InvitationAcceptView.as_view(), name="invitation_accept"),
     path(
         "password-reset/",
         auth_views.PasswordResetView.as_view(

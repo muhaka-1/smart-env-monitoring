@@ -1,6 +1,8 @@
 {% autoescape off %}Hej!
 
 Du har bjudits in till Smart Environmental Monitoring.
+{% if username %}Ditt användarnamn är: {{ username }}
+{% endif %}
 Välj ditt lösenord via länken:
 {{ action_url }}
 
