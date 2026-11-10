@@ -1,14 +1,15 @@
-import io
 import os
 import runpy
 import traceback
 from pathlib import Path
-from smtplib import SMTPException
+from smtplib import SMTPAuthenticationError, SMTPException
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import SimpleTestCase, override_settings
+from dotenv import load_dotenv
 
 from monitoring.emails import EmailDeliveryError, send_platform_email
 
@@ -16,10 +17,15 @@ SETTINGS = Path(__file__).resolve().parents[2] / "config" / "settings.py"
 
 
 class EmailConfigurationTests(SimpleTestCase):
-    def test_local_defaults_do_not_require_smtp_credentials(self):
+    def setUp(self):
+        loader = patch("dotenv.load_dotenv", return_value=False)
+        self.env_loader = loader.start()
+        self.addCleanup(loader.stop)
+
+    def test_smtp_is_default_without_embedded_credentials(self):
         with patch.dict(os.environ, {}, clear=True):
             config = runpy.run_path(str(SETTINGS))
-        self.assertEqual(config["EMAIL_BACKEND"], "django.core.mail.backends.console.EmailBackend")
+        self.assertEqual(config["EMAIL_BACKEND"], "django.core.mail.backends.smtp.EmailBackend")
         self.assertEqual(config["EMAIL_HOST_USER"], "")
         self.assertEqual(config["EMAIL_HOST_PASSWORD"], "")
         self.assertEqual(config["EMAIL_TIMEOUT"], 10)
@@ -27,6 +33,36 @@ class EmailConfigurationTests(SimpleTestCase):
         self.assertEqual(config["PLATFORM_BASE_URL"], "http://127.0.0.1:8000")
         self.assertFalse(config["EMAIL_USE_TLS"])
         self.assertFalse(config["EMAIL_USE_SSL"])
+
+    def test_project_env_is_loaded_without_overriding_process_environment(self):
+        with TemporaryDirectory() as directory:
+            env_file = Path(directory) / ".env"
+            env_file.write_text(
+                'EMAIL_HOST=smtp.file.example.test\n'
+                'EMAIL_HOST_USER="file-user" # SMTP login\n'
+                'EMAIL_HOST_PASSWORD="test-only-${LITERAL}"\n'
+                'EMAIL_PORT=587\nEMAIL_USE_TLS=1\n',
+                encoding="utf-8-sig",
+            )
+            self.env_loader.side_effect = lambda path, **kwargs: load_dotenv(env_file, **kwargs)
+            with patch.dict(os.environ, {"EMAIL_HOST": "smtp.process.example.test"}, clear=True):
+                config = runpy.run_path(str(SETTINGS))
+            self.env_loader.assert_called_once_with(
+                SETTINGS.parents[2] / ".env", override=False, interpolate=False, encoding="utf-8-sig"
+            )
+        self.assertEqual(config["EMAIL_HOST"], "smtp.process.example.test")
+        self.assertEqual(config["EMAIL_HOST_USER"], "file-user")
+        self.assertEqual(config["EMAIL_HOST_PASSWORD"], "test-only-${LITERAL}")
+        self.assertEqual(config["EMAIL_PORT"], 587)
+        self.assertTrue(config["EMAIL_USE_TLS"])
+
+    def test_missing_env_file_keeps_smtp_defaults_for_system_checks(self):
+        with TemporaryDirectory() as directory:
+            env_file = Path(directory) / ".env"
+            self.env_loader.side_effect = lambda path, **kwargs: load_dotenv(env_file, **kwargs)
+            with patch.dict(os.environ, {}, clear=True):
+                config = runpy.run_path(str(SETTINGS))
+        self.assertEqual(config["EMAIL_BACKEND"], "django.core.mail.backends.smtp.EmailBackend")
 
     def test_email_settings_are_read_from_environment(self):
         env = {
@@ -44,6 +80,27 @@ class EmailConfigurationTests(SimpleTestCase):
                     self.assertEqual(config[key], int(value) if key in ("EMAIL_PORT", "EMAIL_TIMEOUT") else value)
                 self.assertEqual(config["EMAIL_USE_TLS"], tls == "1")
                 self.assertEqual(config["EMAIL_USE_SSL"], ssl == "1")
+
+    def test_empty_and_non_numeric_email_integers_raise_safe_errors(self):
+        for field in ("EMAIL_PORT", "EMAIL_TIMEOUT"):
+            for value in ("", "   ", "private-invalid-number", "1.5"):
+                with self.subTest(field=field, value=value), patch.dict(os.environ, {field: value}, clear=True):
+                    try:
+                        runpy.run_path(str(SETTINGS))
+                    except ImproperlyConfigured as exc:
+                        self.assertEqual(str(exc), f"{field} måste vara ett heltal och får inte vara tomt.")
+                        rendered = traceback.format_exc()
+                    else:
+                        self.fail("Ogiltig SMTP-inställning accepterades.")
+                self.assertNotIn("ValueError:", rendered)
+                if value.strip():
+                    self.assertNotIn(value, rendered)
+
+    def test_valid_email_integers_are_preserved(self):
+        with patch.dict(os.environ, {"EMAIL_PORT": "465", "EMAIL_TIMEOUT": "20"}, clear=True):
+            config = runpy.run_path(str(SETTINGS))
+        self.assertEqual(config["EMAIL_PORT"], 465)
+        self.assertEqual(config["EMAIL_TIMEOUT"], 20)
 
 
 @override_settings(
@@ -155,13 +212,18 @@ class PlatformEmailTests(SimpleTestCase):
                 with self.assertRaises(EmailDeliveryError):
                     send_platform_email("user@example.test", "invitation", action_path="/")
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
-    def test_console_backend_displays_message_locally(self):
-        output = io.StringIO()
-        with patch("sys.stdout", output):
-            send_platform_email("user@example.test", "invitation", action_path="/activate/test-token/")
-        self.assertIn("To: user@example.test", output.getvalue())
-        self.assertIn("https://monitor.example.test/activate/test-token/", output.getvalue())
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+        EMAIL_HOST_USER="test-user", EMAIL_HOST_PASSWORD="test-only-password",
+    )
+    def test_smtp_authentication_failure_is_reported_without_fallback(self):
+        with patch("django.core.mail.backends.smtp.smtplib.SMTP", autospec=True) as smtp:
+            smtp.return_value.login.side_effect = SMTPAuthenticationError(535, b"Rejected")
+            with self.assertLogs("monitoring.emails", level="ERROR"):
+                with self.assertRaises(EmailDeliveryError):
+                    send_platform_email("user@example.test", "invitation", action_path="/activate/test-token/")
+        smtp.return_value.login.assert_called_once_with("test-user", "test-only-password")
+        self.assertEqual(mail.outbox, [])
 
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",

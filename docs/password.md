@@ -29,19 +29,20 @@ Inloggningssidan länkar till *Glömt lösenord?* och dashboarden visar *Byt lö
 
 ## Lokal kontroll
 
+Konfigurera SMTP i projektrotens `.env` enligt [e-posttjänsten](email.md). Använd ett aktivt lokalt konto med användbart lösenord och en e-postadress som du kontrollerar.
+
 ```powershell
 python backend/manage.py migrate
-python backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_user('anna', 'anna@example.com', 'Strandlosen-2026')"
 python backend/manage.py runserver
 ```
 
 1. Öppna `http://127.0.0.1:8000/accounts/login/` och välj *Glömt lösenord?*.
-2. Ange `anna@example.com`. Med console-backend skrivs mejlet ut i terminalen där servern körs.
+2. Ange kontots e-postadress och kontrollera inkorgen eller skräpposten hos den adressen.
 3. Öppna länken, välj ett nytt lösenord och logga in med det.
 4. Öppna samma länk igen – felmeddelandet ska visas.
 5. Logga in, välj *Byt lösenord* på dashboarden och byt lösenordet.
 
-Console-utdata innehåller giltiga återställningslänkar och ska bara användas med testdata.
+Den neutrala bekräftelsen visas även vid leveransfel. Kontrollera serverloggen och leverantörens leveransstatus om inget mejl kommer fram; publicera inte återställningslänken.
 
 ## Tester
 

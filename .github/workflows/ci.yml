@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
 
     steps:
       - uses: actions/checkout@v4
