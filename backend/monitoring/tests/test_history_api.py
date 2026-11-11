@@ -85,6 +85,14 @@ class HistoryApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("end", response.json())
 
+    def test_dates_outside_utc_range_return_field_errors(self):
+        for field in ("start", "end"):
+            for value in ("0001-01-01T00:00:00+14:00", "9999-12-31T23:59:59-14:00"):
+                with self.subTest(field=field, value=value):
+                    response = self.client.get(reverse("readings"), {field: value})
+                    self.assertEqual(response.status_code, 400)
+                    self.assertIn(field, response.json())
+
     def test_no_matches_returns_empty_history(self):
         for params in (
             {"sensor_id": "missing"},

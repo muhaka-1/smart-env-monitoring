@@ -6,24 +6,29 @@ Dataset -> Python-simulator -> HTTP (eller MQTT) -> Django -> SQLite -> REST-API
 Verifieringen använder den riktiga simulatorn mot en riktig server och läser tillbaka varje skickad mätning via API:t.
 
 ## Ren lokal start (Windows/Git Bash, samma steg på macOS/Linux)
-Kräver Python 3.10+ och Git. Börja i en tom mapp.
+Kräver Python 3.11+ och Git. Börja i en tom mapp. Stegen nedan är en isolerad verifiering utan riktiga mejl: minnesbackend anges uttryckligen och SMTP-uppgifter behövs inte. För vanlig lokal drift med riktig e-post, konfigurera `.env` enligt [README](../README.md) och [email.md](email.md) och använd SMTP-backend.
 ```bash
 git clone https://github.com/muhaka-1/smart-env-monitoring.git
 cd smart-env-monitoring
 git checkout development
 python -m venv .venv
 source .venv/Scripts/activate            # macOS/Linux: source .venv/bin/activate
-Om `.venv/Scripts/activate` saknas (Python från MSYS/MinGW), använd `source .venv/bin/activate`.
-pip install -r backend/requirements.txt
+# Om Scripts/activate saknas (MSYS/MinGW): source .venv/bin/activate
+python -m pip install -r requirements.txt -r backend/requirements.txt
+export EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend
 cd backend
 python manage.py migrate                 # skapar en tom lokal databas
+python manage.py createsuperuser --username local-review  # välj lösenord interaktivt
 python manage.py runserver 8001          # lämna terminalen öppen
 ```
+I PowerShell aktiveras miljön med `.\.venv\Scripts\Activate.ps1` och testbackend sätts med `$env:EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"`. Använd en separat testterminal så att inställningen inte förväxlas med riktig SMTP.
+
 I en **andra terminal** (aktivera `.venv` igen från projektets rotmapp):
 ```bash
 cd sensor
-python -m tools.verify_flow --base-url http://localhost:8001
+python -m tools.verify_flow --base-url http://127.0.0.1:8001 --username local-review
 ```
+Ange samma lösenord när verktyget frågar; skriv det inte i kommandot. Historik kräver inloggning, så kontot behövs även om senaste värden är publika. Använd samma värdnamn vid inloggning och API-anrop. Om `INGEST_API_KEY` konfigureras måste samma värde finnas i simulatorns processmiljö; simulatorn läser inte backendens `.env`.
 Förväntat resultat (sensor-ID beror på datasetets strand):
 ```text
 PASS  Backend svarar (/api/health/)  [HTTP 200]
@@ -40,9 +45,12 @@ Flaggor: `--count 10` (fler mätningar), `--online` (hämta riktiga datasetet i 
 ## Kontrollera manuellt i webbläsaren eller med curl
 ```bash
 curl "http://localhost:8001/api/readings/latest/"                              # senaste värde per sensor
-curl "http://localhost:8001/api/readings/?sensor_id=<sensor_id>&limit=10"      # historik, äldst först
 ```
-Dashboarden visar samma data på `http://localhost:8001/`.
+Dashboarden visar samma data på `http://127.0.0.1:8001/`. Logga in där för att se historik eller använd verifieringsverktyget ovan, som skickar sessionscookien även vid historikanrop. Anonymt `curl` mot `/api/readings/` ger HTTP 403.
+
+## Stoppa och starta om
+
+Stoppa Django med `Ctrl+C` och starta samma kommando igen från samma klon. Behåll `backend/db.sqlite3` och testbackend i backendterminalen. Kör sedan verifieringsverktyget igen med samma konto. Verktyget skickar nya tidsstämplar; tidigare mätningar och konto ska finnas kvar. Radera inte databasen och skapa inte om kontot vid omstart.
 
 ## MQTT-varianten
 MQTT kräver broker och mottagare. Följ `docs/mqtt.md`, avsnitt 1 till 4, och kör sedan `python -m sensor_sim --transport mqtt --offline --count 3` i `sensor/`. Mätningarna ska synas i samma API-anrop som ovan.
@@ -68,10 +76,10 @@ python manage.py test monitoring.tests.test_end_to_end
 | 2 | – | – | – | Ej utförd | – |
 
 > Verifiering på en andra fysisk dator är inte utförd. Kedjan har körts från en ny klon på dator 1
-> och i CI (`test_end_to_end.py`, ren Ubuntu-miljö). Uppföljning: #<issuenummer>.
+> och i CI (`test_end_to_end.py`, ren Ubuntu-miljö). Uppföljning: [#76](https://github.com/muhaka-1/smart-env-monitoring/issues/76).
 
 ### Om API:t kräver inloggning (efter #62/#65)
-Historik och data kan vara skyddade med Django-session. Logga då in med ett testkonto:
+Historik är skyddad med Django-session. Logga in med ett testkonto:
 ```bash
 VERIFY_USERNAME=anna python -m tools.verify_flow --base-url http://localhost:8001
 ```

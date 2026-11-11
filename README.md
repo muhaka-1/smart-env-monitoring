@@ -22,7 +22,7 @@ Dashboardens status är en teknisk projektregel. Den avgör inte om vattnet är 
 
 ## Nya beslutade krav
 
-Följande funktioner är planerade men ännu inte färdigimplementerade:
+Följande funktioner är implementerade i `development`:
 
 - olika publika och inloggade vyer,
 - en fortsatt publik sida för aktuella mätvärden,
@@ -34,7 +34,7 @@ Följande funktioner är planerade men ännu inte färdigimplementerade:
 - e-postvarningar vid upptäckta dataproblem samt sparade meddelanden för inloggade användare,
 - felrapport på skärmen och som PDF.
 
-Teamet rättar först kvarvarande fel och öppna pull requests. Därefter genomförs de nya kraven i separata issues och feature-grenar.
+Se [åtkomstkontroll](docs/access-control.md), [lösenord](docs/password.md), [inbjudningar](docs/invitations.md), [e-post](docs/email.md), [meddelanden](docs/notifications.md), [historik-PDF](docs/history-pdf.md) och [felrapporter](docs/error-reports.md) för detaljer och verifiering.
 
 ## Team och ansvar
 
@@ -74,18 +74,41 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements.txt
 ```
 
-### 2. Förbered databasen och valfri demohistorik
+### 2. Konfigurera lokal miljö
+
+Kopiera exempelkonfigurationen endast om `.env` inte redan finns. Behåll befintliga lokala uppgifter.
+
+PowerShell:
+
+```powershell
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
+```
+
+macOS/Linux/Git Bash:
+
+```bash
+[ -e .env ] || cp .env.example .env
+```
+
+Fyll i SMTP-värd, port, inloggning, nyckel, TLS/SSL och verifierad avsändare enligt [e-postkonfigurationen](docs/email.md). SMTP är standard; exempelvärdena räcker inte för start. Sätt `PLATFORM_BASE_URL` till den adress där du öppnar plattformen. Lägg aldrig `.env` eller riktiga nycklar i Git.
+
+För en **isolerad lokal verifiering utan utskick** kan processens `EMAIL_BACKEND` sättas till `django.core.mail.backends.locmem.EmailBackend` i varje backendterminal. Det är samma testbackend som i CI, inte verifiering av riktig e-postleverans. Se [ren end-to-end-start](docs/end-to-end.md) för ett komplett exempel utan SMTP-uppgifter.
+
+### 3. Förbered databasen och valfri demohistorik
 
 PowerShell:
 
 ```powershell
 .\.venv\Scripts\python.exe backend\manage.py migrate
+.\.venv\Scripts\python.exe backend\manage.py createsuperuser
 .\.venv\Scripts\python.exe backend\manage.py seed_demo_data --repeat 2
 ```
 
 `seed_demo_data` lägger till historik utan att radera befintliga mätningar. Flaggan `--clear` avvisas för att skydda data.
 
-### 3. Starta Django
+`createsuperuser` skapar ett lokalt testkonto interaktivt. Logga in för historik, meddelanden och rapporter; den publika sidan visar senaste värden. Admin kan bjuda in vanliga användare via [kontoinbjudningar](docs/invitations.md). Skapa inget nytt administratörskonto om du redan har ett.
+
+### 4. Starta Django
 
 ```powershell
 .\.venv\Scripts\python.exe backend\manage.py runserver
@@ -93,9 +116,11 @@ PowerShell:
 
 Öppna <http://127.0.0.1:8000/>. Hälsokontrollen finns på <http://127.0.0.1:8000/api/health/>.
 
-### 4. Skicka simulerade mätningar
+### 5. Skicka simulerade mätningar
 
 Öppna en andra terminal medan Django körs:
+
+Om `INGEST_API_KEY` är satt i backendens `.env`, sätt samma värde som processvariabel i simulatorns terminal. Simulatorn läser inte `.env` automatiskt. Utan konfigurerad nyckel tillåts HTTP-inmatning lokalt utan nyckel.
 
 ```powershell
 Set-Location sensor
@@ -129,6 +154,8 @@ Set-Location sensor
 
 MQTT använder topic-formatet `beach/<sensor_id>/readings` och QoS 1. Se [protokollbeslutet](docs/protocol-decision.md) för motiveringen.
 
+Stoppa simulator, MQTT-mottagare och Django med `Ctrl+C`. Stoppa brokern med `docker compose stop`; starta om med `docker compose up -d` och starta sedan mottagare, Django och simulator igen. Befintlig databas behålls. Starta inte om med tom eller raderad databas; använd inte `--clear`. Simulatorn buffrar inte mätningar under längre avbrott, se [MQTT](docs/mqtt.md).
+
 ## API
 
 | Metod | Sökväg | Syfte |
@@ -136,7 +163,7 @@ MQTT använder topic-formatet `beach/<sensor_id>/readings` och QoS 1. Se [protok
 | `GET` | `/api/health/` | Kontrollerar att backend och databas svarar |
 | `GET` | `/api/sensors/` | Returnerar kända sensor-ID:n |
 | `POST` | `/api/readings/` | Validerar och sparar en mätning |
-| `GET` | `/api/readings/` | Returnerar historik med valfria filter |
+| `GET` | `/api/readings/` | Returnerar historik med valfria filter; kräver inloggad session |
 | `GET` | `/api/readings/latest/` | Returnerar senaste värdet per sensor |
 
 Exempel på en mätning:
@@ -156,7 +183,7 @@ Historik kan filtreras med `sensor_id`, `start`, `end`, `order` och `limit`. Fä
 
 ## Konfiguration
 
-Django och simulatorn läser miljövariabler från den process där de startas. [.env.example](.env.example) visar vanliga värden, men filen läses inte automatiskt.
+Django läser `.env` i projektroten automatiskt. Processens befintliga miljövariabler har företräde. [.env.example](.env.example) är en mall och läses inte direkt. Simulatorn läser endast processens miljövariabler; ange exempelvis `INGEST_API_KEY` och `MQTT_HOST` även i dess terminal när de avviker från standard.
 
 | Variabel | Standard | Syfte |
 | --- | ---: | --- |
@@ -181,7 +208,10 @@ $env:ANOMALY_THRESHOLD_TURBIDITY = "30"
 
 Kör från projektets rot:
 
+Använd minnesbackend i testterminalen så att inga riktiga mejl skickas, även om `.env` innehåller SMTP-uppgifter. PowerShell:
+
 ```powershell
+$env:EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 .\.venv\Scripts\python.exe backend\manage.py makemigrations --check --dry-run
 .\.venv\Scripts\python.exe backend\manage.py test monitoring
 Set-Location sensor
@@ -189,6 +219,8 @@ Set-Location sensor
 Set-Location ..
 node backend\monitoring\tests\dashboard.test.cjs
 ```
+
+I macOS/Linux/Git Bash används `export EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend` och `.venv/bin/python` (Git Bash på Windows: `.venv/Scripts/python.exe`) med samma argument. Avsluta testterminalen innan du återgår till riktig SMTP, eller ta bort processvariabeln.
 
 CI kör samma kontroller för pull requests mot `development`, `Testing` och `main`.
 
@@ -205,11 +237,6 @@ firmware/   Tidig ESP32-prototyp; ingår inte i MVP-kravet
 ## Nästa arbete
 
 - rätta och granska kvarvarande öppna pull requests innan nytt funktionsarbete påbörjas,
-- införa inloggning, utloggning och lösenordshantering,
-- skilja på publik dashboard och skyddad historik, meddelanden och rapporter,
-- införa administratörsskapade konton och tidsbegränsade e-postinbjudningar,
-- skicka och spara datavarningar för behöriga användare,
-- skapa PDF-export för historik och felrapporter,
 - verifiera säkerhet, e-postflöden och responsivitet med automatiska och manuella tester,
 - verifiera en ren lokal installation och fortsätta dokumentera veckodemon.
 
