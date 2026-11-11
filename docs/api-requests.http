@@ -1,5 +1,6 @@
+### Endast isolerad verifiering: kör mot separat testklon/testdatabas med EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend. Skicka inte testvärden till kördatabasen.
 ### Kräver tillägget "REST Client" i VS Code. Klicka "Send Request".
-@host = http://localhost:8000
+@host = http://localhost:8001
 
 ### Hälsokoll
 GET {{host}}/api/health/
@@ -36,7 +37,7 @@ GET {{host}}/api/readings/latest/
 
 ### Historik med tidsfilter
 # Kräver en giltig Django-session. Utan session förväntas 401 eller 403 och ingen historikdata.
-# Logga in via /accounts/login/ när issue #62/PR #74 är integrerad. REST Client återanvänder cookies för samma host.
+# Logga in via /accounts/login/ (funktionen är implementerad). REST Client återanvänder cookies för samma host.
 # sensor_id väljer sensor; utan parametern ingår alla sensorer.
 # start/end är valfria ISO 8601-tider med inkluderade gränser; utan tidszon tolkas tiden som UTC.
 # De senaste N mätningarna i intervallet returneras: order=asc (standard) eller desc.

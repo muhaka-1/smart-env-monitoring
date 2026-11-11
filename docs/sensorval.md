@@ -1,5 +1,7 @@
 # Sensorval och rekommenderad omfattning
 
+> **Aktuell läsanvisning 2026-11-11:** äldre bedömningar av README nedan är historisk research. Konton, sparade meddelanden, e-post och PDF-rapporter är nu implementerade; aktuell status beskrivs i README och docs/ARCHITECTURE.md. De ska inte bedömas som framtida arbete utifrån de äldre anteckningarna.
+
 > **Avgränsning beslutad 2026-10-23:** Fysisk sensor, ESP32 och firmware ingår inte i den obligatoriska MVP:n. Projektet ska använda en simulerad sensor som läser det öppna Chicago-datasetet. Dokumentet nedan bevaras endast som research för möjligt framtida arbete. Köp eller implementation av hårdvara ska inte blockera nuvarande projektplan.
 
 **Projekt:** smart-env-monitoring  

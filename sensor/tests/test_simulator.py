@@ -1,10 +1,12 @@
 import unittest
+from datetime import datetime, timezone
+from collections import Counter
 from unittest.mock import MagicMock
 
 import requests
 
 from sensor_sim.config import Config
-from sensor_sim.data_source import Measurement
+from sensor_sim.data_source import Measurement, load_measurements
 from sensor_sim.message import build_message
 from sensor_sim.publishers import HttpPublisher, PermanentError, Publisher, TransientError
 from sensor_sim.simulator import Simulator
@@ -36,6 +38,21 @@ class SimulatorTests(unittest.TestCase):
         pub = FakePublisher()
         self.assertEqual(self.sim(pub).run(count=3), 3)
         self.assertEqual([m["sensor_id"] for m in pub.sent], ["s1", "s2", "s1"])
+
+    def test_six_sensors_keep_values_and_current_send_times(self):
+        items = load_measurements(Config(), offline=True)
+        pub = FakePublisher()
+        sleeps = []
+        started = datetime.now(timezone.utc)
+        Simulator(items, pub, interval=5, sleep=sleeps.append).run(count=12)
+        ended = datetime.now(timezone.utc)
+        self.assertEqual(set(Counter(m["sensor_id"] for m in pub.sent).values()), {2})
+        self.assertEqual(len({m["sensor_id"] for m in pub.sent}), 6)
+        self.assertEqual(sleeps, [5] * 11)
+        for source, message in zip(items, pub.sent):
+            self.assertEqual((message["sensor_id"], message["value"], message["unit"]),
+                             (source.sensor_id, source.value, source.unit))
+            self.assertTrue(started <= datetime.fromisoformat(message["timestamp"]) <= ended)
 
     def test_retries_transient_then_succeeds(self):
         pub = FakePublisher([TransientError("x"), TransientError("y")])

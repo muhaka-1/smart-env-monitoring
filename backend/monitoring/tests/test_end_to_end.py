@@ -41,7 +41,7 @@ class HttpChainTests(SensorPathMixin, LiveServerTestCase):
         user = get_user_model().objects.create_user(username="flow-reader", password="test-flow-password")
         checks = run_flow(
             self.live_server_url,
-            count=4,
+            count=12,
             interval=0.05,
             api_key="test-ingest-key",
             username=user.get_username(),
@@ -49,6 +49,9 @@ class HttpChainTests(SensorPathMixin, LiveServerTestCase):
         )
         self.assertTrue(all(c.ok for c in checks), "\n" + format_report(checks))
         self.assertGreaterEqual(len(checks), 4)   # backend, leverans, fält + minst en latest/history
+        from monitoring.models import Reading
+        self.assertEqual(Reading.objects.values("sensor_id").distinct().count(), 6)
+        self.assertEqual(Reading.objects.count(), 12)
 
 
 @unittest.skipUnless(HAS_SENSOR, "sensor/ saknas i checkouten")
@@ -61,7 +64,7 @@ class MqttFormatChainTests(SensorPathMixin, TestCase):
         cfg = Config()
         ingestor = MqttIngestor("localhost", 1883, "beach/+/readings")
         last = {}
-        for measurement in load_measurements(cfg, offline=True)[:4]:
+        for measurement in load_measurements(cfg, offline=True)[:6]:
             message = build_message(measurement)
             topic = cfg.mqtt_topic_template.format(sensor_id=message["sensor_id"])
             self.assertRegex(topic, r"^beach/[^/]+/readings$")        # matchar mottagarens prenumeration beach/+/readings
