@@ -497,3 +497,229 @@ msgstr "No end limit"
 
 msgid "Rapportsidan finns inte."
 msgstr "The report page does not exist."
+
+msgid "BADVATTENKVALITET"
+msgstr "BATHING WATER QUALITY"
+
+msgid "En samlad bild av dina mätvärden."
+msgstr "A complete view of your readings."
+
+msgid "Logga in för att följa utvecklingen och granska plattformens sparade avvikelser."
+msgstr "Sign in to follow developments and review the platform's saved anomalies."
+
+msgid "Historiska mätningar och diagram"
+msgstr "Historical readings and charts"
+
+msgid "Dina meddelanden från systemet"
+msgstr "Your system messages"
+
+msgid "Rapporter på skärm och som PDF"
+msgstr "On-screen and PDF reports"
+
+msgid "Aktivera konto"
+msgstr "Activate account"
+
+msgid "Välj ditt lösenord för att aktivera kontot."
+msgstr "Choose your password to activate the account."
+
+msgid "Länken fungerar inte"
+msgstr "The link does not work"
+
+msgid "Inbjudningslänken är ogiltig, har gått ut eller har redan använts. Kontakta administratören för en ny inbjudan."
+msgstr "The invitation link is invalid, has expired, or has already been used. Contact the administrator for a new invitation."
+
+msgid "Kontot är aktiverat"
+msgstr "The account is activated"
+
+#, python-format
+msgid "Du kan nu <a href=\"%(login_url)s\">logga in</a> med ditt användarnamn och lösenord."
+msgstr "You can now <a href=\"%(login_url)s\">sign in</a> with your username and password."
+
+msgid "Lösenordet är bytt"
+msgstr "The password has been changed"
+
+msgid "Ditt nya lösenord är sparat. Du är fortfarande inloggad på den här enheten; andra inloggade sessioner har avslutats."
+msgstr "Your new password has been saved. You are still signed in on this device; other signed-in sessions have ended."
+
+msgid "Lösenordet är ändrat"
+msgstr "The password has been changed"
+
+msgid "Ditt nya lösenord är sparat. Du kan nu logga in med det."
+msgstr "Your new password has been saved. You can now sign in with it."
+
+msgid "Välj nytt lösenord"
+msgstr "Choose a new password"
+
+msgid "Spara nytt lösenord"
+msgstr "Save new password"
+
+msgid "Återställningslänken är ogiltig, har gått ut eller har redan använts."
+msgstr "The reset link is invalid, has expired, or has already been used."
+
+msgid "Begär en ny återställningslänk"
+msgstr "Request a new reset link"
+
+msgid "Kontrollera din e-post"
+msgstr "Check your email"
+
+msgid "Om e-postadressen hör till ett aktivt konto har vi skickat en länk för att återställa lösenordet."
+msgstr "If the email address belongs to an active account, we have sent a password reset link."
+
+msgid "Länken gäller en begränsad tid och kan bara användas en gång. Kontrollera även skräpposten om inget meddelande kommer fram."
+msgstr "The link is valid for a limited time and can only be used once. Also check your spam folder if no message arrives."
+
+msgid "Tillbaka till inloggningen"
+msgstr "Back to sign in"
+
+msgid "Glömt lösenord"
+msgstr "Forgot password"
+
+msgid "Ange e-postadressen som hör till ditt konto. Om adressen finns skickar vi en länk för att välja ett nytt lösenord."
+msgstr "Enter the email address associated with your account. If it exists, we will send a link to choose a new password."
+
+msgid "Skicka återställningslänk"
+msgstr "Send reset link"
+
+msgid "DITT KONTO"
+msgstr "YOUR ACCOUNT"
+
+msgid "Öppna din översikt, historik och dina meddelanden."
+msgstr "Open your overview, history, and messages."
+
+msgid "Fel användarnamn eller lösenord. Försök igen."
+msgstr "Incorrect username or password. Try again."
+
+msgid "Användarnamn"
+msgstr "Username"
+
+msgid "Lösenord"
+msgstr "Password"
+
+msgid "Glömt lösenord?"
+msgstr "Forgot password?"
+
+msgid "Din inbjudan till Smart Environmental Monitoring"
+msgstr "Your invitation to Smart Environmental Monitoring"
+
+msgid "Återställ ditt lösenord"
+msgstr "Reset your password"
+
+msgid "Datavarning från Smart Environmental Monitoring"
+msgstr "Data alert from Smart Environmental Monitoring"
+
+msgid "Hej!"
+msgstr "Hello!"
+
+msgid "Du har bjudits in till Smart Environmental Monitoring."
+msgstr "You have been invited to Smart Environmental Monitoring."
+
+#, python-format
+msgid "Ditt användarnamn är: %(username)s"
+msgstr "Your username is: %(username)s"
+
+msgid "Välj ditt lösenord via länken:"
+msgstr "Choose your password using this link:"
+
+msgid "Inbjudan gäller i högst tre dagar. Om länken har gått ut, kontakta administratören för en ny inbjudan."
+msgstr "The invitation is valid for up to three days. If the link has expired, contact the administrator for a new invitation."
+
+msgid "Hälsningar,"
+msgstr "Regards,"
+
+msgid "Du har begärt att återställa ditt lösenord till Smart Environmental Monitoring."
+msgstr "You requested a password reset for Smart Environmental Monitoring."
+
+msgid "Välj ett nytt lösenord via länken:"
+msgstr "Choose a new password using this link:"
+
+msgid "Länken gäller en begränsad tid och kan bara användas en gång."
+msgstr "The link is valid for a limited time and can only be used once."
+
+msgid "Om du inte har begärt återställningen kan du bortse från detta meddelande."
+msgstr "If you did not request the reset, you can ignore this message."
+
+msgid "En datavarning har registrerats i Smart Environmental Monitoring."
+msgstr "A data alert has been registered in Smart Environmental Monitoring."
+
+msgid "Tid"
+msgstr "Time"
+
+msgid "Statusen är projektets gränsregel, inte en myndighetsbedömning av badvattenkvalitet."
+msgstr "The status is the project's threshold rule, not an official assessment of bathing water quality."
+
+msgid "Logga in på plattformen för att läsa meddelandet:"
+msgstr "Sign in to the platform to read the message:"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Historiska mätvärden - Senaste 200"
+msgstr "Historical readings - Latest 200"
+
+msgid "Badvattenkvalitet | Miljöövervakning"
+msgstr "Bathing water quality | Environmental monitoring"
+
+#, python-format
+msgid "Visar %(shown)d av %(total)d matchande mätningar."
+msgstr "Showing %(shown)d of %(total)d matching readings."
+
+#, python-format
+msgid "%(omitted)d matchande mätningar ingår inte. Rapporten visar högst de senaste 200, inte nödvändigtvis hela tidsintervallet."
+msgstr "%(omitted)d matching readings are not included. The report shows at most the latest 200, not necessarily the entire time range."
+
+#, python-format
+msgid "<b>Sensor-ID:</b> %(sensor_id)s"
+msgstr "<b>Sensor ID:</b> %(sensor_id)s"
+
+#, python-format
+msgid "<b>Mätstorhet:</b> %(metric)s"
+msgstr "<b>Metric:</b> %(metric)s"
+
+msgid "Blandade mätstorheter"
+msgstr "Mixed metrics"
+
+msgid "<b>Mätstorhet:</b> Ingen data"
+msgstr "<b>Metric:</b> No data"
+
+#, python-format
+msgid "<b>Tidsintervall (UTC):</b> %(start)s – %(end)s"
+msgstr "<b>Time range (UTC):</b> %(start)s – %(end)s"
+
+#, python-format
+msgid "<b>Rapport skapad (UTC):</b> %(created)s"
+msgstr "<b>Report created (UTC):</b> %(created)s"
+
+msgid "Enhet"
+msgstr "Unit"
+
+msgid "Inga mätvärden finns för den valda sensorn och tidsperioden."
+msgstr "No readings were found for the selected sensor and time period."
+
+msgid "Badvattenkvalitet | Simulerade data"
+msgstr "Bathing water quality | Simulated data"
+
+#, python-format
+msgid "Sida %(page)d"
+msgstr "Page %(page)d"
+
+#, python-format
+msgid "Sensor: %(sensor)s"
+msgstr "Sensor: %(sensor)s"
+
+#, python-format
+msgid "Tidsintervall (UTC): %(start)s - %(end)s"
+msgstr "Time range (UTC): %(start)s - %(end)s"
+
+#, python-format
+msgid "Rapport skapad (UTC): %(created)s"
+msgstr "Report created (UTC): %(created)s"
+
+msgid "Sparade projektavvikelser, inte en myndighetsbedömning av badvattenkvalitet."
+msgstr "Saved project anomalies, not an official assessment of bathing water quality."
+
+msgid "Sensor-ID"
+msgstr "Sensor ID"
+
+#, python-format
+msgid "Antal händelser: %(count)d"
+msgstr "Number of events: %(count)d"

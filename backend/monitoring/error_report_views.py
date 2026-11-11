@@ -67,7 +67,7 @@ def error_report_pdf(request):
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=landscape(A4),
                                  leftMargin=14*mm, rightMargin=14*mm, topMargin=14*mm, bottomMargin=16*mm,
-                                 title="Felrapport")
+                                 title=_("Felrapport"))
     styles = getSampleStyleSheet()
     styles["Title"].textColor = colors.HexColor("#183247")
     cell_style = ParagraphStyle("ReportCell", fontName="Helvetica", fontSize=8, leading=10, splitLongWords=True)
@@ -75,14 +75,15 @@ def error_report_pdf(request):
     def paragraph(value, style=cell_style):
         return Paragraph(escape(str(value)), style)
     filters = context["filters"]
-    story = [paragraph("Badvattenkvalitet | Miljöövervakning"),
-             Paragraph("Felrapport", styles["Title"]),
-             paragraph("Sensor: " + (filters["sensor_id"] or "Alla sensorer")),
-             paragraph(f"Tidsintervall (UTC): {context['start_text']} - {context['end_text']}"),
-             paragraph("Rapport skapad (UTC): " + context["generated_at"]),
-             paragraph("Sparade projektavvikelser, inte en myndighetsbedömning av badvattenkvalitet."),
+    story = [paragraph(_("Badvattenkvalitet | Miljöövervakning")),
+             Paragraph(_("Felrapport"), styles["Title"]),
+             paragraph(_("Sensor: %(sensor)s") % {"sensor": filters["sensor_id"] or _("Alla sensorer")}),
+             paragraph(_("Tidsintervall (UTC): %(start)s - %(end)s") % {
+                 "start": context["start_text"], "end": context["end_text"]}),
+             paragraph(_("Rapport skapad (UTC): %(created)s") % {"created": context["generated_at"]}),
+             paragraph(_("Sparade projektavvikelser, inte en myndighetsbedömning av badvattenkvalitet.")),
              Spacer(1, 5*mm)]
-    headers = ["Sensor-ID", "Mätstorhet", "Tid (UTC)", "Värde", "Enhet", "Gränsvärde", "Status"]
+    headers = [_('Sensor-ID'), _("Mätstorhet"), _("Tid (UTC)"), _("Värde"), _("Enhet"), _("Gränsvärde"), _("Status")]
     rows = [[paragraph(title, header_style) for title in headers]]
     for alert in alerts.iterator(chunk_size=500):
         rows.append([paragraph(value) for value in (
@@ -90,9 +91,9 @@ def error_report_pdf(request):
             alert.value, alert.unit, alert.threshold, alert.get_status_display(),
         )])
     if len(rows) == 1:
-        story.append(paragraph("Inga sparade avvikelser finns för valt filter."))
+        story.append(paragraph(_("Inga sparade avvikelser finns för valt filter.")))
     else:
-        story.append(paragraph(f"Antal händelser: {len(rows)-1}"))
+        story.append(paragraph(_("Antal händelser: %(count)d") % {"count": len(rows)-1}))
         story.append(Spacer(1, 3*mm))
         table = LongTable(rows, repeatRows=1, colWidths=[69*mm, 26*mm, 40*mm, 28*mm, 15*mm, 37*mm, 32*mm])
         table.setStyle(TableStyle([
@@ -107,8 +108,8 @@ def error_report_pdf(request):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#536578"))
-        canvas.drawString(14*mm, 9*mm, "Badvattenkvalitet | Simulerade data")
-        canvas.drawRightString(landscape(A4)[0]-14*mm, 9*mm, f"Sida {doc.page}")
+        canvas.drawString(14*mm, 9*mm, _("Badvattenkvalitet | Simulerade data"))
+        canvas.drawRightString(landscape(A4)[0]-14*mm, 9*mm, _("Sida %(page)d") % {"page": doc.page})
         canvas.restoreState()
     document.build(story, onFirstPage=footer, onLaterPages=footer)
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")

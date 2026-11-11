@@ -1,5 +1,5 @@
-{% extends "monitoring/base.html" %}
+{% extends "monitoring/base.html" %}{% load i18n %}
 {% block content %}
-<div class="account-layout"><section class="account-intro"><p class="eyebrow">BADVATTENKVALITET</p><h2>En samlad bild av dina mätvärden.</h2><p>Logga in för att följa utvecklingen och granska plattformens sparade avvikelser.</p><ul><li>Historiska mätningar och diagram</li><li>Dina meddelanden från systemet</li><li>Rapporter på skärm och som PDF</li></ul></section>
-<section class="panel account-card">{% block account_content %}{% endblock %}<p class="mb-0"><a href="{% url 'dashboard' %}">← Till dashboarden</a></p></section></div>
+<div class="account-layout"><section class="account-intro"><p class="eyebrow">{% translate "BADVATTENKVALITET" %}</p><h2>{% translate "En samlad bild av dina mätvärden." %}</h2><p>{% translate "Logga in för att följa utvecklingen och granska plattformens sparade avvikelser." %}</p><ul><li>{% translate "Historiska mätningar och diagram" %}</li><li>{% translate "Dina meddelanden från systemet" %}</li><li>{% translate "Rapporter på skärm och som PDF" %}</li></ul></section>
+<section class="panel account-card">{% block account_content %}{% endblock %}<p class="mb-0"><a href="{% url 'dashboard' %}">← {% translate "Till dashboarden" %}</a></p></section></div>
 {% endblock %}

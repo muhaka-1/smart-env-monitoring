@@ -1,6 +1,7 @@
-{% extends "accounts/base.html" %}
-{% block title %}Kontot är aktiverat{% endblock %}
+{% extends "accounts/base.html" %}{% load i18n %}
+{% block title %}{% translate "Kontot är aktiverat" %}{% endblock %}
 {% block account_content %}
-<h1>Kontot är aktiverat</h1>
-<p>Du kan nu <a href="{% url 'login' %}">logga in</a> med ditt användarnamn och lösenord.</p>
+<h1>{% translate "Kontot är aktiverat" %}</h1>
+{% url 'login' as login_url %}
+<p>{% blocktranslate %}Du kan nu <a href="{{ login_url }}">logga in</a> med ditt användarnamn och lösenord.{% endblocktranslate %}</p>
 {% endblock %}
