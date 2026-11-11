@@ -1,6 +1,7 @@
 """Affärslogik, oberoende av transport (HTTP eller MQTT)."""
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from rest_framework.exceptions import ValidationError
 
 from .models import Reading
 from .notifications import create_alert
@@ -27,7 +28,16 @@ def ingest_reading(payload: dict) -> Reading:
     metric = data.get("metric", Reading.Metric.TURBIDITY)
     threshold = get_threshold(metric)
     with transaction.atomic():
-        reading = serializer.save(status=evaluate_status(data["value"], metric, threshold))
+        # En savepoint håller transaktionen användbar efter ett misslyckat INSERT.
+        try:
+            with transaction.atomic():
+                reading = serializer.save(status=evaluate_status(data["value"], metric, threshold))
+        except IntegrityError:
+            if not Reading.objects.filter(sensor_id=data["sensor_id"], timestamp=data["timestamp"]).exists():
+                raise
+            raise ValidationError({
+                "non_field_errors": ["En mätning med samma sensor_id och timestamp finns redan."],
+            }) from None
         create_alert(reading, threshold)
     return reading
 

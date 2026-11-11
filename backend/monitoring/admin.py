@@ -10,8 +10,22 @@ from .invitations import send_invitation
 from .models import Reading
 
 
+class ReadingAdminForm(forms.ModelForm):
+    class Meta:
+        model = Reading
+        fields = "__all__"
+
+    def clean(self):
+        data = super().clean()
+        value = data.get("value")
+        if data.get("metric") == Reading.Metric.TURBIDITY and value is not None and value < 0:
+            self.add_error("value", "Turbiditet får inte vara negativ.")
+        return data
+
+
 @admin.register(Reading)
 class ReadingAdmin(admin.ModelAdmin):
+    form = ReadingAdminForm
     list_display = ("sensor_id", "metric", "timestamp", "value", "unit", "quality", "status")
     list_filter = ("metric", "status", "quality", "sensor_id")
     date_hierarchy = "timestamp"

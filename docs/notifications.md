@@ -10,7 +10,7 @@ Direkt importerad äldre demodata bearbetas inte i efterhand och utlöser inga u
 - `Alert` har en unik koppling till `Reading` och sparar sensor-ID, mätstorhet,
   mättid, värde, enhet, status och gränsvärdet som användes vid mottagningen.
   Senare ändringar i konfigurationen ändrar inte den sparade varningen.
-- Varje aktiv användare med giltig e-post vid händelsen får en `Notification`.
+- Varje aktiv användare vid händelsen får en intern `Notification`, även utan giltig e-post. E-post försöks bara till giltiga adresser; saknad eller ogiltig adress ger `failed` med feltext medan meddelandet och felrapporten finns kvar.
   Inaktiva konton, inklusive ännu inte aktiverade inbjudningar, får inget utskick.
   Meddelandet tillhör den användaren; nya användare får inte äldre varningar automatiskt.
 - Databasen tillåter bara en varning per mätning och ett meddelande per varning
@@ -67,4 +67,4 @@ Testerna täcker normalvärden, båda mätstorheterna, HTTP/MQTT, snapshots,
 mottagarurval, dubbletter och databasconstraints, transaktioner, leveransfel,
 SMTP-integration, behörighet och sidindelning. Använd minnesbackend eller en
 isolerad SMTP-mottagare vid tester; kör inte testdata mot riktiga mottagare utan
-uttryckligt godkännande. PDF, läst/oläst och prenumerationsinställningar ingår inte.
+uttryckligt godkännande. Felrapport på skärm och som PDF är implementerad separat, se [error-reports.md](error-reports.md). Läst/oläst och prenumerationsinställningar ingår inte.
