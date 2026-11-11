@@ -5,20 +5,21 @@ from urllib.parse import urlencode
 from django import forms
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.translation import gettext_lazy as _
 
 from .models import Alert
 from .serializers import SENSOR_ID_RE
 
 
 class ErrorReportFilters(forms.Form):
-    sensor_id = forms.CharField(label="Sensor", required=False, max_length=100, strip=False,
+    sensor_id = forms.CharField(label=_("Sensor"), required=False, max_length=100, strip=False,
                                widget=forms.Select(attrs={"class": "form-select"}))
     start = forms.CharField(
-        label="Från (UTC)", required=False, max_length=64,
+        label=_("Från (UTC)"), required=False, max_length=64,
         widget=forms.DateTimeInput(format="%Y-%m-%dT%H:%M:%S", attrs={"type": "datetime-local", "step": "1", "class": "form-control"}),
     )
     end = forms.CharField(
-        label="Till (UTC)", required=False, max_length=64,
+        label=_("Till (UTC)"), required=False, max_length=64,
         widget=forms.DateTimeInput(format="%Y-%m-%dT%H:%M:%S", attrs={"type": "datetime-local", "step": "1", "class": "form-control"}),
     )
     as_of = forms.CharField(required=False, max_length=64, widget=forms.HiddenInput())
@@ -29,12 +30,12 @@ class ErrorReportFilters(forms.Form):
         selected = self.initial.get("sensor_id")
         if selected and selected not in {value for value, _ in choices}:
             choices.append((selected, selected))
-        self.fields["sensor_id"].widget.choices = [("", "Alla sensorer"), *choices]
+        self.fields["sensor_id"].widget.choices = [("", _("Alla sensorer")), *choices]
 
     def clean_sensor_id(self):
         value = self.cleaned_data["sensor_id"]
         if value and not SENSOR_ID_RE.fullmatch(value):
-            raise forms.ValidationError("Ange ett giltigt sensor-ID med a-z, 0-9, '-' eller '_'.")
+            raise forms.ValidationError(_("Ange ett giltigt sensor-ID med a-z, 0-9, '-' eller '_'."))
         return value
 
     def _datetime(self, name):
@@ -49,7 +50,7 @@ class ErrorReportFilters(forms.Form):
                 return value.astimezone(dt_timezone.utc)
         except (ValueError, OverflowError):
             pass
-        raise forms.ValidationError("Ange giltigt datum och tid i ISO 8601-format.")
+        raise forms.ValidationError(_("Ange giltigt datum och tid i ISO 8601-format."))
 
     def clean_start(self):
         return self._datetime("start")
@@ -64,7 +65,7 @@ class ErrorReportFilters(forms.Form):
         data = super().clean()
         start, end = data.get("start"), data.get("end")
         if start and end and start > end:
-            self.add_error("end", "Till måste vara samma tid som eller senare än Från.")
+            self.add_error("end", _("Till måste vara samma tid som eller senare än Från."))
         return data
 
 

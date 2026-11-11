@@ -1,0 +1,499 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: smart-env-monitoring\n"
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Badvattenkvalitet"
+msgstr "Bathing water quality"
+
+msgid "Miljöövervakning"
+msgstr "Environmental monitoring"
+
+msgid "Hoppa till innehållet"
+msgstr "Skip to content"
+
+msgid "Språk"
+msgstr "Language"
+
+msgid "Byt språk"
+msgstr "Change language"
+
+msgid "Mitt konto"
+msgstr "My account"
+
+#, python-format
+msgid "Inloggad som %(username)s"
+msgstr "Signed in as %(username)s"
+
+msgid "Byt lösenord"
+msgstr "Change password"
+
+msgid "Administration"
+msgstr "Administration"
+
+msgid "Logga ut"
+msgstr "Sign out"
+
+msgid "Meny"
+msgstr "Menu"
+
+msgid "Huvudmeny"
+msgstr "Main menu"
+
+msgid "Mätvärden"
+msgstr "Readings"
+
+msgid "Om mätvärdena"
+msgstr "About the readings"
+
+msgid "Logga in"
+msgstr "Sign in"
+
+msgid "DIN ARBETSPLATS"
+msgstr "YOUR WORKSPACE"
+
+msgid "Arbetsyta"
+msgstr "Workspace"
+
+msgid "Översikt"
+msgstr "Overview"
+
+msgid "Historik"
+msgstr "History"
+
+msgid "Meddelanden"
+msgstr "Messages"
+
+msgid "Rapporter"
+msgstr "Reports"
+
+msgid "Simulerade mätningar"
+msgstr "Simulated readings"
+
+msgid "Öppna dataset återspelas i plattformen. Statusen är inte ett badråd."
+msgstr "Open datasets are replayed in the platform. The status is not bathing advice."
+
+msgid "Mitt konto · Byt lösenord"
+msgstr "My account · Change password"
+
+msgid "Simulerade data · Temperatur & turbiditet"
+msgstr "Simulated data · Temperature & turbidity"
+
+msgid "Min översikt"
+msgstr "My overview"
+
+msgid "MILJÖÖVERVAKNING"
+msgstr "ENVIRONMENTAL MONITORING"
+
+msgid "Senaste mätvärdena och dina sparade meddelanden på ett ställe."
+msgstr "Your latest readings and saved messages in one place."
+
+msgid "Följ de senaste mätvärdena för temperatur och turbiditet."
+msgstr "Follow the latest temperature and turbidity readings."
+
+msgid "Simulerade datasetvärden · Inte ett badråd."
+msgstr "Simulated dataset values · Not bathing advice."
+
+msgid "Laddar…"
+msgstr "Loading…"
+
+msgid "Sammanfattning av senaste mätvärden"
+msgstr "Summary of latest readings"
+
+msgid "Mätpunkter"
+msgstr "Measurement points"
+
+msgid "Med ett senaste mätvärde"
+msgstr "With a latest reading"
+
+msgid "Avvikelser"
+msgstr "Anomalies"
+
+msgid "Enligt senast uppmätt status"
+msgstr "According to the latest status"
+
+msgid "Inaktuella mätningar"
+msgstr "Stale readings"
+
+msgid "Behöver en ny uppdatering"
+msgstr "Need a new update"
+
+msgid "Aktivera JavaScript för att hämta de senaste mätvärdena."
+msgstr "Enable JavaScript to retrieve the latest readings."
+
+msgid "Senaste mätvärden"
+msgstr "Latest readings"
+
+msgid "Visa historik"
+msgstr "View history"
+
+msgid "Hämtar mätvärden…"
+msgstr "Retrieving readings…"
+
+msgid "Om mätvärdena och deras status"
+msgstr "About the readings and their status"
+
+msgid "Mätvärdena kommer från en simulator som återspelar verkliga datasetvärden, inte aktuella mätningar på plats. Tiden som visas är simulatorns sändtid."
+msgstr "The readings come from a simulator replaying real dataset values, not current on-site measurements. The displayed time is the simulator transmission time."
+
+msgid "betyder att värdet inte överstiger projektets gräns."
+msgstr "means the value does not exceed the project's threshold."
+
+msgid "Avvikelse"
+msgstr "Anomaly"
+
+msgid "betyder att gränsen har överskridits. Informationen är inte ett badråd och bedömer inte om vattnet är säkert att bada i."
+msgstr "means the threshold has been exceeded. The information is not bathing advice and does not determine whether the water is safe for swimming."
+
+msgid "Dina senaste meddelanden"
+msgstr "Your latest messages"
+
+msgid "Visa alla"
+msgstr "View all"
+
+msgid "Inga meddelanden ännu"
+msgstr "No messages yet"
+
+msgid "Dina sparade avvikelser visas här när det finns några."
+msgstr "Your saved anomalies will appear here when available."
+
+msgid "Få tillgång till mer"
+msgstr "Access more features"
+
+msgid "Logga in för att öppna historik, meddelanden och rapporter."
+msgstr "Sign in to access history, messages and reports."
+
+msgid "MÄTDATA"
+msgstr "MEASUREMENT DATA"
+
+msgid "Utforska tidigare mätningar och spara ditt urval som PDF."
+msgstr "Explore previous readings and save your selection as a PDF."
+
+msgid "Aktivera JavaScript för att visa och filtrera mätvärden."
+msgstr "Enable JavaScript to view and filter readings."
+
+msgid "Välj plats, mätvärde och tidsintervall för att utforska tidigare mätningar."
+msgstr "Select a location, metric and time range to explore previous readings."
+
+msgid "Plats och mätvärde"
+msgstr "Location and metric"
+
+msgid "Från"
+msgstr "From"
+
+msgid "Till"
+msgstr "To"
+
+msgid "Filtrera"
+msgstr "Filter"
+
+msgid "Nollställ"
+msgstr "Reset"
+
+msgid "Snabbval för tidsintervall"
+msgstr "Time range shortcuts"
+
+msgid "Senaste timmen"
+msgstr "Last hour"
+
+msgid "Senaste dygnet"
+msgstr "Last 24 hours"
+
+msgid "Senaste 7 dagarna"
+msgstr "Last 7 days"
+
+msgid "Senaste 200"
+msgstr "Latest 200"
+
+msgid "Intervall: senaste 200 mätningarna."
+msgstr "Range: latest 200 readings."
+
+msgid "Ladda ned PDF"
+msgstr "Download PDF"
+
+msgid "Diagram och PDF visar högst 200 av de senaste matchande mätningarna, inte nödvändigtvis hela tidsintervallet. PDF anger antal visade och utelämnade mätningar. Tider i PDF är UTC; datumfälten och diagrammet använder webbläsarens lokala tid."
+msgstr "The chart and PDF show at most 200 of the latest matching readings, not necessarily the entire time range. The PDF states how many readings are shown and omitted. Times in the PDF are UTC; date fields and the chart use the browser's local time."
+
+msgid "Historiska mätvärden över tid"
+msgstr "Historical readings over time"
+
+msgid "DINA AVVIKELSER"
+msgstr "YOUR ANOMALIES"
+
+msgid "Avvikelser enligt projektets gränser. Detta är inte en myndighetsbedömning av badvattenkvalitet."
+msgstr "Anomalies according to the project's thresholds. This is not an official assessment of bathing water quality."
+
+msgid "Till dashboarden"
+msgstr "Go to dashboard"
+
+msgid "Felrapport"
+msgstr "Error report"
+
+#, python-format
+msgid "Avvikelse: %(sensor)s"
+msgstr "Anomaly: %(sensor)s"
+
+msgid "Mätstorhet"
+msgstr "Metric"
+
+msgid "Tid (UTC)"
+msgstr "Time (UTC)"
+
+msgid "Värde"
+msgstr "Value"
+
+msgid "Gränsvärde vid mätningen"
+msgstr "Threshold at time of reading"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "E-post"
+msgstr "Email"
+
+msgid "Du har inga sparade meddelanden."
+msgstr "You have no saved messages."
+
+msgid "Meddelandesidor"
+msgstr "Message pages"
+
+msgid "Föregående"
+msgstr "Previous"
+
+msgid "Nästa"
+msgstr "Next"
+
+#, python-format
+msgid "Sida %(current)s av %(total)s"
+msgstr "Page %(current)s of %(total)s"
+
+msgid "DINA UNDERLAG"
+msgstr "YOUR REPORTS"
+
+msgid "Välj rapport, ange ett urval och spara resultatet som PDF."
+msgstr "Choose a report, define a selection and save the result as a PDF."
+
+msgid "Historiska mätvärden"
+msgstr "Historical readings"
+
+msgid "Välj mätpunkt och tidsintervall i historiken. PDF-rapporten innehåller högst de senaste 200 matchande mätningarna."
+msgstr "Select a measurement point and time range in history. The PDF report contains at most the latest 200 matching readings."
+
+msgid "Öppna historik"
+msgstr "Open history"
+
+msgid "AVVIKELSER"
+msgstr "ANOMALIES"
+
+msgid "Se dina sparade avvikelser på skärmen eller hämta en PDF med alla händelser som matchar ditt filter."
+msgstr "View your saved anomalies on screen or download a PDF containing all events matching your filter."
+
+msgid "Öppna felrapport"
+msgstr "Open error report"
+
+msgid "OK och ANOMALY är projektets tekniska status, inte en myndighetsbedömning av badvattenkvalitet."
+msgstr "OK and ANOMALY are technical project statuses, not an official assessment of bathing water quality."
+
+msgid "Till startsidan"
+msgstr "Go to home page"
+
+msgid "Rapporten visar dina sparade projektavvikelser, inte en myndighetsbedömning av badvattenkvalitet."
+msgstr "The report shows your saved project anomalies, not an official assessment of bathing water quality."
+
+msgid "Alla sensorer"
+msgstr "All sensors"
+
+#, python-format
+msgid "Sensor: %(sensor)s. Tidsintervall (UTC): %(start)s – %(end)s."
+msgstr "Sensor: %(sensor)s. Time range (UTC): %(start)s – %(end)s."
+
+msgid "Resultat"
+msgstr "Results"
+
+#, python-format
+msgid "Totalt %(count)s händelse."
+msgid_plural "Totalt %(count)s händelser."
+msgstr[0] "A total of %(count)s event."
+msgstr[1] "A total of %(count)s events."
+
+#, python-format
+msgid "Rapport skapad (UTC): %(created)s."
+msgstr "Report created (UTC): %(created)s."
+
+msgid "PDF innehåller alla händelser som matchar filtret."
+msgstr "The PDF contains all events matching the filter."
+
+msgid "Inga sparade avvikelser finns för valt filter."
+msgstr "No saved anomalies were found for the selected filter."
+
+msgid "Rapportsidor"
+msgstr "Report pages"
+
+msgid "Begäran kunde inte behandlas"
+msgstr "The request could not be processed"
+
+msgid "Kontrollera adressen och försök igen."
+msgstr "Check the address and try again."
+
+msgid "Du har inte åtkomst"
+msgstr "You do not have access"
+
+msgid "Logga in med ett konto som har behörighet. Om du skickade ett formulär, ladda om sidan och försök igen."
+msgstr "Sign in with an authorised account. If you submitted a form, reload the page and try again."
+
+msgid "Sidan kunde inte hittas"
+msgstr "The page could not be found"
+
+msgid "Kontrollera adressen eller gå tillbaka till startsidan."
+msgstr "Check the address or return to the home page."
+
+msgid "Ett fel har inträffat"
+msgstr "An error has occurred"
+
+msgid "Sidan kunde inte visas just nu. Försök igen om en stund."
+msgstr "The page cannot be displayed right now. Try again shortly."
+
+msgid "Turbiditet"
+msgstr "Turbidity"
+
+msgid "Temperatur"
+msgstr "Temperature"
+
+msgid "Mätvärde"
+msgstr "Reading"
+
+msgid "senaste timmen"
+msgstr "last hour"
+
+msgid "senaste dygnet"
+msgstr "last 24 hours"
+
+msgid "senaste 7 dagarna"
+msgstr "last 7 days"
+
+msgid "senaste 200 mätningarna"
+msgstr "latest 200 readings"
+
+msgid "Mätvärdena kunde inte hämtas."
+msgstr "The readings could not be retrieved."
+
+msgid "Inga mätvärden ännu."
+msgstr "No readings yet."
+
+msgid "Senaste status: "
+msgstr "Latest status: "
+
+msgid "gräns"
+msgstr "threshold"
+
+msgid "Mätningen är inaktuell eller saknar giltig tid."
+msgstr "The reading is stale or does not have a valid time."
+
+#, python-format
+msgid "Visa historik för %(sensor)s"
+msgstr "View history for %(sensor)s"
+
+msgid "Historiken innehåller olika mätstorheter och kan inte visas i samma diagram."
+msgstr "The history contains different metrics and cannot be shown in the same chart."
+
+msgid "Inga mätvärden finns för det valda intervallet."
+msgstr "No readings were found for the selected range."
+
+msgid "Gränsvärde"
+msgstr "Threshold"
+
+msgid "● OK · ▲ Avvikelse. Statusen följer projektets konfigurerade gränsregel och är inte en officiell bedömning av badvattnet."
+msgstr "● OK · ▲ Anomaly. The status follows the project's configured threshold rule and is not an official assessment of the bathing water."
+
+msgid "Tid (lokal tid)"
+msgstr "Time (local time)"
+
+msgid "Välj både Från och Till, eller använd ett snabbval."
+msgstr "Select both From and To, or use a shortcut."
+
+msgid "Tidsintervallet innehåller ett ogiltigt datum."
+msgstr "The time range contains an invalid date."
+
+msgid "Från måste vara tidigare än Till."
+msgstr "From must be earlier than To."
+
+#, python-format
+msgid "Intervall: %(range)s."
+msgstr "Range: %(range)s."
+
+#, python-format
+msgid "Eget intervall: %(start)s – %(end)s."
+msgstr "Custom range: %(start)s – %(end)s."
+
+msgid "Eget intervall är inte komplett."
+msgstr "The custom range is incomplete."
+
+msgid "Välj en sensor innan rapporten skapas."
+msgstr "Select a sensor before creating the report."
+
+msgid "Din session har gått ut eller saknar behörighet. Logga in igen för att visa historiken."
+msgstr "Your session has expired or lacks permission. Sign in again to view history."
+
+msgid "Mätvärdena är inte tillgängliga just nu."
+msgstr "The readings are not available right now."
+
+#, python-format
+msgid "Uppdaterad %(time)s"
+msgstr "Updated %(time)s"
+
+msgid "Uppdateringen misslyckades"
+msgstr "Update failed"
+
+msgid "Kunde inte hämta nya mätvärden. Kontrollera anslutningen eller logga in igen. Ett nytt försök görs automatiskt."
+msgstr "Could not retrieve new readings. Check the connection or sign in again. Another attempt will be made automatically."
+
+msgid "Bra"
+msgstr "Good"
+
+msgid "Misstänkt"
+msgstr "Suspect"
+
+msgid "Dålig"
+msgstr "Bad"
+
+msgid "Väntar på e-postförsök"
+msgstr "Waiting for email attempt"
+
+msgid "Påbörjat utskick, utfall ännu inte bekräftat"
+msgstr "Sending started, outcome not yet confirmed"
+
+msgid "Accepterat av e-postservern"
+msgstr "Accepted by the email server"
+
+msgid "E-postförsöket misslyckades"
+msgstr "Email attempt failed"
+
+msgid "Sensor"
+msgstr "Sensor"
+
+msgid "Från (UTC)"
+msgstr "From (UTC)"
+
+msgid "Till (UTC)"
+msgstr "To (UTC)"
+
+msgid "Ange ett giltigt sensor-ID med a-z, 0-9, '-' eller '_'."
+msgstr "Enter a valid sensor ID using a-z, 0-9, '-' or '_'."
+
+msgid "Ange giltigt datum och tid i ISO 8601-format."
+msgstr "Enter a valid date and time in ISO 8601 format."
+
+msgid "Till måste vara samma tid som eller senare än Från."
+msgstr "To must be the same time as or later than From."
+
+msgid "Ingen startgräns"
+msgstr "No start limit"
+
+msgid "Ingen slutgräns"
+msgstr "No end limit"
+
+msgid "Rapportsidan finns inte."
+msgstr "The report page does not exist."
