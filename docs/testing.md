@@ -37,7 +37,7 @@ Samma argument fungerar i PowerShell. Simulatorns testkommando nedan körs från
 
 ## Backend (Django, `python backend/manage.py test monitoring`)
 
-Tester: validering (HTTP 400), API-nyckel, senaste värde, historik med datumfilter och sortering, per-mätstorhet gränsvärde, dubblettskydd, MQTT-hantering av ogiltig data, demodata (`seed_demo_data`) och att firmwarens gränsvärden är lika med backendens.
+Tester: validering (HTTP 400), API-nyckel, senaste värde, historik med datumfilter och sortering, per-mätstorhet gränsvärde, dubblettskydd, MQTT-hantering av ogiltig data, balanserat dataseturval och reservdata och att firmwarens gränsvärden är lika med backendens.
 
 Åtkomsttesterna i `test_access_control.py` verifierar att senaste värden är publika, att anonym historik nekas för både `GET` och `HEAD`, att inloggad historik fungerar och att historikpanelen inte skickas i den publika sidans HTML. Se [`access-control.md`](access-control.md).
 

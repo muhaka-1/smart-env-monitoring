@@ -72,9 +72,9 @@ class NotificationTests(TestCase):
             alert = self.client.get(reverse("messages-api")).json()["results"][0]["alert"]
         self.assertEqual((alert["value"], alert["threshold"], alert["status"]), (27, 25, "ANOMALY"))
 
-    def test_only_active_users_with_valid_email_get_messages_and_email(self):
+    def test_all_active_users_get_internal_messages_but_only_valid_emails_are_sent(self):
         reading = self.ingest()
-        self.assertEqual(set(Notification.objects.filter(alert__reading=reading).values_list("user_id", flat=True)), {self.anna.pk, self.erik.pk})
+        self.assertEqual(set(Notification.objects.filter(alert__reading=reading).values_list("user_id", flat=True)), set(User.objects.filter(is_active=True).values_list("pk", flat=True)))
         self.assertEqual({tuple(m.to) for m in mail.outbox}, {("anna@example.test",), ("erik@example.test",)})
 
     def test_alert_is_saved_when_no_recipients_exist(self):
@@ -101,7 +101,7 @@ class NotificationTests(TestCase):
             reading = consumer.handle_message("beach/oak-turbidity/readings", json.dumps(payload).encode())
         self.assertIsNotNone(reading)
         self.assertEqual(Alert.objects.count(), 2)
-        self.assertEqual(Notification.objects.count(), 4)
+        self.assertEqual(Notification.objects.count(), 8)
         self.assertEqual(len(mail.outbox), 4)
 
     def test_invalid_measurement_creates_no_reading_alert_or_email(self):
@@ -122,7 +122,7 @@ class NotificationTests(TestCase):
         for notification in Notification.objects.all():
             deliver_notification(notification.pk)
         self.assertEqual(Alert.objects.count(), 1)
-        self.assertEqual(Notification.objects.count(), 2)
+        self.assertEqual(Notification.objects.count(), 4)
         self.assertEqual(len(mail.outbox), 2)
 
     def test_http_and_mqtt_duplicate_payloads_cannot_send_again(self):
@@ -151,10 +151,15 @@ class NotificationTests(TestCase):
             self.assertEqual(mail.outbox, [])
             self.assertEqual(set(Notification.objects.values_list("delivery_status", flat=True)), {"pending"})
         self.assertEqual(len(callbacks), 1)
-        for message in Notification.objects.all():
-            self.assertEqual(message.delivery_status, "sent")
-            self.assertIsNotNone(message.email_sent_at)
-            self.assertEqual(message.delivery_error, "")
+        for message in Notification.objects.select_related("user"):
+            if message.user_id in (self.anna.pk, self.erik.pk):
+                self.assertEqual(message.delivery_status, "sent")
+                self.assertIsNotNone(message.email_sent_at)
+                self.assertEqual(message.delivery_error, "")
+            else:
+                self.assertEqual(message.delivery_status, "failed")
+                self.assertIsNone(message.email_sent_at)
+                self.assertTrue(message.delivery_error)
 
     def test_rollback_does_not_leave_alerts_messages_or_send_email(self):
         with self.captureOnCommitCallbacks(execute=True):
@@ -197,7 +202,7 @@ class NotificationTests(TestCase):
                 response = self.client.post(reverse("readings"), data=json.dumps(self.payload()), content_type="application/json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Reading.objects.count(), 1)
-        self.assertEqual(Notification.objects.filter(delivery_status="failed").count(), 2)
+        self.assertEqual(Notification.objects.filter(delivery_status="failed").count(), 4)
 
     def test_mqtt_still_accepts_reading_when_smtp_fails(self):
         consumer = MqttIngestor("localhost", 1883, "beach/+/readings")
@@ -205,7 +210,7 @@ class NotificationTests(TestCase):
             with self.captureOnCommitCallbacks(execute=True):
                 reading = consumer.handle_message("beach/oak-temperature/readings", json.dumps(self.payload()).encode())
         self.assertIsNotNone(reading)
-        self.assertEqual(Notification.objects.filter(delivery_status="failed").count(), 2)
+        self.assertEqual(Notification.objects.filter(delivery_status="failed").count(), 4)
 
     def test_alert_save_failure_rolls_back_the_whole_measurement_transaction(self):
         with patch("monitoring.notifications.Alert.objects.get_or_create", side_effect=IntegrityError("unavailable")):
@@ -220,7 +225,7 @@ class NotificationTests(TestCase):
         with self.assertLogs("monitoring.notifications", level="WARNING"):
             self.ingest()
         self.assertEqual(Reading.objects.count(), 1)
-        self.assertEqual(Notification.objects.filter(delivery_status="failed").count(), 2)
+        self.assertEqual(Notification.objects.filter(delivery_status="failed").count(), 4)
         self.assertEqual(mail.outbox, [])
 
     @override_settings(

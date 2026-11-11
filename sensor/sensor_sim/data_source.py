@@ -46,7 +46,10 @@ def parse_timestamp(value) -> datetime | None:
 def _number(rec: dict, key: str):
     """Returnerar float, eller None om värdet saknas, inte är ett tal, NaN eller oändligt."""
     try:
-        v = float(rec[key])
+        raw = rec[key]
+        if isinstance(raw, bool):
+            return None
+        v = float(raw)
     except (KeyError, TypeError, ValueError):
         return None
     return v if math.isfinite(v) else None
@@ -92,9 +95,42 @@ def normalize(raw_records: list[dict], skipped: Counter | None = None) -> list[M
 
 
 def fetch_remote(cfg: Config) -> list[dict]:
-    resp = requests.get(cfg.dataset_url, timeout=cfg.request_timeout * 3)
-    resp.raise_for_status()
-    return resp.json()
+    selected = []
+    for beach in cfg.beaches:
+        rows, seen = [], set()
+        escaped_beach = beach.replace("'", "''")
+        for page in range(10):
+            resp = requests.get(cfg.dataset_url, params={
+                "$where": f"beach_name = '{escaped_beach}'",
+                "$order": "measurement_timestamp DESC, measurement_id DESC",
+                "$limit": cfg.rows_per_beach,
+                "$offset": page * cfg.rows_per_beach,
+            }, timeout=cfg.request_timeout * 3)
+            resp.raise_for_status()
+            batch = resp.json()
+            if not isinstance(batch, list):
+                raise ValueError("Datasetet måste vara en JSON-lista")
+            skipped = Counter()
+            for row in batch:
+                if not isinstance(row, dict) or row.get("beach_name") != beach:
+                    continue
+                identity = row.get("measurement_id")
+                if not isinstance(identity, str) or not identity or identity in seen:
+                    continue
+                # Båda mätstorheterna krävs för en balanserad uppspelning.
+                if len(normalize([row], skipped)) == 2:
+                    seen.add(identity)
+                    rows.append(row)
+                if len(rows) == cfg.rows_per_beach:
+                    break
+            if skipped:
+                log.warning("%s: avvisade värden %s", beach, dict(skipped))
+            if len(rows) == cfg.rows_per_beach or len(batch) < cfg.rows_per_beach:
+                break
+        if len(rows) != cfg.rows_per_beach:
+            raise ValueError(f"För få giltiga datasetrader för {beach}")
+        selected.extend(rows)
+    return selected
 
 
 def load_sample(cfg: Config) -> list[dict]:
@@ -106,7 +142,15 @@ def _normalize_logged(raw: list[dict], source: str) -> list[Measurement]:
     measurements = normalize(raw, skipped)
     if skipped:
         log.warning("%s: %d värden/rader avvisades %s", source, sum(skipped.values()), dict(skipped))
-    return measurements
+    return interleave_sensors(measurements)
+
+
+def interleave_sensors(measurements: list[Measurement]) -> list[Measurement]:
+    groups = {}
+    for measurement in measurements:
+        groups.setdefault(measurement.sensor_id, []).append(measurement)
+    return [group[index] for index in range(max(map(len, groups.values()), default=0))
+            for group in groups.values() if index < len(group)]
 
 
 def load_measurements(cfg: Config, offline: bool = False) -> list[Measurement]:

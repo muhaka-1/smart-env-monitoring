@@ -68,12 +68,14 @@ def error_report_pdf(request):
                                  leftMargin=14*mm, rightMargin=14*mm, topMargin=14*mm, bottomMargin=16*mm,
                                  title="Felrapport")
     styles = getSampleStyleSheet()
+    styles["Title"].textColor = colors.HexColor("#183247")
     cell_style = ParagraphStyle("ReportCell", fontName="Helvetica", fontSize=8, leading=10, splitLongWords=True)
     header_style = ParagraphStyle("ReportHeader", parent=cell_style, fontName="Helvetica-Bold", textColor=colors.white)
     def paragraph(value, style=cell_style):
         return Paragraph(escape(str(value)), style)
     filters = context["filters"]
-    story = [Paragraph("Felrapport", styles["Title"]),
+    story = [paragraph("Badvattenkvalitet | Miljöövervakning"),
+             Paragraph("Felrapport", styles["Title"]),
              paragraph("Sensor: " + (filters["sensor_id"] or "Alla sensorer")),
              paragraph(f"Tidsintervall (UTC): {context['start_text']} - {context['end_text']}"),
              paragraph("Rapport skapad (UTC): " + context["generated_at"]),
@@ -93,7 +95,7 @@ def error_report_pdf(request):
         story.append(Spacer(1, 3*mm))
         table = LongTable(rows, repeatRows=1, colWidths=[69*mm, 26*mm, 40*mm, 28*mm, 15*mm, 37*mm, 32*mm])
         table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d6efd")),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#124d61")),
             ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f2f2f2")]),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -103,6 +105,8 @@ def error_report_pdf(request):
     def footer(canvas, doc):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.HexColor("#536578"))
+        canvas.drawString(14*mm, 9*mm, "Badvattenkvalitet | Simulerade data")
         canvas.drawRightString(landscape(A4)[0]-14*mm, 9*mm, f"Sida {doc.page}")
         canvas.restoreState()
     document.build(story, onFirstPage=footer, onLaterPages=footer)

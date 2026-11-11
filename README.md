@@ -94,17 +94,16 @@ Fyll i SMTP-värd, port, inloggning, nyckel, TLS/SSL och verifierad avsändare e
 
 För en **isolerad lokal verifiering utan utskick** kan processens `EMAIL_BACKEND` sättas till `django.core.mail.backends.locmem.EmailBackend` i varje backendterminal. Det är samma testbackend som i CI, inte verifiering av riktig e-postleverans. Se [ren end-to-end-start](docs/end-to-end.md) för ett komplett exempel utan SMTP-uppgifter.
 
-### 3. Förbered databasen och valfri demohistorik
+### 3. Förbered databasen
 
 PowerShell:
 
 ```powershell
 .\.venv\Scripts\python.exe backend\manage.py migrate
 .\.venv\Scripts\python.exe backend\manage.py createsuperuser
-.\.venv\Scripts\python.exe backend\manage.py seed_demo_data --repeat 2
 ```
 
-`seed_demo_data` lägger till historik utan att radera befintliga mätningar. Flaggan `--clear` avvisas för att skydda data.
+Historiken byggs av simulatorns mottagna mätningar. Ingen genererad demohistorik ska läsas in i kördatabasen. Befintliga databaser från äldre versioner kan innehålla demodata; säkerhetskopiera och identifiera sådana rader innan någon rensning.
 
 `createsuperuser` skapar ett lokalt testkonto interaktivt. Logga in för historik, meddelanden och rapporter; den publika sidan visar senaste värden. Admin kan bjuda in vanliga användare via [kontoinbjudningar](docs/invitations.md). Skapa inget nytt administratörskonto om du redan har ett.
 
@@ -124,10 +123,12 @@ Om `INGEST_API_KEY` är satt i backendens `.env`, sätt samma värde som process
 
 ```powershell
 Set-Location sensor
-..\.venv\Scripts\python.exe -m sensor_sim --offline --transport http --count 10
+..\.venv\Scripts\python.exe -m sensor_sim --transport http
 ```
 
-Ta bort `--offline` för att försöka läsa det öppna datasetet. Om datakällan inte kan nås använder simulatorn sin lokala reservdata.
+Simulatorn hämtar 25 giltiga rader per plats med serverfilter för Ohio Street Beach, 63rd Street Beach och Rainbow Beach. Lägg till `--offline` för att använda den verifierade lokala kopian av samma källa. Kopian används också om nätverkshämtningen misslyckas. Inga värden genereras slumpmässigt.
+
+En mätning skickas var femte sekund, växelvis mellan sex sensorer (tre platser × två mätstorheter). Varje sensor uppdateras därmed ungefär var 30:e sekund. Använd `--count 12` endast för en begränsad kontroll; utan `--count` fortsätter sändningen tills `Ctrl+C`. Värdena är historiska källvärden med aktuell sändtid, inte nya fältmätningar.
 
 ## Fullständigt MQTT-flöde
 
@@ -149,7 +150,7 @@ Starta därefter tre processer i var sin terminal:
 
 ```powershell
 Set-Location sensor
-..\.venv\Scripts\python.exe -m sensor_sim --offline --transport mqtt --count 10
+..\.venv\Scripts\python.exe -m sensor_sim --transport mqtt
 ```
 
 MQTT använder topic-formatet `beach/<sensor_id>/readings` och QoS 1. Se [protokollbeslutet](docs/protocol-decision.md) för motiveringen.
@@ -166,11 +167,11 @@ Stoppa simulator, MQTT-mottagare och Django med `Ctrl+C`. Stoppa brokern med `do
 | `GET` | `/api/readings/` | Returnerar historik med valfria filter; kräver inloggad session |
 | `GET` | `/api/readings/latest/` | Returnerar senaste värdet per sensor |
 
-Exempel på en mätning:
+Exempel på meddelandeformat (manuellt valda testvärden ska bara skickas till en isolerad testdatabas, inte kördatabasen):
 
 ```json
 {
-  "sensor_id": "oak-street-beach-turbidity",
+  "sensor_id": "ohio-street-beach-turbidity",
   "metric": "turbidity",
   "timestamp": "2026-10-30T12:00:00Z",
   "value": 11.1,

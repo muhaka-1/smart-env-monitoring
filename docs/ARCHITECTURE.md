@@ -2,6 +2,8 @@
 
 Det här dokumentet beskriver det **implementerade mätdataflödet** från dataset till dashboard, komponentgränserna och vad som händer när något går fel. Kontoflöden och rapporter avgränsas separat i avsnittet *Utanför dataflödet*. Det gäller MVP:n med **simulerad sensordata**. Fysisk sensor, ESP32 och firmware (`firmware/`) ingår inte i flödet nedan.
 
+Urvalet hämtar 25 giltiga rader per plats för Ohio Street Beach, 63rd Street Beach och Rainbow Beach med serverfilter före paginering. Simulatorn växlar mellan sex sensorer; reservfilen innehåller verifierade originalrader från samma platser. Historik byggs via mottagningsvägen utan direktinläst demodata.
+
 ## Dataflöde
 
 Varje pil är namngiven med protokoll eller anropstyp. Tjocka pilar är huvudflödet över MQTT. Streckade pilar visar datasetets reservfil respektive det manuellt valda HTTP-alternativet.

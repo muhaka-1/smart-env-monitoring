@@ -1,0 +1,3 @@
+{% extends "monitoring/error_page.html" %}
+{% block title %}Ett fel har inträffat{% endblock %}
+{% block content %}{% with code="500" heading="Ett fel har inträffat" explanation="Sidan kunde inte visas just nu. Försök igen om en stund." %}{{ block.super }}{% endwith %}{% endblock %}

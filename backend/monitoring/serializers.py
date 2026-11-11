@@ -10,10 +10,18 @@ SENSOR_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,99}$")
 DEFAULT_UNITS = {"turbidity": "NTU", "temperature": "°C"}
 
 
+class ReadingValueField(serializers.FloatField):
+    def to_internal_value(self, data):
+        if isinstance(data, bool):
+            self.fail("invalid")
+        return super().to_internal_value(data)
+
+
 class ReadingSerializer(serializers.ModelSerializer):
     """Validerar inkommande sensordata och serialiserar utdata."""
 
     threshold = serializers.SerializerMethodField()
+    value = ReadingValueField()
 
     class Meta:
         model = Reading

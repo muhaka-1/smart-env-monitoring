@@ -2,6 +2,7 @@ const REFRESH_MS = 5000;
 const MAIN = document.querySelector("main");
 const STALE_MS = Number(MAIN.dataset.readingStaleSeconds) * 1000;
 const CAN_VIEW_HISTORY = document.body.dataset.canViewHistory === "true";
+const HAS_HISTORY_PANEL = CAN_VIEW_HISTORY && Boolean(document.getElementById("sensor"));
 const LABELS = { turbidity: "Turbiditet", temperature: "Temperatur" };
 const RANGE_PRESETS = {
   hour: { hours: 1, label: "senaste timmen" },
@@ -19,7 +20,11 @@ let pendingRefresh = false;
 
 async function getJSON(url) {
   const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url} -> HTTP ${r.status}`);
+  if (!r.ok) {
+    const error = new Error("Mätvärdena kunde inte hämtas.");
+    error.status = r.status;
+    throw error;
+  }
   return r.json();
 }
 
@@ -55,6 +60,7 @@ function el(tag, className, text) {
 
 function renderCards(items) {
   const container = $("cards");
+  if (!container) return;
   container.replaceChildren();
   if (!items.length) {
     container.append(el("p", "text-muted", "Inga mätvärden ännu."));
@@ -87,12 +93,10 @@ function renderCards(items) {
     container.append(col);
 
     if (CAN_VIEW_HISTORY) {
-      card.setAttribute("role", "button");
-      card.addEventListener("click", () => {
-        selected = r.sensor_id;
-        $("sensor").value = selected;
-        refresh();
-      });
+      const link = el("a", "stretched-link", "Visa historik");
+      link.setAttribute("aria-label", `Visa historik för ${sensorOptionLabel(r.sensor_id)}`);
+      link.href = `${MAIN.dataset.historyUrl}?sensor_id=${encodeURIComponent(r.sensor_id)}`;
+      body.append(link);
     }
   }
 }
@@ -127,7 +131,7 @@ function renderChart(data) {
   }
   const cfg = { datasets };
   explanation.textContent = "● OK · ▲ Avvikelse. Statusen följer projektets konfigurerade gränsregel och är inte en officiell bedömning av badvattnet.";
-  const options = { animation: false, parsing: false, plugins: { tooltip: { callbacks: {
+  const options = { responsive: true, maintainAspectRatio: false, animation: false, parsing: false, plugins: { tooltip: { callbacks: {
     title: (items) => items.length ? fmt(items[0].parsed.x) : "",
     label: (item) => item.datasetIndex === 0
       ? `${name}: ${item.parsed.y} ${data.unit || ""} · ${isAnomaly(item.raw.status) ? "⚠ Avvikelse" : "✔ OK"}`
@@ -249,15 +253,26 @@ async function refresh() {
   if (inFlight) { pendingRefresh = true; return; }   // kör om direkt efter pågående anrop
   inFlight = true;
   try {
-    if (CAN_VIEW_HISTORY) {
+    if (HAS_HISTORY_PANEL) {
       const sensors = (await getJSON("/api/sensors/")).results;
       renderSensorOptions(sensors);
-      if (!selected && sensors.length) selected = sensors[0];
+      if (!selected && sensors.length) {
+        const requested = new URLSearchParams(window.location.search || "").get("sensor_id");
+        selected = sensors.includes(requested) ? requested : sensors[0];
+      }
       if (selected) $("sensor").value = selected;
     }
     latestReadings = (await getJSON("/api/readings/latest/")).results;
     renderCards(latestReadings);
-    if (CAN_VIEW_HISTORY && selected) {
+    const summary = {
+      "summary-total": latestReadings.length,
+      "summary-anomaly": latestReadings.filter((r) => isAnomaly(r.status)).length,
+      "summary-stale": latestReadings.filter((r) => !Number.isFinite(Date.parse(r.timestamp)) || Date.now() - Date.parse(r.timestamp) > STALE_MS).length,
+    };
+    for (const [id, count] of Object.entries(summary)) {
+      if ($(id)) $(id).textContent = String(count);
+    }
+    if (HAS_HISTORY_PANEL && selected) {
       const history = historyUrl();
       if (history.error) renderRangeError(history.error);
       else renderChart(await getJSON(history.url));
@@ -265,8 +280,13 @@ async function refresh() {
     $("updated").textContent = "Uppdaterad " + new Date().toLocaleTimeString("sv-SE");
     $("error").classList.add("d-none");
   } catch (e) {
+    if (HAS_HISTORY_PANEL && (e.status === 401 || e.status === 403)) {
+      renderRangeError("Din session har gått ut eller saknar behörighet. Logga in igen för att visa historiken.");
+    }
     if (latestReadings.length) renderCards(latestReadings);
-    $("error").textContent = "Kunde inte hämta data: " + e.message;
+    else if ($("cards")) $("cards").replaceChildren(el("p", "text-muted", "Mätvärdena är inte tillgängliga just nu."));
+    $("updated").textContent = "Uppdateringen misslyckades";
+    $("error").textContent = "Kunde inte hämta nya mätvärden. Kontrollera anslutningen eller logga in igen. Ett nytt försök görs automatiskt.";
     $("error").classList.remove("d-none");
   } finally {
     inFlight = false;
@@ -274,7 +294,7 @@ async function refresh() {
   }
 }
 
-if (CAN_VIEW_HISTORY) {
+if (HAS_HISTORY_PANEL) {
   window.addEventListener("resize", () => {
     requestAnimationFrame(() => {
       if (chart) chart.resize();

@@ -1,0 +1,22 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+{% block nav-sidebar %}{% include "admin/nav_sidebar.html" %}{% endblock %}
+{% block content_title %}<div class="administration-heading"><p class="administration-eyebrow">DIN ARBETSPLATS</p><h1>Administration</h1><p>Hantera plattformens konton, behörigheter och sparade mätvärden.</p></div>{% endblock %}
+{% block content %}
+<div id="content-main" class="administration-overview">
+{% for app in app_list %}
+<section class="administration-section" aria-labelledby="app-heading-{{ app.app_label }}">
+<h2 id="app-heading-{{ app.app_label }}">{{ app.name }}</h2>
+<div class="administration-models">
+{% for model in app.models %}
+<article class="administration-model">
+<p class="administration-eyebrow">{{ app.name }}</p><h3>{{ model.name }}</h3>
+<div class="administration-model-actions">
+{% if model.admin_url %}<a class="administration-button" href="{{ model.admin_url }}">{% if model.view_only %}Visa{% else %}Öppna{% endif %}<span class="visually-hidden"> {{ model.name }}</span> →</a>{% endif %}
+{% if model.add_url %}<a class="administration-add" href="{{ model.add_url }}">{% translate 'Add' %}<span class="visually-hidden"> {{ model.name }}</span></a>{% endif %}
+</div></article>
+{% endfor %}
+</div></section>
+{% empty %}<p class="administration-empty">{% translate 'You don’t have permission to view or edit anything.' %}</p>{% endfor %}
+</div>
+{% endblock %}

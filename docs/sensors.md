@@ -1,46 +1,27 @@
 # Sensorer, intervall och meddelanden
 
-## MVP-beslut för datasetet
+## Val av källdata
 
-- **Källa:** City of Chicago, *Beach Water Quality – Automated Sensors*.
-- **Vald plats:** Ohio Street Beach.
-- **Primärt mätvärde:** turbiditet i NTU, eftersom projektets scenario handlar om badvattenkvalitet.
-- **Kompletterande mätvärde:** vattentemperatur i °C. Det ger ett andra realistiskt mätflöde men kan tas bort utan att MVP:n slutar fungera.
-- **Lokal reservdata:** `sensor/data/chicago_sample.json` med 25 verkliga datasetrader.
+- **Källa:** City of Chicago, *Beach Water Quality – Automated Sensors*, Socrata `qmqz-2xku`.
+- **Platser för projektets uppspelning:** Ohio Street Beach, 63rd Street Beach och Rainbow Beach. Antalet tre är ett projektval, inte ett krav från uppgiften.
+- **Mätstorheter:** turbiditet (`turbidity`, NTU) och vattentemperatur (`water_temperature`, °C). Lufttemperatur används inte.
+- **Urval:** serverfilter `beach_name` per plats, 25 giltiga rader med båda mätstorheterna och unika `measurement_id`. Sortering: `measurement_timestamp DESC, measurement_id DESC`.
+- **Ofullständiga rader:** ordinarie validering används; urvalet söker nästa sida tills kvoten fyllts, högst 10 sidor per plats. En ofullständig kvot eller ett nätverksfel ger återgång till den verifierade reservfilen för alla tre platser. Saknade värden ersätts aldrig med noll.
+- **Reservfil:** `sensor/data/chicago_sample.json`. Den innehåller ursprungliga rader inklusive `measurement_id` och källtid; inga slumpmässiga variationer används.
 
-### Kontroll av reservdatan
+### Ursprungskontroll av reservfilen
 
-Kontrollen utfördes 2026-10-29. Alla 25 rader är användbara och ger tillsammans 50 simulerade mätvärden: 25 turbiditetsvärden och 25 temperaturvärden.
+Hämtad och verifierad **2026-11-11** från [officiellt JSON-API](https://data.cityofchicago.org/resource/qmqz-2xku.json). För varje plats används `$where=beach_name='platsnamn'`, `$limit=25` och sidindelning med `$offset`. Alla 75 sparade rader jämfördes därefter i sin helhet mot ett separat API-anrop filtrerat på deras `measurement_id`: **75 av 75 matchade exakt**.
 
-| Kontroll | Resultat |
-| --- | --- |
-| Plats | 25 av 25 rader: Ohio Street Beach |
-| Unika `measurement_id` | 25 av 25 |
-| Saknade platsnamn, tidsstämplar, mätvärden eller ID | 0 |
-| Turbiditet | 0,00–0,99 NTU |
-| Vattentemperatur | 22,4–23,1 °C |
-| Rader som avvisas av simulatorns validering | 0 |
+| Plats | Giltiga rader | Äldsta källtid | Nyaste källtid |
+| --- | ---: | --- | --- |
+| Ohio Street Beach | 25 | 2026-09-24 23:00 | 2026-09-25 23:00 |
+| 63rd Street Beach | 25 | 2015-09-13 03:00 | 2025-03-18 00:30 |
+| Rainbow Beach | 25 | 2015-09-30 05:00 | 2025-03-18 00:30 |
 
-Den lokala kopian uppfyller därmed kravet på minst 20 användbara rader. Det fullständiga fjärrdatasetet kan däremot innehålla saknade, negativa eller orimliga värden. Dessa fall och simulatorns hantering dokumenteras i [`data-rules.md`](data-rules.md).
+Källtiderna ovan är återgivna som i datasetet. Äldre ursprungstider är väntade vid återspelning. Alla rader klarar befintlig validering och ger totalt 150 mätningar, 25 per sensor. Verktyget `python -m tools.fetch_real_sample --beach "Ohio Street Beach" --rows 25` använder samma serverfiltrerade urval.
 
-## Sensorlista i den äldre demofilen
-
-Sensor-ID skapas av strandnamnet i datasetet: `<strandnamn som slug>-<mätstorhet>`.
-
-Simulatorns reservfil `sensor/data/chicago_sample.json` innehåller 25 faktiska rader från Ohio Street Beach i [Chicago Beach Water Quality](https://data.cityofchicago.org/resource/qmqz-2xku.json), hämtade 2026-10-29. Tidsintervallet i källan är 2026-09-24 23:00–2026-09-25 23:00. Kolumnerna är `beach_name`, `measurement_timestamp`, `turbidity`, `water_temperature` och `measurement_id`. Fälten kan kontrolleras med `python -m tools.fetch_real_sample` i `sensor/`.
-
-Den äldre filen `sample_readings.json` används separat för demodata. Tabellen nedan beskriver den, inte den nya reservfilen.
-
-| Strand (visningsnamn) | Sensor-ID | Mätstorhet | Enhet | Gränsvärde (avvikelse om värdet är **över**) |
-| --- | --- | --- | --- | --- |
-| Oak Street Beach | `oak-street-beach-turbidity` | Grumlighet | NTU | 30 |
-| Oak Street Beach | `oak-street-beach-temperature` | Vattentemperatur | °C | 25 |
-| 63rd Street Beach | `63rd-street-beach-turbidity` | Grumlighet | NTU | 30 |
-| 63rd Street Beach | `63rd-street-beach-temperature` | Vattentemperatur | °C | 25 |
-| Rainbow Beach | `rainbow-beach-turbidity` | Grumlighet | NTU | 30 |
-| Rainbow Beach | `rainbow-beach-temperature` | Vattentemperatur | °C | 25 |
-
-Gränsvärden: `ANOMALY_THRESHOLD_TURBIDITY` / `ANOMALY_THRESHOLD_TEMPERATURE` i backend. Projektet använder simulerade sensorer.
+Sensor-ID skapas av strandnamnet: `<strandnamn som slug>-<mätstorhet>`. Oak Street Beach finns inte i den aktuella vattenmätgruppen och ingår inte i uppspelningen. Den äldre demofilen och kommandot för direktinläsning av varierad demohistorik har tagits bort; normal start fyller bara historik via simulatorn och mottagningsvägen.
 
 ## Gränsvärden och statusens innebörd (issue #13)
 
@@ -58,7 +39,7 @@ Standardgränserna är 30 NTU för turbiditet och 25 °C för temperatur. Enligt
 
 Källorna granskades 2026-10-29. De förklarar begränsningarna i bedömningen; de är inte källor till projektets demonstrationsvärden. För användning som faktiska verksamhetsgränser krävs en separat motivering utifrån användningsfall och platsens förutsättningar.
 
-Reservfilens turbiditet (0,00–0,99 NTU) och temperatur (22,4–23,1 °C) ligger under standardgränserna. För att demonstrera en avvikelse utan att ändra datasetet kan backend startas med en tillfällig lokal gräns, exempelvis `ANOMALY_THRESHOLD_TEMPERATURE=23`. Nya temperaturmätningar över 23 °C får då `ANOMALY`; redan lagrade statusvärden räknas inte om. Ta bort den tillfälliga miljövariabeln och starta om backend för att återgå till standardgränsen. Tester använder separata testvärden under, på och över båda gränserna.
+Reservfilen innehåller ursprungliga värden från tre platser och kan ge både OK och ANOMALY. För att demonstrera en avvikelse utan att ändra datasetet kan backend startas med en tillfällig lokal gräns, exempelvis `ANOMALY_THRESHOLD_TEMPERATURE=23`. Kör sådana manuella försök endast mot en separat testdatabas med `EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend`, aldrig mot driftens databas eller SMTP-utskick. Nya temperaturmätningar över 23 °C får då `ANOMALY`; redan lagrade statusvärden räknas inte om. Ta bort den tillfälliga miljövariabeln och starta om backend för att återgå till standardgränsen. Tester använder separata testvärden under, på och över båda gränserna.
 
 ## Enheter
 
@@ -70,8 +51,8 @@ Reservfilens turbiditet (0,00–0,99 NTU) och temperatur (22,4–23,1 °C) ligge
 | Källa | Intervall |
 | --- | --- |
 | PC-simulator | **5 s** totalt (`SENSOR_INTERVAL` eller `--interval`), ett meddelande åt gången |
-| PC-simulator, per sensor (reservfilen) | var **10 s** (2 sensorer delar på 5 s-takten). Ett varv = 50 meddelanden = **4 min 10 s** |
-| PC-simulator, per sensor (riktiga datasetet) | varierar: beror på antalet sensorer och hur mätningarna fördelas i datasetet |
+| PC-simulator, per sensor | ungefär var **30 s** (6 sensorer delar på 5 s-takten). Ett varv = 150 meddelanden = **12 min 30 s** |
+| Fördelning | en mätning per sensor i varje sexmeddelandersomgång, i tidsordning inom respektive sensor |
 
 Formel för simulatorn: tid per sensor = intervall × antal meddelanden mellan två sändningar från samma sensor.
 
@@ -90,11 +71,11 @@ Formel för simulatorn: tid per sensor = intervall × antal meddelanden mellan t
 | **Format** | JSON |
 
 ```json
-{"sensor_id":"oak-street-beach-turbidity","metric":"turbidity","timestamp":"2026-10-27T12:00:00.123456+00:00","value":4.28,"unit":"NTU","quality":"good"}
+{"sensor_id":"ohio-street-beach-turbidity","metric":"turbidity","timestamp":"2026-10-27T12:00:00.123456+00:00","value":4.28,"unit":"NTU","quality":"good"}
 ```
 
 `timestamp` är sändtidpunkten (aktuell tid, UTC) enligt krav 2.1; datasetets ursprungliga mättid bevaras inte.
-`quality`: `good`, `suspect` eller `bad`.
+`quality`: `good`, `suspect` eller `bad`. Officiella nollvärden bevaras; saknade eller logiska värden (`true`/`false`) ersätts aldrig med noll.
 
 ### Vid anslutningsfel
 
@@ -104,6 +85,6 @@ Formel för simulatorn: tid per sensor = intervall × antal meddelanden mellan t
 4. Backend loggar och avvisar ogiltig data utan att stoppa konsumenten.
 5. Klienten (`paho`) återansluter själv i bakgrunden efter ett avbrott.
 
-## Demodata för diagrammet
+## Historik i kördatabasen
 
-`python manage.py seed_demo_data --repeat 7` fyller databasen med cirka 6 dygn historik för alla 6 sensorer (se README).
+Historik skapas genom verklig inmatning från simulatorn via HTTP eller MQTT. Automatiska tester får använda konstruerade värden i separata testdatabaser; de ska inte fylla kördatabasen.

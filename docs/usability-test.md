@@ -25,7 +25,7 @@ Läs upp en uppgift i taget utan att peka ut rätt kontroll.
 1. Hitta vilken plats som har den senaste avvikelsen.
 2. Förklara med egna ord vad **OK** och **Avvikelse** betyder. Fråga därefter om
    statusen är ett badråd.
-3. Hitta det senaste turbiditetsvärdet för Oak Street Beach.
+3. Hitta det senaste turbiditetsvärdet för Ohio Street Beach.
 4. Visa historiken för en annan plats och välj senaste dygnet.
 5. Välj ett eget tidsintervall och återställ sedan filtret.
 6. Förklara vad varningen om en inaktuell mätning betyder.

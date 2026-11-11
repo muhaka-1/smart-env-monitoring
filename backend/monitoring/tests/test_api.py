@@ -1,8 +1,11 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from monitoring.models import Reading
+from monitoring.models import Alert, Notification, Reading
+from monitoring.serializers import ReadingSerializer
 
 
 def make(sensor="a", ts="2026-01-01T10:00:00Z", value=5.0):
@@ -49,6 +52,25 @@ class ApiTests(TestCase):
         reading = Reading.objects.get(pk=created.json()["id"])
         self.assertEqual(reading.value, 5.0)
         self.assertEqual(reading.status, "OK")
+
+    def test_duplicate_saved_after_validation_returns_400_without_side_effects(self):
+        validate = ReadingSerializer.is_valid
+
+        def validate_before_competing_insert(serializer, *args, **kwargs):
+            result = validate(serializer, *args, **kwargs)
+            Reading.objects.create(**{**serializer.validated_data, "value": 5.0}, status="OK")
+            return result
+
+        with patch.object(ReadingSerializer, "is_valid", validate_before_competing_insert):
+            response = self.post(make(value=99))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("non_field_errors", response.json())
+        self.assertEqual(Reading.objects.count(), 1)
+        reading = Reading.objects.get()
+        self.assertEqual((reading.value, reading.status), (5.0, "OK"))
+        self.assertFalse(Alert.objects.exists())
+        self.assertFalse(Notification.objects.exists())
 
     def test_post_rejects_invalid_timestamps_without_saving(self):
         for timestamp in ("nope", "2026-02-30T10:00:00Z", "", None):

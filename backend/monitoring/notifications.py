@@ -38,9 +38,9 @@ def create_alert(reading, threshold):
     )
     if not created:
         return
-    users = get_user_model().objects.filter(is_active=True).exclude(email="").iterator()
+    users = get_user_model().objects.filter(is_active=True).iterator()
     Notification.objects.bulk_create([
-        Notification(alert=alert, user=user) for user in users if valid_recipient(user)
+        Notification(alert=alert, user=user) for user in users
     ])
     transaction.on_commit(lambda: deliver_alert(alert.pk))
 
@@ -64,7 +64,7 @@ def deliver_notification(notification_id):
     if not valid_recipient(message.user):
         Notification.objects.filter(pk=notification_id).update(
             delivery_status=Notification.DeliveryStatus.FAILED,
-            delivery_error="Mottagaren är inte längre aktiv eller saknar giltig e-postadress.",
+            delivery_error="E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen.",
         )
         return
     alert = message.alert

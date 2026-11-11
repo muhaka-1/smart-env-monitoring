@@ -1,0 +1,3 @@
+{% extends "monitoring/error_page.html" %}
+{% block title %}Begäran kunde inte behandlas{% endblock %}
+{% block content %}{% with code="400" heading="Begäran kunde inte behandlas" explanation="Kontrollera adressen och försök igen." %}{{ block.super }}{% endwith %}{% endblock %}

@@ -27,6 +27,7 @@ class DashboardAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-can-view-history="true"')
         self.assertContains(response, "Inloggad som pat")
+        response = self.client.get(reverse("history"))
         self.assertContains(response, 'id="history-panel"')
         self.assertContains(response, 'id="sensor"')
 

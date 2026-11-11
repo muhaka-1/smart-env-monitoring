@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}{{ title }} | Badvattenkvalitet{% endblock %}
+{% block branding %}<a class="administration-brand" href="{% url 'admin:index' %}"><img src="{% static 'monitoring/mark.svg' %}" width="42" height="42" alt=""><span>Badvattenkvalitet<small>Administration</small></span></a><span class="visually-hidden">Badvattenkvalitet · Administration</span>{% endblock %}
+{% block responsive %}{{ block.super }}<link rel="stylesheet" href="{% static 'monitoring/administration.css' %}">{% endblock %}
+{% block extrahead %}{{ block.super }}<script src="{% static 'monitoring/interface.js' %}" defer></script><link rel="icon" href="{% static 'monitoring/mark.svg' %}" type="image/svg+xml">{% endblock %}
+{% block usertools %}{% if has_permission %}<div id="user-tools"><details class="account-menu administration-account"><summary><span class="administration-avatar" aria-hidden="true">{{ user.get_username|first|upper }}</span><span class="administration-username">{{ user.get_username }}</span><span aria-hidden="true">⌄</span><span class="visually-hidden">Mitt konto</span></summary><div class="administration-account-links">{% block userlinks %}
+  {% if user.is_active and user.is_staff %}{% url 'django-admindocs-docroot' as docsroot %}{% if docsroot %}<a href="{{ docsroot }}">{% translate 'Documentation' %}</a>{% endif %}{% endif %}
+  {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">{% translate 'Change password' %}</a>{% endif %}
+  <form id="logout-form" method="post" action="{% url 'admin:logout' %}">{% csrf_token %}<button type="submit">{% translate 'Log out' %}</button></form>
+  {% include "admin/color_theme_toggle.html" %}
+{% endblock %}</div></details></div>{% endif %}{% endblock %}
+{% block nav-global %}<a class="platform-link" href="{% url 'dashboard' %}">Till plattformen →</a>
+{% if has_permission %}<details class="administration-mobile-nav"><summary>Meny</summary><nav aria-label="Administration"><a href="{% url 'dashboard' %}">Till plattformen</a><a href="{% url 'admin:index' %}">Administration</a>{% for app in available_apps %}{% for model in app.models %}{% if model.admin_url %}<a href="{{ model.admin_url }}">{{ model.name }}</a>{% endif %}{% endfor %}{% endfor %}</nav></details>{% endif %}
+{% endblock %}
+{% block footer %}<span>Badvattenkvalitet</span><span>Administration · Simulerade miljödata</span>{% endblock %}

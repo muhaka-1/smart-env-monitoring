@@ -1,0 +1,46 @@
+{% extends "monitoring/base.html" %}
+{% load static %}
+{% block title %}Historik{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">MÄTDATA</p><h1>Historik</h1><p>Utforska tidigare mätningar och spara ditt urval som PDF.</p></div><span id="updated" class="update-status" role="status">Laddar…</span></div>
+<noscript><p class="alert alert-info">Aktivera JavaScript för att visa och filtrera mätvärden.</p></noscript>
+<div id="error" class="alert alert-danger d-none" role="alert"></div>
+  <div class="card shadow-sm" id="history-panel">
+    <div class="card-body">
+      <h2 class="h4 mb-1">Historik</h2>
+      <p class="text-muted mb-3">Välj plats, mätvärde och tidsintervall för att utforska tidigare mätningar.</p>
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-4"><label class="form-label" for="sensor">Plats och mätvärde</label>
+          <select id="sensor" class="form-select"></select></div>
+        <div class="col-md-3"><label class="form-label" for="from">Från</label>
+          <input id="from" type="datetime-local" class="form-control"></div>
+        <div class="col-md-3"><label class="form-label" for="to">Till</label>
+          <input id="to" type="datetime-local" class="form-control"></div>
+        <div class="col-md-2 d-flex flex-wrap gap-2">
+          <button id="apply" class="btn btn-primary flex-grow-1">Filtrera</button>
+          <button id="reset" class="btn btn-outline-secondary flex-grow-1">Nollställ</button>
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-2" role="group" aria-label="Snabbval för tidsintervall">
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset" data-range="hour">Senaste timmen</button>
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset" data-range="day">Senaste dygnet</button>
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset" data-range="week">Senaste 7 dagarna</button>
+        <button type="button" class="btn btn-sm btn-outline-primary range-preset active" data-range="all" aria-pressed="true">Senaste 200</button>
+      </div>
+      <p id="interval-summary" class="small text-muted mb-2" role="status">Intervall: senaste 200 mätningarna.</p>
+      <div class="d-flex justify-content-end mb-3">
+        <button id="download-pdf" type="button" class="btn btn-success">
+          Ladda ned PDF
+        </button>
+      </div>
+      <p class="small text-muted">Diagram och PDF visar högst 200 av de senaste matchande mätningarna, inte nödvändigtvis hela tidsintervallet. PDF anger antal visade och utelämnade mätningar. Tider i PDF är UTC; datumfälten och diagrammet använder webbläsarens lokala tid.</p>
+      <p id="history-message" class="text-muted" role="status"></p>
+      <div class="chart-frame">
+        <canvas hidden id="chart" role="img" aria-label="Historiska mätvärden över tid" aria-describedby="chart-explanation" class="mw-100" height="110"></canvas>
+      </div>
+      <p id="chart-explanation" class="small text-muted mt-2" hidden></p>
+    </div>
+  </div>
+
+{% endblock %}
+{% block scripts %}<script src="{% static 'monitoring/vendor/chart.umd.min.js' %}"></script><script src="{% static 'monitoring/dashboard.js' %}"></script>{% endblock %}

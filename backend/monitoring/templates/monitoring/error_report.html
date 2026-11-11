@@ -1,15 +1,9 @@
-{% load static tz %}
-<!doctype html>
-<html lang="sv">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Felrapport – Smart Environmental Monitoring</title>
-  <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
-</head>
-<body class="bg-light">
-<main class="container py-4">
-  <h1>Felrapport</h1>
+{% extends "monitoring/base.html" %}
+{% load tz %}
+{% block title %}Felrapport{% endblock %}
+{% block content %}
+
+  <div class="page-heading"><div><p class="eyebrow">DINA AVVIKELSER</p><h1>Felrapport</h1></div></div>
   <p class="alert alert-info">Rapporten visar dina sparade projektavvikelser, inte en myndighetsbedömning av badvattenkvalitet.</p>
   <div class="d-flex flex-wrap gap-2 mb-3">
     <a class="btn btn-outline-primary" href="{% url 'dashboard' %}">Till dashboarden</a>
@@ -37,17 +31,26 @@
   </form>
   {% if filters %}
   <p class="text-break">Sensor: {{ filters.sensor_id|default:"Alla sensorer" }}. Tidsintervall (UTC): {{ start_text }} – {{ end_text }}.</p>
-  <p>Rapport skapad (UTC): {{ generated_at }}. Totalt {{ total }} händelser.</p>
-  <p><a class="btn btn-success" href="{{ pdf_url }}">Ladda ned PDF</a> PDF innehåller alla händelser som matchar filtret.</p>
+  <div class="report-results-toolbar panel mb-3">
+    <div>
+      <h2 class="h5 mb-1">Resultat</h2>
+      <p class="mb-1">Totalt {{ total }} händelser.</p>
+      <p class="small text-muted mb-0">Rapport skapad (UTC): {{ generated_at }}.</p>
+    </div>
+    <div class="report-results-export">
+      <a class="btn btn-success" href="{{ pdf_url }}" aria-describedby="report-pdf-description">Ladda ned PDF</a>
+      <p id="report-pdf-description" class="small text-muted mt-2 mb-0">PDF innehåller alla händelser som matchar filtret.</p>
+    </div>
+  </div>
   {% for alert in page_obj %}
-  <article class="card shadow-sm p-3 mb-3 text-break" aria-labelledby="alert-{{ alert.pk }}">
+  <article class="panel mb-3 text-break" aria-labelledby="alert-{{ alert.pk }}">
     <h2 class="h4" id="alert-{{ alert.pk }}">{{ alert.sensor_id }}</h2>
-    <dl class="row mb-0">
-      <dt class="col-sm-5">Mätstorhet</dt><dd class="col-sm-7">{{ alert.get_metric_display }}</dd>
-      <dt class="col-sm-5">Tid (UTC)</dt><dd class="col-sm-7">{% timezone "UTC" %}{{ alert.timestamp|date:"Y-m-d H:i:s" }}{% endtimezone %}</dd>
-      <dt class="col-sm-5">Värde</dt><dd class="col-sm-7">{{ alert.value }} {{ alert.unit }}</dd>
-      <dt class="col-sm-5">Gränsvärde vid mätningen</dt><dd class="col-sm-7">{{ alert.threshold }} {{ alert.unit }}</dd>
-      <dt class="col-sm-5">Status</dt><dd class="col-sm-7">{{ alert.status }}</dd>
+    <dl class="record-details">
+      <div><dt>Mätstorhet</dt><dd>{{ alert.get_metric_display }}</dd></div>
+      <div><dt>Tid (UTC)</dt><dd>{% timezone "UTC" %}{{ alert.timestamp|date:"Y-m-d H:i:s" }}{% endtimezone %}</dd></div>
+      <div><dt>Värde</dt><dd>{{ alert.value }} {{ alert.unit }}</dd></div>
+      <div><dt>Gränsvärde vid mätningen</dt><dd>{{ alert.threshold }} {{ alert.unit }}</dd></div>
+      <div><dt>Status</dt><dd>{{ alert.status }}</dd></div>
     </dl>
   </article>
   {% empty %}
@@ -61,6 +64,5 @@
   </nav>
   {% endif %}
   {% endif %}
-</main>
-</body>
-</html>
+
+{% endblock %}

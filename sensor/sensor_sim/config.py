@@ -15,10 +15,9 @@ class Config:
     mqtt_port: int = 1883
     mqtt_topic_template: str = "beach/{sensor_id}/readings"
     # Chicago Park District - Beach Water Quality Automated Sensors (Socrata)
-    dataset_url: str = (
-        "https://data.cityofchicago.org/resource/qmqz-2xku.json"
-        "?$limit=500&$order=measurement_timestamp DESC"
-    )
+    dataset_url: str = "https://data.cityofchicago.org/resource/qmqz-2xku.json"
+    beaches: tuple[str, ...] = ("Ohio Street Beach", "63rd Street Beach", "Rainbow Beach")
+    rows_per_beach: int = 25
     sample_path: Path = PKG_ROOT / "data" / "chicago_sample.json"
     max_retries: int = 5
     retry_base_delay: float = 1.0
