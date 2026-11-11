@@ -5,9 +5,11 @@ from django.urls import include, path
 from monitoring import accounts
 from monitoring.message_views import MessageListView
 from monitoring.error_report_views import error_report
-from monitoring.views import DashboardView
+from monitoring.views import DashboardView, HistoryView, ReportListView
 
 urlpatterns = [
+    path("history/", HistoryView.as_view(), name="history"),
+    path("reports/", ReportListView.as_view(), name="report-list"),
     path("reports/errors/", error_report, name="error-report"),
     path("messages/", MessageListView.as_view(), name="message-list"),
     path("admin/", admin.site.urls),

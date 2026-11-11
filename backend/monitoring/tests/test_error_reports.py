@@ -178,7 +178,8 @@ class ErrorReportTests(TestCase):
     def test_report_navigation_is_available_only_after_login(self):
         self.assertNotContains(self.client.get(reverse("dashboard")), f'href="{self.page_url}"')
         self.login()
-        self.assertContains(self.client.get(reverse("dashboard")), f'href="{self.page_url}"')
+        self.assertContains(self.client.get(reverse("dashboard")), f'href="{reverse("report-list")}"')
+        self.assertContains(self.client.get(reverse("report-list")), f'href="{self.page_url}"')
         self.assertContains(self.client.get(reverse("message-list")), f'href="{self.page_url}"')
 
     def test_new_events_do_not_change_export_of_already_displayed_selection(self):

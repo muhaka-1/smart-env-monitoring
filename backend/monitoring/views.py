@@ -3,8 +3,11 @@ from datetime import timezone as dt_timezone
 from io import BytesIO
 
 from django.conf import settings
-from django.db import connection
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import connection, transaction
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.utils.dateparse import parse_datetime
 from django.views.generic import TemplateView
 from rest_framework import status
@@ -17,6 +20,7 @@ from rest_framework.views import APIView
 from . import services
 from .serializers import SENSOR_ID_RE, ReadingSerializer
 from .models import Reading
+from .notifications import messages_for
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -46,6 +50,7 @@ def _api_key_ok(request):
     return hmac.compare_digest(request.headers.get("X-API-Key", "").encode("utf-8"), expected.encode("utf-8"))
 
 
+@method_decorator(never_cache, name="dispatch")
 class DashboardView(TemplateView):
     template_name = "monitoring/dashboard.html"
 
@@ -53,7 +58,17 @@ class DashboardView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["reading_stale_seconds"] = max(
             1, settings.READING_STALE_SECONDS)
+        if self.request.user.is_authenticated and self.template_name == "monitoring/dashboard.html":
+            context["recent_notifications"] = messages_for(self.request.user)[:3]
         return context
+
+
+class HistoryView(LoginRequiredMixin, DashboardView):
+    template_name = "monitoring/history.html"
+
+
+class ReportListView(LoginRequiredMixin, TemplateView):
+    template_name = "monitoring/reports.html"
 
 
 class HealthView(APIView):
@@ -151,14 +166,16 @@ def history_pdf(request):
     if start is not None and end is not None and start > end:
         return HttpResponseBadRequest("Starttiden måste vara tidigare än sluttiden.")
 
-    # Samma gräns och sortering som dashboardens historik.
-    rows = services.query_history(
-        sensor_id=sensor_id,
-        start=start,
-        end=end,
-        limit=200,
-        descending=False,
-    )
+    matches = Reading.objects.filter(sensor_id=sensor_id)
+    if start is not None:
+        matches = matches.filter(timestamp__gte=start)
+    if end is not None:
+        matches = matches.filter(timestamp__lte=end)
+    # Antal och urval ska beskriva samma databasögonblick även under inmatning.
+    with transaction.atomic():
+        total = matches.count()
+        rows = list(matches.order_by("-timestamp", "-pk")[:200])
+    rows.reverse()
 
     buffer = BytesIO()
     document = SimpleDocTemplate(
@@ -168,11 +185,15 @@ def history_pdf(request):
         leftMargin=18 * mm,
         topMargin=18 * mm,
         bottomMargin=18 * mm,
-        title="Historiska mätvärden",
+        title="Historiska mätvärden - Senaste 200",
     )
     styles = getSampleStyleSheet()
+    styles["Title"].textColor = colors.HexColor("#183247")
     story = [
-        Paragraph("Historiska mätvärden", styles["Title"]),
+        Paragraph("Badvattenkvalitet | Miljöövervakning", styles["Normal"]),
+        Paragraph("Historiska mätvärden - Senaste 200", styles["Title"]),
+        Paragraph(f"Visar {len(rows)} av {total} matchande mätningar.", styles["BodyText"]),
+        Paragraph(f"{total - len(rows)} matchande mätningar ingår inte. Rapporten visar högst de senaste 200, inte nödvändigtvis hela tidsintervallet.", styles["BodyText"]),
         Spacer(1, 5 * mm),
         Paragraph(f"<b>Sensor-ID:</b> {sensor_id}", styles["BodyText"]),
     ]
@@ -191,36 +212,36 @@ def history_pdf(request):
         story.append(Paragraph("<b>Mätstorhet:</b> Ingen data", styles["BodyText"]))
 
     interval_start = (
-        timezone.localtime(start).strftime("%Y-%m-%d %H:%M")
+        start.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")
         if start else "Ingen startgräns"
     )
     interval_end = (
-        timezone.localtime(end).strftime("%Y-%m-%d %H:%M")
+        end.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")
         if end else "Ingen slutgräns"
     )
 
     story.extend([
         Paragraph(
-            f"<b>Tidsintervall:</b> {interval_start} – {interval_end}",
+            f"<b>Tidsintervall (UTC):</b> {interval_start} – {interval_end}",
             styles["BodyText"],
         ),
         Paragraph(
-            f"<b>Rapport skapad:</b> "
-            f"{timezone.localtime().strftime('%Y-%m-%d %H:%M')}",
+            f"<b>Rapport skapad (UTC):</b> "
+            f"{timezone.now().astimezone(dt_timezone.utc).strftime('%Y-%m-%d %H:%M')}",
             styles["BodyText"],
         ),
         Spacer(1, 6 * mm),
     ])
 
     if rows:
-        table_data = [["Tid", "Värde", "Enhet", "Status"]]
+        table_data = [["Tid (UTC)", "Värde", "Enhet", "Status"]]
 
         status_labels = {
             str(status): label for status, label in Reading.Status.choices
         }
         for row in rows:
             table_data.append([
-                timezone.localtime(row.timestamp).strftime("%Y-%m-%d %H:%M:%S"),
+                row.timestamp.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                 f"{row.value:.1f}",
                 row.unit,
                 str(status_labels.get(str(row.status), row.status)),
@@ -232,7 +253,7 @@ def history_pdf(request):
             colWidths=[52 * mm, 35 * mm, 30 * mm, 38 * mm],
         )
         table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d6efd")),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#124d61")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
             ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
@@ -253,7 +274,15 @@ def history_pdf(request):
             styles["BodyText"],
         ))
 
-    document.build(story)
+    def footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.HexColor("#536578"))
+        canvas.drawString(18 * mm, 10 * mm, "Badvattenkvalitet | Simulerade data")
+        canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, f"Sida {doc.page}")
+        canvas.restoreState()
+
+    document.build(story, onFirstPage=footer, onLaterPages=footer)
 
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
     response["Content-Disposition"] = (

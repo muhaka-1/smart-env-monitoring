@@ -151,7 +151,7 @@ class HistoryPdfTests(TestCase):
         self.assertNotContains(public_response, 'id="download-pdf"')
 
         self.client.force_login(self.user)
-        authenticated_response = self.client.get(reverse("dashboard"))
+        authenticated_response = self.client.get(reverse("history"))
         self.assertContains(authenticated_response, 'id="download-pdf"')
 
     def test_admin_link_only_visible_to_staff(self):

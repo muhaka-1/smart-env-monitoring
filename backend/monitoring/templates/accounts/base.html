@@ -1,15 +1,5 @@
-<!doctype html>
-<html lang="sv">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="same-origin">
-  <title>{% block title %}Konto{% endblock %} – Smart Environmental Monitoring</title>
-</head>
-<body>
-  <main>
-    {% block content %}{% endblock %}
-    <p><a href="{% url 'dashboard' %}">Till dashboarden</a></p>
-  </main>
-</body>
-</html>
+{% extends "monitoring/base.html" %}
+{% block content %}
+<div class="account-layout"><section class="account-intro"><p class="eyebrow">BADVATTENKVALITET</p><h2>En samlad bild av dina mätvärden.</h2><p>Logga in för att följa utvecklingen och granska plattformens sparade avvikelser.</p><ul><li>Historiska mätningar och diagram</li><li>Dina meddelanden från systemet</li><li>Rapporter på skärm och som PDF</li></ul></section>
+<section class="panel account-card">{% block account_content %}{% endblock %}<p class="mb-0"><a href="{% url 'dashboard' %}">← Till dashboarden</a></p></section></div>
+{% endblock %}

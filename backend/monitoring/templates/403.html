@@ -1,0 +1,3 @@
+{% extends "monitoring/error_page.html" %}
+{% block title %}Du har inte åtkomst{% endblock %}
+{% block content %}{% with code="403" heading="Du har inte åtkomst" explanation="Logga in med ett konto som har behörighet. Om du skickade ett formulär, ladda om sidan och försök igen." %}{{ block.super }}{% endwith %}{% endblock %}

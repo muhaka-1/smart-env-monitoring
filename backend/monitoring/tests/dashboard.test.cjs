@@ -39,7 +39,7 @@ const document = {
   createElement: () => new Element(),
 };
 const source = fs.readFileSync(path.join(__dirname, "../static/monitoring/dashboard.js"), "utf8");
-const initIndex = source.lastIndexOf("if (CAN_VIEW_HISTORY) {");
+const initIndex = source.lastIndexOf("if (HAS_HISTORY_PANEL) {");
 assert.notEqual(initIndex, -1);
 const context = vm.createContext({ document, Chart: ChartMock, Date, Number, Set, URLSearchParams });
 vm.runInContext(source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart, renderSensorOptions, sensorDisplayName, sensorOptionLabel, validateRange };", context);
@@ -195,7 +195,7 @@ console.log("Dashboard labels, status, intervals, axes, empty state and anomaly 
     }),
   });
   vm.runInContext(
-    source.replace("refresh();\nsetInterval", "globalThis.initialRefresh = refresh();\nsetInterval") +
+    source.replace(/refresh\(\);\r?\nsetInterval/, "globalThis.initialRefresh = refresh();\nsetInterval") +
       "\nglobalThis.refreshDashboard = refresh; globalThis.renderChart = renderChart;",
     authenticatedContext
   );
@@ -217,8 +217,37 @@ console.log("Dashboard labels, status, intervals, axes, empty state and anomaly 
   for (const handler of controls["download-pdf"].listeners.click) handler();
   assert.equal(downloads.length, 1);
   assert.equal(new URL(downloads[0], "http://localhost").searchParams.get("sensor_id"), "test-sensor");
+  authenticatedContext.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30, results: rows });
+  authenticatedContext.fetch = async () => ({ ok: false, status: 403 });
+  await authenticatedContext.refreshDashboard();
+  assert.equal(controls.chart.hidden, true);
+  assert.match(controls["history-message"].textContent, /Logga in igen/);
   console.log("Dashboard event handlers remain single after repeated refreshes: OK");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+(async () => {
+  const overviewControls = Object.fromEntries(["cards", "updated", "error", "summary-total", "summary-anomaly", "summary-stale"].map((id) => [id, new Element()]));
+  const requests = [];
+  const overview = vm.createContext({
+    document: { ...document, getElementById: (id) => overviewControls[id] },
+    Date, Number, Set, URLSearchParams,
+    setInterval: () => {},
+    fetch: async (url) => {
+      requests.push(url);
+      return { ok: true, json: async () => ({ results: [
+        { ...reading, sensor_id: "oak-temperature", status: "ANOMALY", timestamp: new Date(now).toISOString() },
+        { ...reading, sensor_id: "old-turbidity", timestamp: new Date(now - 301000).toISOString() },
+      ] }) };
+    },
+  });
+  vm.runInContext(source.replace(/refresh\(\);\r?\nsetInterval/, "globalThis.initialRefresh = refresh();\nsetInterval"), overview);
+  await overview.initialRefresh;
+  assert.deepEqual(requests, ["/api/readings/latest/"]);
+  assert.equal(overviewControls["summary-total"].textContent, "2");
+  assert.equal(overviewControls["summary-anomaly"].textContent, "1");
+  assert.equal(overviewControls["summary-stale"].textContent, "1");
+  console.log("Authenticated overview uses latest-only data and accurate summaries: OK");
+})().catch((error) => { console.error(error); process.exitCode = 1; });

@@ -96,3 +96,41 @@ class InternalNotificationEligibilityTests(TestCase):
             text = pdf_text(response)
             self.assertIn("rainbow-beach-turbidity", text)
             self.assertIn("58.1", text)
+
+
+class HistoryExportContractTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user("history-reader")
+        self.client.force_login(self.user)
+        self.start = datetime(2026, 11, 1, 12, tzinfo=timezone.utc)
+        self.sensor = "ohio-street-beach-turbidity"
+
+    def test_partial_export_discloses_matching_included_and_omitted_counts(self):
+        Reading.objects.bulk_create([Reading(sensor_id=self.sensor, metric="turbidity",
+            timestamp=self.start+timedelta(minutes=i), value=i/10, unit="NTU") for i in range(201)])
+        response = self.client.get(reverse("history-pdf"), {"sensor_id": self.sensor,
+            "start": self.start.isoformat(), "end": (self.start+timedelta(hours=4)).isoformat()})
+        self.assertEqual(response.status_code, 200)
+        text = pdf_text(response)
+        self.assertIn("Senaste 200", text)
+        self.assertIn("Visar 200 av 201", text)
+        self.assertIn("1 matchande", text)
+        self.assertNotIn("2026-11-01 12:00:00", text)
+        self.assertIn("2026-11-01 12:01:00", text)
+        self.assertIn("2026-11-01 15:20:00", text)
+        html = self.client.get(reverse("history"))
+        self.assertContains(html, "högst 200")
+        self.assertContains(html, "hela tidsintervallet")
+
+    @override_settings(TIME_ZONE="Europe/Stockholm")
+    def test_pdf_declares_utc_and_applies_explicit_offset_consistently(self):
+        Reading.objects.create(sensor_id=self.sensor, timestamp=self.start, value=12.3)
+        Reading.objects.create(sensor_id=self.sensor, timestamp=self.start-timedelta(seconds=1), value=99)
+        response = self.client.get(reverse("history-pdf"), {"sensor_id": self.sensor,
+            "start": "2026-11-01T13:00:00+01:00", "end": "2026-11-01T13:00:00+01:00"})
+        self.assertEqual(response.status_code, 200)
+        text = pdf_text(response)
+        for expected in ("Tidsintervall (UTC)", "Rapport skapad (UTC)", "Tid (UTC)",
+                         "2026-11-01 12:00", "12.3", "Visar 1 av 1"):
+            self.assertIn(expected, text)
+        self.assertNotIn("99.0", text)
