@@ -30,19 +30,20 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 def _parse_dt(raw, field):
     try:
         dt = parse_datetime(raw) if raw else None
-    except ValueError:
-        dt = None
-    if dt is None:
+        if dt is None:
+            raise ValueError
+        dt = timezone.make_aware(dt, dt_timezone.utc) if timezone.is_naive(dt) else dt
+        return dt.astimezone(dt_timezone.utc)
+    except (ValueError, OverflowError):
         raise ValidationError(
-            {field: "Ogiltigt datumformat, använd ISO 8601."})
-    return timezone.make_aware(dt, dt_timezone.utc) if timezone.is_naive(dt) else dt
+            {field: "Ogiltigt datumformat eller datum utanför tillåtet intervall, använd ISO 8601."}) from None
 
 
 def _api_key_ok(request):
     expected = settings.INGEST_API_KEY
     if not expected:
         return True
-    return hmac.compare_digest(request.headers.get("X-API-Key", ""), expected)
+    return hmac.compare_digest(request.headers.get("X-API-Key", "").encode("utf-8"), expected.encode("utf-8"))
 
 
 class DashboardView(TemplateView):

@@ -137,6 +137,15 @@ class HistoryPdfTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_dates_outside_utc_range_are_rejected(self):
+        self.client.force_login(self.user)
+        for field in ("start", "end"):
+            for value in ("0001-01-01T00:00:00+14:00", "9999-12-31T23:59:59-14:00"):
+                with self.subTest(field=field, value=value):
+                    response = self.client.get(self.url, {"sensor_id": self.sensor_id, field: value})
+                    self.assertEqual(response.status_code, 400)
+                    self.assertNotEqual(response.get("Content-Type"), "application/pdf")
+
     def test_pdf_button_only_visible_after_login(self):
         public_response = self.client.get(reverse("dashboard"))
         self.assertNotContains(public_response, 'id="download-pdf"')

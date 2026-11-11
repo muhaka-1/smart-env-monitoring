@@ -22,6 +22,18 @@ class ApiTests(TestCase):
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.json()["status"], "OK")
 
+    @override_settings(INGEST_API_KEY="test-key")
+    def test_non_ascii_api_key_is_rejected_without_saving(self):
+        response = self.post(make(), HTTP_X_API_KEY="å")
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(Reading.objects.count(), 0)
+
+    @override_settings(INGEST_API_KEY="test-nyckel-å")
+    def test_matching_non_ascii_api_key_is_accepted(self):
+        response = self.post(make(), HTTP_X_API_KEY="test-nyckel-å")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Reading.objects.count(), 1)
+
     def test_post_invalid_returns_400(self):
         self.assertEqual(self.post({"sensor_id": "a"}).status_code, 400)
         self.assertEqual(self.post(make(value="abc")).status_code, 400)
