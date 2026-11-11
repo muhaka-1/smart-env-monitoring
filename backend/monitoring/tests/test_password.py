@@ -88,6 +88,19 @@ class PasswordResetTests(TestCase):
         self.assertRedirects(r, reverse("password_reset_done"))
         self.assertNotIn("anna@example.test", "\n".join(logged.output))
 
+    @override_settings(PLATFORM_BASE_URL="invalid-base-url")
+    def test_configuration_failure_still_gives_neutral_confirmation(self):
+        with self.assertLogs("monitoring.accounts", level="WARNING") as logged:
+            registered = self.client.post(reverse("password_reset"), {"email": "anna@example.test"}, follow=True)
+        unknown = self.client.post(reverse("password_reset"), {"email": "unknown@example.test"}, follow=True)
+        self.assertRedirects(registered, reverse("password_reset_done"))
+        self.assertRedirects(unknown, reverse("password_reset_done"))
+        self.assertEqual(registered.content, unknown.content)
+        self.assertEqual(mail.outbox, [])
+        output = "\n".join(logged.output)
+        for private in ("anna@example.test", "invalid-base-url", OLD_PASSWORD):
+            self.assertNotIn(private, output)
+
     def test_reset_request_requires_csrf(self):
         strict = Client(enforce_csrf_checks=True)
         self.assertEqual(strict.post(reverse("password_reset"), {"email": "anna@example.test"}).status_code, 403)
