@@ -9,6 +9,7 @@ import logging
 
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import PasswordResetForm
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import path, reverse, reverse_lazy
 
 from .emails import EmailDeliveryError, send_platform_email
@@ -32,10 +33,9 @@ class PlatformPasswordResetForm(PasswordResetForm):
         )
         try:
             send_platform_email(to_email, "password_reset", action_path=action_path)
-        except EmailDeliveryError:
-            # Tjänsten har redan loggat felet utan mottagare eller token. Användaren får
-            # samma neutrala svar så att leveransfel inte avslöjar om kontot finns.
-            log.warning("Återställningsmejl kunde inte levereras.")
+        except (EmailDeliveryError, ImproperlyConfigured):
+            # Leverans- och konfigurationsfel får inte avslöja om kontot finns.
+            log.warning("Återställningsmejl kunde inte levereras; kontrollera e-postkonfigurationen.")
 
 
 _T = "accounts/"

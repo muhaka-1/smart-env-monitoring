@@ -17,7 +17,7 @@ Inloggningssidan länkar till *Glömt lösenord?* och dashboarden visar *Byt lö
 
 ## Säkerhetsegenskaper
 
-- **Neutral bekräftelse.** Formuläret visar alltid samma sida, oavsett om adressen finns, kontot är inaktivt, kontot saknar användbart lösenord eller leveransen misslyckas. Endast aktiva konton med användbart lösenord får mejl (e-postmatchningen är skiftlägesokänslig).
+- **Neutral bekräftelse.** Formuläret visar samma sida, oavsett om adressen finns, kontot är inaktivt, kontot saknar användbart lösenord eller leveransen misslyckas. Även ett konfigurationsfel i e-posttjänsten, exempelvis ogiltig `PLATFORM_BASE_URL`, ger samma svar och loggas utan konfigurationsvärden, mottagare eller token. Endast aktiva konton med användbart lösenord får mejl (e-postmatchningen är skiftlägesokänslig).
 - **Säker, tidsbegränsad token.** Token skapas av `PasswordResetTokenGenerator`, signeras med `SECRET_KEY` och slutar gälla efter `PASSWORD_RESET_TIMEOUT` sekunder (standard 3600 = 1 timme, kan sättas som miljövariabel).
 - **Engångsanvändning.** Token bygger på lösenordshashen och senaste inloggning, så den blir ogiltig så fort lösenordet ändras.
 - **Token läcker inte via Referer.** Django flyttar token till sessionen och omdirigerar till `/accounts/reset/<uidb64>/set-password/`; sidorna har även `referrer`-policyn `same-origin`, så att adressen inte skickas till andra webbplatser. Använd inte `no-referrer`: då skickar webbläsaren `Origin: null` vid formulärinlämning och Djangos CSRF-kontroll svarar 403.
