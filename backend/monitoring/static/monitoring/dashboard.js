@@ -33,6 +33,10 @@ const t = (key, replacements = {}) => {
   return value;
 };
 const LOCALE = I18N.locale || DEFAULT_I18N.locale;
+const formatNumber = (value) => new Intl.NumberFormat(LOCALE).format(value);
+const formatReading = (value) => new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1, maximumFractionDigits: 1,
+}).format(value);
 const LABELS = { turbidity: t("turbidity"), temperature: t("temperature") };
 const RANGE_PRESETS = {
   hour: { hours: 1, label: t("range_hour") },
@@ -106,7 +110,7 @@ function renderCards(items) {
 
     const body = el("div", "card-body");
     const value = el("div", "display-5 fw-bold");
-    value.append(Number(r.value).toFixed(1), " ", el("small", "fs-6", r.unit));
+    value.append(formatReading(Number(r.value)), " ", el("small", "fs-6", r.unit));
     body.append(
       el("h3", "h5 mb-1", sensorDisplayName(r.sensor_id)),
       el("div", "text-muted small", `${LABELS[r.metric] || r.metric} · ${r.sensor_id}`),
@@ -115,7 +119,7 @@ function renderCards(items) {
         "span",
         `badge fs-6 d-inline-block text-wrap text-start mw-100 bg-${stale ? "secondary" : anomaly ? "danger" : "success"}`,
         `${stale ? t("latest_status") : ""}${anomaly ? `⚠ ${t("anomaly")}` : "✔ OK"}`),
-      el("div", "text-muted small mt-2", `${fmt(r.timestamp)} · ${t("threshold")} ${r.threshold ?? "–"} ${r.unit}`),
+      el("div", "text-muted small mt-2", `${fmt(r.timestamp)} · ${t("threshold")} ${r.threshold == null ? "–" : formatNumber(r.threshold)} ${r.unit}`),
     );
     if (stale) body.append(el("div", "text-warning fw-bold mt-2", t("stale")));
     card.append(body);
@@ -161,11 +165,11 @@ function renderChart(data) {
   }
   const cfg = { datasets };
   explanation.textContent = t("chart_explanation");
-  const options = { responsive: true, maintainAspectRatio: false, animation: false, parsing: false, plugins: { tooltip: { callbacks: {
+  const options = { locale: LOCALE, responsive: true, maintainAspectRatio: false, animation: false, parsing: false, plugins: { tooltip: { callbacks: {
     title: (items) => items.length ? fmt(items[0].parsed.x) : "",
     label: (item) => item.datasetIndex === 0
-      ? `${name}: ${item.parsed.y} ${data.unit || ""} · ${isAnomaly(item.raw.status) ? `⚠ ${t("anomaly")}` : "✔ OK"}`
-      : `${t("threshold_label")}: ${item.parsed.y} ${data.unit || ""}`,
+      ? `${name}: ${formatNumber(item.parsed.y)} ${data.unit || ""} · ${isAnomaly(item.raw.status) ? `⚠ ${t("anomaly")}` : "✔ OK"}`
+      : `${t("threshold_label")}: ${formatNumber(item.parsed.y)} ${data.unit || ""}`,
   } } }, scales: {
     x: { type: "linear", title: { display: true, text: t("time_local") }, ticks: {
       maxTicksLimit: 3, minRotation: 0, maxRotation: 0,
