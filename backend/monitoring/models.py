@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Reading(models.Model):
@@ -12,11 +13,11 @@ class Reading(models.Model):
 
     class Status(models.TextChoices):
         OK = "OK", "OK"
-        ANOMALY = "ANOMALY", "Avvikelse"
+        ANOMALY = "ANOMALY", _("Avvikelse")
 
     class Metric(models.TextChoices):
-        TURBIDITY = "turbidity", "Turbiditet"
-        TEMPERATURE = "temperature", "Temperatur"
+        TURBIDITY = "turbidity", _("Turbiditet")
+        TEMPERATURE = "temperature", _("Temperatur")
 
     sensor_id = models.CharField(max_length=100)
     metric = models.CharField(max_length=20, choices=Metric.choices, default=Metric.TURBIDITY)
@@ -61,10 +62,10 @@ class Alert(models.Model):
 
 class Notification(models.Model):
     class DeliveryStatus(models.TextChoices):
-        PENDING = "pending", "Väntar på e-postförsök"
-        SENDING = "sending", "Påbörjat utskick, utfall ännu inte bekräftat"
-        SENT = "sent", "Accepterat av e-postservern"
-        FAILED = "failed", "E-postförsöket misslyckades"
+        PENDING = "pending", _("Väntar på e-postförsök")
+        SENDING = "sending", _("Påbörjat utskick, utfall ännu inte bekräftat")
+        SENT = "sent", _("Accepterat av e-postservern")
+        FAILED = "failed", _("E-postförsöket misslyckades")
 
     alert = models.ForeignKey(Alert, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

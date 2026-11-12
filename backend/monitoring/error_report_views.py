@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
 from reportlab.lib import colors
@@ -32,8 +33,8 @@ def report_context(request):
     context.update(
         form=ErrorReportFilters(initial=display, sensor_ids=sensors),
         filters=filters,
-        start_text=utc_text(filters["start"]) if filters["start"] else "Ingen startgräns",
-        end_text=utc_text(filters["end"]) if filters["end"] else "Ingen slutgräns",
+        start_text=utc_text(filters["start"]) if filters["start"] else _("Ingen startgräns"),
+        end_text=utc_text(filters["end"]) if filters["end"] else _("Ingen slutgräns"),
         filter_query=filter_query(filters),
     )
     return context, filter_alerts(available, filters)
@@ -50,7 +51,7 @@ def error_report(request):
     try:
         page = paginator.page(request.GET.get("page", 1))
     except InvalidPage:
-        raise Http404("Rapportsidan finns inte.")
+        raise Http404(_("Rapportsidan finns inte."))
     context.update(page_obj=page, total=paginator.count,
                    pdf_url=reverse("error-report-pdf") + "?" + context["filter_query"])
     return render(request, "monitoring/error_report.html", context)

@@ -1,10 +1,11 @@
 {% extends "monitoring/base.html" %}
-{% block title %}Rapporter{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Rapporter" %}{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">DINA UNDERLAG</p><h1>Rapporter</h1><p>Välj rapport, ange ett urval och spara resultatet som PDF.</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">{% translate "DINA UNDERLAG" %}</p><h1>{% translate "Rapporter" %}</h1><p>{% translate "Välj rapport, ange ett urval och spara resultatet som PDF." %}</p></div></div>
 <div class="report-grid">
-<article class="panel"><p class="eyebrow">MÄTDATA</p><h2>Historiska mätvärden</h2><p>Välj mätpunkt och tidsintervall i historiken. PDF-rapporten innehåller högst de senaste 200 matchande mätningarna.</p><a class="btn btn-primary" href="{% url 'history' %}">Öppna historik</a></article>
-<article class="panel"><p class="eyebrow">AVVIKELSER</p><h2>Felrapport</h2><p>Se dina sparade avvikelser på skärmen eller hämta en PDF med alla händelser som matchar ditt filter.</p><a class="btn btn-primary" href="{% url 'error-report' %}">Öppna felrapport</a></article>
+<article class="panel"><p class="eyebrow">{% translate "MÄTDATA" %}</p><h2>{% translate "Historiska mätvärden" %}</h2><p>{% translate "Välj mätpunkt och tidsintervall i historiken. PDF-rapporten innehåller högst de senaste 200 matchande mätningarna." %}</p><a class="btn btn-primary" href="{% url 'history' %}">{% translate "Öppna historik" %}</a></article>
+<article class="panel"><p class="eyebrow">{% translate "AVVIKELSER" %}</p><h2>{% translate "Felrapport" %}</h2><p>{% translate "Se dina sparade avvikelser på skärmen eller hämta en PDF med alla händelser som matchar ditt filter." %}</p><a class="btn btn-primary" href="{% url 'error-report' %}">{% translate "Öppna felrapport" %}</a></article>
 </div>
-<p class="text-muted small mt-4">OK och ANOMALY är projektets tekniska status, inte en myndighetsbedömning av badvattenkvalitet.</p>
+<p class="text-muted small mt-4">{% translate "OK och ANOMALY är projektets tekniska status, inte en myndighetsbedömning av badvattenkvalitet." %}</p>
 {% endblock %}
