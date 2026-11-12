@@ -1,63 +1,71 @@
-{% load static %}
+{% load static i18n %}{% get_current_language as LANGUAGE_CODE %}{% get_available_languages as LANGUAGES %}{% get_language_info_list for LANGUAGES as languages %}
 <!doctype html>
-<html lang="sv">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="same-origin">
-  <title>{% block title %}Badvattenkvalitet{% endblock %} – Miljöövervakning</title>
+  <title>{% block title %}{% translate "Badvattenkvalitet" %}{% endblock %} – {% translate "Miljöövervakning" %}</title>
   <link href="{% static 'monitoring/vendor/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'monitoring/interface.css' %}" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="{% static 'monitoring/mark.svg' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="app-body {% if user.is_authenticated %}has-sidebar{% endif %}" data-can-view-history="{{ user.is_authenticated|yesno:'true,false' }}">
-<a class="skip-link" href="#main-content">Hoppa till innehållet</a>
+<a class="skip-link" href="#main-content">{% translate "Hoppa till innehållet" %}</a>
 <header class="site-header">
   <a class="site-brand" href="{% url 'dashboard' %}">
     <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M4 12c4-7 8 7 12 0s8 7 12 0M4 20c4-7 8 7 12 0s8 7 12 0"/></svg></span>
-    <span>Badvattenkvalitet<small>Miljöövervakning</small></span>
+    <span>{% translate "Badvattenkvalitet" %}<small>{% translate "Miljöövervakning" %}</small></span>
   </a>
+  {% if request.resolver_match.url_name != 'password_reset_done' %}<form action="{% url 'set_language' %}" method="post" class="language-switcher">
+    {% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}">
+    <label class="visually-hidden" for="language-select">{% translate "Språk" %}</label>
+    <select id="language-select" name="language" aria-label="{% translate 'Språk' %}">
+      {% for language in languages %}<option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>{{ language.name_local }}</option>{% endfor %}
+    </select>
+    <button type="submit">{% translate "Byt språk" %}</button>
+  </form>{% endif %}
   {% if user.is_authenticated %}
   <div class="header-actions">
     <details class="account-menu">
-      <summary><span class="account-avatar" aria-hidden="true">{{ user.get_username|first|upper }}</span><span class="account-name">{{ user.get_username }}</span><span aria-hidden="true">⌄</span><span class="visually-hidden">Mitt konto</span></summary>
+      <summary><span class="account-avatar" aria-hidden="true">{{ user.get_username|first|upper }}</span><span class="account-name">{{ user.get_username }}</span><span aria-hidden="true">⌄</span><span class="visually-hidden">{% translate "Mitt konto" %}</span></summary>
       <div class="account-dropdown">
-        <p class="menu-caption">Inloggad som {{ user.get_username }}</p>
-        <a href="{% url 'password_change' %}">Byt lösenord</a>
-        {% if user.is_staff %}<a href="{% url 'admin:index' %}">Administration</a>{% endif %}
-        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Logga ut</button></form>
+        <p class="menu-caption">{% blocktranslate with username=user.get_username %}Inloggad som {{ username }}{% endblocktranslate %}</p>
+        <a href="{% url 'password_change' %}">{% translate "Byt lösenord" %}</a>
+        {% if user.is_staff %}<a href="{% url 'admin:index' %}">{% translate "Administration" %}</a>{% endif %}
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">{% translate "Logga ut" %}</button></form>
       </div>
     </details>
-    <button class="nav-toggle" type="button" aria-controls="app-navigation" aria-expanded="false" hidden>Meny <span aria-hidden="true">☰</span></button>
+    <button class="nav-toggle" type="button" aria-controls="app-navigation" aria-expanded="false" hidden>{% translate "Meny" %} <span aria-hidden="true">☰</span></button>
   </div>
   {% else %}
-  <nav class="public-navigation" aria-label="Huvudmeny">
-    <a href="{% url 'dashboard' %}#readings">Mätvärden</a>
-    <a href="{% url 'dashboard' %}#about-readings">Om mätvärdena</a>
-    <a class="btn btn-primary" href="{% url 'login' %}"{% if request.resolver_match.url_name == 'login' %} aria-current="page"{% endif %}>Logga in</a>
+  <nav class="public-navigation" aria-label="{% translate 'Huvudmeny' %}">
+    <a href="{% url 'dashboard' %}#readings">{% translate "Mätvärden" %}</a>
+    <a href="{% url 'dashboard' %}#about-readings">{% translate "Om mätvärdena" %}</a>
+    <a class="btn btn-primary" href="{% url 'login' %}"{% if request.resolver_match.url_name == 'login' %} aria-current="page"{% endif %}>{% translate "Logga in" %}</a>
   </nav>
   {% endif %}
 </header>
 <div class="workspace">
   {% if user.is_authenticated %}
   <aside class="app-sidebar" id="app-navigation">
-    <p class="sidebar-caption">DIN ARBETSPLATS</p>
-    <nav aria-label="Arbetsyta">
-      <a href="{% url 'dashboard' %}"{% if request.resolver_match.url_name == 'dashboard' %} aria-current="page"{% endif %}><span aria-hidden="true">◫</span> Översikt</a>
-      <a href="{% url 'history' %}"{% if request.resolver_match.url_name == 'history' %} aria-current="page"{% endif %}><span aria-hidden="true">↗</span> Historik</a>
-      <a href="{% url 'message-list' %}"{% if request.resolver_match.url_name == 'message-list' %} aria-current="page"{% endif %}><span aria-hidden="true">▤</span> Meddelanden</a>
-      <a href="{% url 'report-list' %}"{% if request.resolver_match.url_name == 'report-list' or request.resolver_match.url_name == 'error-report' %} aria-current="page"{% endif %}><span aria-hidden="true">▥</span> Rapporter</a>
+    <p class="sidebar-caption">{% translate "DIN ARBETSPLATS" %}</p>
+    <nav aria-label="{% translate 'Arbetsyta' %}">
+      <a href="{% url 'dashboard' %}"{% if request.resolver_match.url_name == 'dashboard' %} aria-current="page"{% endif %}><span aria-hidden="true">◫</span> {% translate "Översikt" %}</a>
+      <a href="{% url 'history' %}"{% if request.resolver_match.url_name == 'history' %} aria-current="page"{% endif %}><span aria-hidden="true">↗</span> {% translate "Historik" %}</a>
+      <a href="{% url 'message-list' %}"{% if request.resolver_match.url_name == 'message-list' %} aria-current="page"{% endif %}><span aria-hidden="true">▤</span> {% translate "Meddelanden" %}</a>
+      <a href="{% url 'report-list' %}"{% if request.resolver_match.url_name == 'report-list' or request.resolver_match.url_name == 'error-report' %} aria-current="page"{% endif %}><span aria-hidden="true">▥</span> {% translate "Rapporter" %}</a>
     </nav>
-    <div class="sidebar-note"><strong>Simulerade mätningar</strong><p>Öppna dataset återspelas i plattformen. Statusen är inte ett badråd.</p></div>
-    <a class="sidebar-account" href="{% url 'password_change' %}"{% if request.resolver_match.url_name == 'password_change' %} aria-current="page"{% endif %}>Mitt konto · Byt lösenord</a>
+    <div class="sidebar-note"><strong>{% translate "Simulerade mätningar" %}</strong><p>{% translate "Öppna dataset återspelas i plattformen. Statusen är inte ett badråd." %}</p></div>
+    <a class="sidebar-account" href="{% url 'password_change' %}"{% if request.resolver_match.url_name == 'password_change' %} aria-current="page"{% endif %}>{% translate "Mitt konto · Byt lösenord" %}</a>
   </aside>
   {% endif %}
   <div class="page-area">
     <main id="main-content" tabindex="-1" class="page-content {% block main_class %}{% endblock %}" data-reading-stale-seconds="{{ reading_stale_seconds|default:300 }}" data-history-url="{% url 'history' %}">
       {% block content %}{% endblock %}
     </main>
-    <footer class="site-footer"><span>Badvattenkvalitet</span><span>Simulerade data · Temperatur &amp; turbiditet</span></footer>
+    <footer class="site-footer"><span>{% translate "Badvattenkvalitet" %}</span><span>{% translate "Simulerade data · Temperatur & turbiditet" %}</span></footer>
   </div>
 </div>
 <script src="{% static 'monitoring/interface.js' %}" defer></script>

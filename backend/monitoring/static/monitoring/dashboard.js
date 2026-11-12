@@ -3,12 +3,46 @@ const MAIN = document.querySelector("main");
 const STALE_MS = Number(MAIN.dataset.readingStaleSeconds) * 1000;
 const CAN_VIEW_HISTORY = document.body.dataset.canViewHistory === "true";
 const HAS_HISTORY_PANEL = CAN_VIEW_HISTORY && Boolean(document.getElementById("sensor"));
-const LABELS = { turbidity: "Turbiditet", temperature: "Temperatur" };
+const DEFAULT_I18N = {
+  locale: "sv", turbidity: "Turbiditet", temperature: "Temperatur", measurement: "Mätvärde",
+  range_hour: "senaste timmen", range_day: "senaste dygnet", range_week: "senaste 7 dagarna",
+  range_all: "senaste 200 mätningarna", fetch_error: "Mätvärdena kunde inte hämtas.",
+  no_readings: "Inga mätvärden ännu.", latest_status: "Senaste status: ", anomaly: "Avvikelse",
+  threshold: "gräns", stale: "Mätningen är inaktuell eller saknar giltig tid.",
+  show_history: "Visa historik", show_history_for: "Visa historik för %(sensor)s",
+  mixed_history: "Historiken innehåller olika mätstorheter och kan inte visas i samma diagram.",
+  no_interval_readings: "Inga mätvärden finns för det valda intervallet.", threshold_label: "Gränsvärde",
+  chart_explanation: "● OK · ▲ Avvikelse. Statusen följer projektets konfigurerade gränsregel och är inte en officiell bedömning av badvattnet.",
+  time_local: "Tid (lokal tid)", value: "Värde",
+  choose_both: "Välj både Från och Till, eller använd ett snabbval.",
+  invalid_date: "Tidsintervallet innehåller ett ogiltigt datum.", from_before_to: "Från måste vara tidigare än Till.",
+  interval: "Intervall: %(range)s.", custom_interval: "Eget intervall: %(start)s – %(end)s.",
+  custom_incomplete: "Eget intervall är inte komplett.", choose_sensor: "Välj en sensor innan rapporten skapas.",
+  session_expired: "Din session har gått ut eller saknar behörighet. Logga in igen för att visa historiken.",
+  unavailable: "Mätvärdena är inte tillgängliga just nu.", updated: "Uppdaterad %(time)s",
+  update_failed: "Uppdateringen misslyckades",
+  refresh_error: "Kunde inte hämta nya mätvärden. Kontrollera anslutningen eller logga in igen. Ett nytt försök görs automatiskt.",
+};
+const i18nNode = document.getElementById("dashboard-i18n");
+const I18N = i18nNode ? JSON.parse(i18nNode.textContent) : DEFAULT_I18N;
+const t = (key, replacements = {}) => {
+  let value = I18N[key] ?? DEFAULT_I18N[key] ?? key;
+  for (const [name, replacement] of Object.entries(replacements)) {
+    value = value.replace(`%(${name})s`, replacement);
+  }
+  return value;
+};
+const LOCALE = I18N.locale || DEFAULT_I18N.locale;
+const formatNumber = (value) => new Intl.NumberFormat(LOCALE).format(value);
+const formatReading = (value) => new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1, maximumFractionDigits: 1,
+}).format(value);
+const LABELS = { turbidity: t("turbidity"), temperature: t("temperature") };
 const RANGE_PRESETS = {
-  hour: { hours: 1, label: "senaste timmen" },
-  day: { hours: 24, label: "senaste dygnet" },
-  week: { hours: 24 * 7, label: "senaste 7 dagarna" },
-  all: { hours: null, label: "senaste 200 mätningarna" },
+  hour: { hours: 1, label: t("range_hour") },
+  day: { hours: 24, label: t("range_day") },
+  week: { hours: 24 * 7, label: t("range_week") },
+  all: { hours: null, label: t("range_all") },
 };
 const $ = (id) => document.getElementById(id);
 let chart = null;
@@ -21,7 +55,7 @@ let pendingRefresh = false;
 async function getJSON(url) {
   const r = await fetch(url);
   if (!r.ok) {
-    const error = new Error("Mätvärdena kunde inte hämtas.");
+    const error = new Error(t("fetch_error"));
     error.status = r.status;
     throw error;
   }
@@ -29,7 +63,7 @@ async function getJSON(url) {
 }
 
 const isAnomaly = (s) => s === "ANOMALY";
-const fmt = (iso) => new Date(iso).toLocaleString("sv-SE");
+const fmt = (iso) => new Date(iso).toLocaleString(LOCALE);
 
 function sensorDisplayName(sensorId) {
   return sensorId
@@ -43,7 +77,7 @@ function sensorDisplayName(sensorId) {
 function sensorMetricLabel(sensorId) {
   if (sensorId.endsWith("-turbidity")) return LABELS.turbidity;
   if (sensorId.endsWith("-temperature")) return LABELS.temperature;
-  return "Mätvärde";
+  return t("measurement");
 }
 
 function sensorOptionLabel(sensorId) {
@@ -63,7 +97,7 @@ function renderCards(items) {
   if (!container) return;
   container.replaceChildren();
   if (!items.length) {
-    container.append(el("p", "text-muted", "Inga mätvärden ännu."));
+    container.append(el("p", "text-muted", t("no_readings")));
     return;
   }
   for (const r of items) {
@@ -76,7 +110,7 @@ function renderCards(items) {
 
     const body = el("div", "card-body");
     const value = el("div", "display-5 fw-bold");
-    value.append(Number(r.value).toFixed(1), " ", el("small", "fs-6", r.unit));
+    value.append(formatReading(Number(r.value)), " ", el("small", "fs-6", r.unit));
     body.append(
       el("h3", "h5 mb-1", sensorDisplayName(r.sensor_id)),
       el("div", "text-muted small", `${LABELS[r.metric] || r.metric} · ${r.sensor_id}`),
@@ -84,17 +118,17 @@ function renderCards(items) {
       el(
         "span",
         `badge fs-6 d-inline-block text-wrap text-start mw-100 bg-${stale ? "secondary" : anomaly ? "danger" : "success"}`,
-        `${stale ? "Senaste status: " : ""}${anomaly ? "⚠ Avvikelse" : "✔ OK"}`),
-      el("div", "text-muted small mt-2", `${fmt(r.timestamp)} · gräns ${r.threshold ?? "–"} ${r.unit}`),
+        `${stale ? t("latest_status") : ""}${anomaly ? `⚠ ${t("anomaly")}` : "✔ OK"}`),
+      el("div", "text-muted small mt-2", `${fmt(r.timestamp)} · ${t("threshold")} ${r.threshold == null ? "–" : formatNumber(r.threshold)} ${r.unit}`),
     );
-    if (stale) body.append(el("div", "text-warning fw-bold mt-2", "Mätningen är inaktuell eller saknar giltig tid."));
+    if (stale) body.append(el("div", "text-warning fw-bold mt-2", t("stale")));
     card.append(body);
     col.append(card);
     container.append(col);
 
     if (CAN_VIEW_HISTORY) {
-      const link = el("a", "stretched-link", "Visa historik");
-      link.setAttribute("aria-label", `Visa historik för ${sensorOptionLabel(r.sensor_id)}`);
+      const link = el("a", "stretched-link", t("show_history"));
+      link.setAttribute("aria-label", t("show_history_for", { sensor: sensorOptionLabel(r.sensor_id) }));
       link.href = `${MAIN.dataset.historyUrl}?sensor_id=${encodeURIComponent(r.sensor_id)}`;
       body.append(link);
     }
@@ -106,8 +140,8 @@ function renderChart(data) {
   const mixed = rows.length > 0 && data.metric == null;
   const message = $("history-message");
   const explanation = $("chart-explanation");
-  message.textContent = mixed ? "Historiken innehåller olika mätstorheter och kan inte visas i samma diagram." :
-    rows.length ? "" : "Inga mätvärden finns för det valda intervallet.";
+  message.textContent = mixed ? t("mixed_history") :
+    rows.length ? "" : t("no_interval_readings");
   message.className = mixed ? "alert alert-warning" : "text-muted";
   $("chart").hidden = mixed || !rows.length;
   explanation.hidden = mixed || !rows.length;
@@ -115,7 +149,7 @@ function renderChart(data) {
     if (chart) { chart.destroy(); chart = null; }
     return;
   }
-  const name = `${LABELS[data.metric] || "Värde"} (${data.unit || ""})`;
+  const name = `${LABELS[data.metric] || t("value")} (${data.unit || ""})`;
   const points = rows.map((r) => ({ x: Date.parse(r.timestamp), y: r.value, status: r.status }));
   const dense = rows.length > 60;
   const datasets = [
@@ -126,22 +160,22 @@ function renderChart(data) {
       pointHoverRadius: 6 },
   ];
   if (data.threshold != null) {
-    datasets.push({ label: "Gränsvärde", data: points.map((point) => ({ x: point.x, y: data.threshold })), borderColor: "#dc3545",
+    datasets.push({ label: t("threshold_label"), data: points.map((point) => ({ x: point.x, y: data.threshold })), borderColor: "#dc3545",
       borderDash: [6, 4], pointRadius: 0 });
   }
   const cfg = { datasets };
-  explanation.textContent = "● OK · ▲ Avvikelse. Statusen följer projektets konfigurerade gränsregel och är inte en officiell bedömning av badvattnet.";
-  const options = { responsive: true, maintainAspectRatio: false, animation: false, parsing: false, plugins: { tooltip: { callbacks: {
+  explanation.textContent = t("chart_explanation");
+  const options = { locale: LOCALE, responsive: true, maintainAspectRatio: false, animation: false, parsing: false, plugins: { tooltip: { callbacks: {
     title: (items) => items.length ? fmt(items[0].parsed.x) : "",
     label: (item) => item.datasetIndex === 0
-      ? `${name}: ${item.parsed.y} ${data.unit || ""} · ${isAnomaly(item.raw.status) ? "⚠ Avvikelse" : "✔ OK"}`
-      : `Gränsvärde: ${item.parsed.y} ${data.unit || ""}`,
+      ? `${name}: ${formatNumber(item.parsed.y)} ${data.unit || ""} · ${isAnomaly(item.raw.status) ? `⚠ ${t("anomaly")}` : "✔ OK"}`
+      : `${t("threshold_label")}: ${formatNumber(item.parsed.y)} ${data.unit || ""}`,
   } } }, scales: {
-    x: { type: "linear", title: { display: true, text: "Tid (lokal tid)" }, ticks: {
+    x: { type: "linear", title: { display: true, text: t("time_local") }, ticks: {
       maxTicksLimit: 3, minRotation: 0, maxRotation: 0,
-      callback: (value) => new Date(value).toLocaleString("sv-SE", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
+      callback: (value) => new Date(value).toLocaleString(LOCALE, { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
     } },
-    y: { title: { display: true, text: data.unit ? `Värde (${data.unit})` : "Värde" } },
+    y: { title: { display: true, text: data.unit ? `${t("value")} (${data.unit})` : t("value") } },
   } };
   if (chart) {
     chart.data = cfg;
@@ -157,13 +191,13 @@ function toLocalInput(date) {
 
 function validateRange(fromValue, toValue) {
   if (!fromValue && !toValue) return { valid: true, start: null, end: null };
-  if (!fromValue || !toValue) return { valid: false, message: "Välj både Från och Till, eller använd ett snabbval." };
+  if (!fromValue || !toValue) return { valid: false, message: t("choose_both") };
   const start = new Date(fromValue);
   const end = new Date(toValue);
   if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
-    return { valid: false, message: "Tidsintervallet innehåller ett ogiltigt datum." };
+    return { valid: false, message: t("invalid_date") };
   }
-  if (start >= end) return { valid: false, message: "Från måste vara tidigare än Till." };
+  if (start >= end) return { valid: false, message: t("from_before_to") };
   return { valid: true, start, end };
 }
 
@@ -190,12 +224,12 @@ function updateRangeInputs(now = new Date()) {
 function updateIntervalSummary(range) {
   const summary = $("interval-summary");
   if (activeRange && RANGE_PRESETS[activeRange]) {
-    summary.textContent = `Intervall: ${RANGE_PRESETS[activeRange].label}.`;
+    summary.textContent = t("interval", { range: RANGE_PRESETS[activeRange].label });
     return;
   }
   summary.textContent = range.valid && range.start
-    ? `Eget intervall: ${fmt(range.start.toISOString())} – ${fmt(range.end.toISOString())}.`
-    : "Eget intervall är inte komplett.";
+    ? t("custom_interval", { start: fmt(range.start.toISOString()), end: fmt(range.end.toISOString()) })
+    : t("custom_incomplete");
 }
 
 function historyUrl() {
@@ -211,7 +245,7 @@ function historyUrl() {
 
 function reportUrl() {
   if (!selected) {
-    return { error: "Välj en sensor innan rapporten skapas." };
+    return { error: t("choose_sensor") };
   }
 
   if (activeRange) updateRangeInputs();
@@ -277,16 +311,16 @@ async function refresh() {
       if (history.error) renderRangeError(history.error);
       else renderChart(await getJSON(history.url));
     }
-    $("updated").textContent = "Uppdaterad " + new Date().toLocaleTimeString("sv-SE");
+    $("updated").textContent = t("updated", { time: new Date().toLocaleTimeString(LOCALE) });
     $("error").classList.add("d-none");
   } catch (e) {
     if (HAS_HISTORY_PANEL && (e.status === 401 || e.status === 403)) {
-      renderRangeError("Din session har gått ut eller saknar behörighet. Logga in igen för att visa historiken.");
+      renderRangeError(t("session_expired"));
     }
     if (latestReadings.length) renderCards(latestReadings);
-    else if ($("cards")) $("cards").replaceChildren(el("p", "text-muted", "Mätvärdena är inte tillgängliga just nu."));
-    $("updated").textContent = "Uppdateringen misslyckades";
-    $("error").textContent = "Kunde inte hämta nya mätvärden. Kontrollera anslutningen eller logga in igen. Ett nytt försök görs automatiskt.";
+    else if ($("cards")) $("cards").replaceChildren(el("p", "text-muted", t("unavailable")));
+    $("updated").textContent = t("update_failed");
+    $("error").textContent = t("refresh_error");
     $("error").classList.remove("d-none");
   } finally {
     inFlight = false;

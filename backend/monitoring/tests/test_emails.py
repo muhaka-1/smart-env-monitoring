@@ -149,8 +149,8 @@ class PlatformEmailTests(SimpleTestCase):
         self.assertEqual(message.to, ["alert@example.test"])
         self.assertEqual(message.subject, "Datavarning från Smart Environmental Monitoring")
         for text in (
-            "Sensor: oak-temperature", "Mätstorhet: temperature", "Tid: 2026-11-03T12:00:00Z",
-            "Värde: 27 °C", "Gränsvärde: 25 °C", "Status: ANOMALY",
+            "Sensor: oak-temperature", "Mätstorhet: Temperatur", "Tid: 2026-11-03T12:00:00Z",
+            "Värde: 27 °C", "Gränsvärde: 25 °C", "Status: Avvikelse",
             "https://monitor.example.test/messages/7/", "inte en myndighetsbedömning",
         ):
             self.assertIn(text, message.body)

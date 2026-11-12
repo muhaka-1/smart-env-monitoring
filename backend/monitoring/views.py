@@ -5,7 +5,8 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import connection, transaction
-from django.utils import timezone
+from django.utils import formats, timezone
+from django.utils.translation import get_language, gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.utils.dateparse import parse_datetime
@@ -58,6 +59,42 @@ class DashboardView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["reading_stale_seconds"] = max(
             1, settings.READING_STALE_SECONDS)
+        context["dashboard_i18n"] = {
+            "locale": get_language() or settings.LANGUAGE_CODE,
+            "turbidity": _("Turbiditet"),
+            "temperature": _("Temperatur"),
+            "measurement": _("Mätvärde"),
+            "range_hour": _("senaste timmen"),
+            "range_day": _("senaste dygnet"),
+            "range_week": _("senaste 7 dagarna"),
+            "range_all": _("senaste 200 mätningarna"),
+            "fetch_error": _("Mätvärdena kunde inte hämtas."),
+            "no_readings": _("Inga mätvärden ännu."),
+            "latest_status": _("Senaste status: "),
+            "anomaly": _("Avvikelse"),
+            "threshold": _("gräns"),
+            "stale": _("Mätningen är inaktuell eller saknar giltig tid."),
+            "show_history": _("Visa historik"),
+            "show_history_for": _("Visa historik för %(sensor)s"),
+            "mixed_history": _("Historiken innehåller olika mätstorheter och kan inte visas i samma diagram."),
+            "no_interval_readings": _("Inga mätvärden finns för det valda intervallet."),
+            "threshold_label": _("Gränsvärde"),
+            "chart_explanation": _("● OK · ▲ Avvikelse. Statusen följer projektets konfigurerade gränsregel och är inte en officiell bedömning av badvattnet."),
+            "time_local": _("Tid (lokal tid)"),
+            "value": _("Värde"),
+            "choose_both": _("Välj både Från och Till, eller använd ett snabbval."),
+            "invalid_date": _("Tidsintervallet innehåller ett ogiltigt datum."),
+            "from_before_to": _("Från måste vara tidigare än Till."),
+            "interval": _("Intervall: %(range)s."),
+            "custom_interval": _("Eget intervall: %(start)s – %(end)s."),
+            "custom_incomplete": _("Eget intervall är inte komplett."),
+            "choose_sensor": _("Välj en sensor innan rapporten skapas."),
+            "session_expired": _("Din session har gått ut eller saknar behörighet. Logga in igen för att visa historiken."),
+            "unavailable": _("Mätvärdena är inte tillgängliga just nu."),
+            "updated": _("Uppdaterad %(time)s"),
+            "update_failed": _("Uppdateringen misslyckades"),
+            "refresh_error": _("Kunde inte hämta nya mätvärden. Kontrollera anslutningen eller logga in igen. Ett nytt försök görs automatiskt."),
+        }
         if self.request.user.is_authenticated and self.template_name == "monitoring/dashboard.html":
             context["recent_notifications"] = messages_for(self.request.user)[:3]
         return context
@@ -185,17 +222,25 @@ def history_pdf(request):
         leftMargin=18 * mm,
         topMargin=18 * mm,
         bottomMargin=18 * mm,
-        title="Historiska mätvärden - Senaste 200",
+        title=_("Historiska mätvärden - Senaste 200"),
     )
     styles = getSampleStyleSheet()
     styles["Title"].textColor = colors.HexColor("#183247")
     story = [
-        Paragraph("Badvattenkvalitet | Miljöövervakning", styles["Normal"]),
-        Paragraph("Historiska mätvärden - Senaste 200", styles["Title"]),
-        Paragraph(f"Visar {len(rows)} av {total} matchande mätningar.", styles["BodyText"]),
-        Paragraph(f"{total - len(rows)} matchande mätningar ingår inte. Rapporten visar högst de senaste 200, inte nödvändigtvis hela tidsintervallet.", styles["BodyText"]),
+        Paragraph(_("Badvattenkvalitet | Miljöövervakning"), styles["Normal"]),
+        Paragraph(_("Historiska mätvärden - Senaste 200"), styles["Title"]),
+        Paragraph(
+            _("Visar %(shown)d av %(total)d matchande mätningar.")
+            % {"shown": len(rows), "total": total},
+            styles["BodyText"],
+        ),
+        Paragraph(
+            _("%(omitted)d matchande mätningar ingår inte. Rapporten visar högst de senaste 200, inte nödvändigtvis hela tidsintervallet.")
+            % {"omitted": total - len(rows)},
+            styles["BodyText"],
+        ),
         Spacer(1, 5 * mm),
-        Paragraph(f"<b>Sensor-ID:</b> {sensor_id}", styles["BodyText"]),
+        Paragraph(_("<b>Sensor-ID:</b> %(sensor_id)s") % {"sensor_id": sensor_id}, styles["BodyText"]),
     ]
 
     if rows:
@@ -206,35 +251,36 @@ def history_pdf(request):
             metric_labels.get(row.metric, row.metric)
             for row in rows
         }
-        metric_name = next(iter(metric_names)) if len(metric_names) == 1 else "Blandade mätstorheter"
-        story.append(Paragraph(f"<b>Mätstorhet:</b> {metric_name}", styles["BodyText"]))
+        metric_name = next(iter(metric_names)) if len(metric_names) == 1 else _("Blandade mätstorheter")
+        story.append(Paragraph(_("<b>Mätstorhet:</b> %(metric)s") % {"metric": metric_name}, styles["BodyText"]))
     else:
-        story.append(Paragraph("<b>Mätstorhet:</b> Ingen data", styles["BodyText"]))
+        story.append(Paragraph(_("<b>Mätstorhet:</b> Ingen data"), styles["BodyText"]))
 
     interval_start = (
         start.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")
-        if start else "Ingen startgräns"
+        if start else _("Ingen startgräns")
     )
     interval_end = (
         end.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")
-        if end else "Ingen slutgräns"
+        if end else _("Ingen slutgräns")
     )
 
     story.extend([
         Paragraph(
-            f"<b>Tidsintervall (UTC):</b> {interval_start} – {interval_end}",
+            _("<b>Tidsintervall (UTC):</b> %(start)s – %(end)s")
+            % {"start": interval_start, "end": interval_end},
             styles["BodyText"],
         ),
         Paragraph(
-            f"<b>Rapport skapad (UTC):</b> "
-            f"{timezone.now().astimezone(dt_timezone.utc).strftime('%Y-%m-%d %H:%M')}",
+            _("<b>Rapport skapad (UTC):</b> %(created)s")
+            % {"created": timezone.now().astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")},
             styles["BodyText"],
         ),
         Spacer(1, 6 * mm),
     ])
 
     if rows:
-        table_data = [["Tid (UTC)", "Värde", "Enhet", "Status"]]
+        table_data = [[_("Tid (UTC)"), _("Värde"), _("Enhet"), _("Status")]]
 
         status_labels = {
             str(status): label for status, label in Reading.Status.choices
@@ -242,7 +288,7 @@ def history_pdf(request):
         for row in rows:
             table_data.append([
                 row.timestamp.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-                f"{row.value:.1f}",
+                formats.number_format(row.value, decimal_pos=1, use_l10n=True),
                 row.unit,
                 str(status_labels.get(str(row.status), row.status)),
             ])
@@ -270,7 +316,7 @@ def history_pdf(request):
         story.append(table)
     else:
         story.append(Paragraph(
-            "Inga mätvärden finns för den valda sensorn och tidsperioden.",
+            _("Inga mätvärden finns för den valda sensorn och tidsperioden."),
             styles["BodyText"],
         ))
 
@@ -278,8 +324,8 @@ def history_pdf(request):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#536578"))
-        canvas.drawString(18 * mm, 10 * mm, "Badvattenkvalitet | Simulerade data")
-        canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, f"Sida {doc.page}")
+        canvas.drawString(18 * mm, 10 * mm, _("Badvattenkvalitet | Simulerade data"))
+        canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, _("Sida %(page)d") % {"page": doc.page})
         canvas.restoreState()
 
     document.build(story, onFirstPage=footer, onLaterPages=footer)

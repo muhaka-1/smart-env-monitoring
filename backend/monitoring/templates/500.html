@@ -1,3 +1,4 @@
 {% extends "monitoring/error_page.html" %}
-{% block title %}Ett fel har inträffat{% endblock %}
-{% block content %}{% with code="500" heading="Ett fel har inträffat" explanation="Sidan kunde inte visas just nu. Försök igen om en stund." %}{{ block.super }}{% endwith %}{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Ett fel har inträffat" %}{% endblock %}
+{% block content %}{% translate "Ett fel har inträffat" as heading %}{% translate "Sidan kunde inte visas just nu. Försök igen om en stund." as explanation %}{% with code="500" heading=heading explanation=explanation %}{{ block.super }}{% endwith %}{% endblock %}

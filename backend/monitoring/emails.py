@@ -10,13 +10,14 @@ from django.core.mail import EmailMessage
 from django.core.validators import URLValidator, validate_email
 from django.template.loader import render_to_string
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import get_language, gettext as _, gettext_noop, override
 
 log = logging.getLogger(__name__)
 
 _TEMPLATES = {
-    "invitation": ("Din inbjudan till Smart Environmental Monitoring", "monitoring/emails/invitation.txt"),
-    "password_reset": ("Återställ ditt lösenord", "monitoring/emails/password_reset.txt"),
-    "data_alert": ("Datavarning från Smart Environmental Monitoring", "monitoring/emails/data_alert.txt"),
+    "invitation": (gettext_noop("Din inbjudan till Smart Environmental Monitoring"), "monitoring/emails/invitation.txt"),
+    "password_reset": (gettext_noop("Återställ ditt lösenord"), "monitoring/emails/password_reset.txt"),
+    "data_alert": (gettext_noop("Datavarning från Smart Environmental Monitoring"), "monitoring/emails/data_alert.txt"),
 }
 _ALERT_FIELDS = {"sensor_id", "metric", "timestamp", "value", "unit", "threshold", "status"}
 
@@ -43,7 +44,14 @@ def _platform_url(action_path: str) -> str:
     return base + action_path
 
 
-def send_platform_email(recipient: str, kind: str, *, action_path: str, context: Mapping[str, object] | None = None) -> None:
+def send_platform_email(
+    recipient: str,
+    kind: str,
+    *,
+    action_path: str,
+    context: Mapping[str, object] | None = None,
+    language: str | None = None,
+) -> None:
     """Skickar en mall till en mottagare eller kastar EmailDeliveryError vid leveransfel."""
     if kind not in _TEMPLATES:
         raise ValueError("Okänd e-posttyp.")
@@ -52,13 +60,24 @@ def send_platform_email(recipient: str, kind: str, *, action_path: str, context:
     if kind == "data_alert" and not _ALERT_FIELDS.issubset(data):
         raise ValueError("Datavarningen saknar obligatoriska mallfält.")
     data["action_url"] = _platform_url(action_path)
-    subject, template = _TEMPLATES[kind]
-    message = EmailMessage(
-        subject=subject,
-        body=render_to_string(template, data).strip() + "\n",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[recipient],
-    )
+    subject_text, template = _TEMPLATES[kind]
+    selected_language = language or get_language() or settings.LANGUAGE_CODE
+    with override(selected_language):
+        if kind == "data_alert":
+            data["metric"] = {
+                "temperature": _("Temperatur"),
+                "turbidity": _("Turbiditet"),
+            }.get(str(data["metric"]), data["metric"])
+            data["status"] = {
+                "ANOMALY": _("Avvikelse"),
+                "OK": _("OK"),
+            }.get(str(data["status"]), data["status"])
+        message = EmailMessage(
+            subject=_(subject_text),
+            body=render_to_string(template, data).strip() + "\n",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[recipient],
+        )
     try:
         if message.send(fail_silently=False) != 1:
             raise EmailDeliveryError("E-postmeddelandet kunde inte skickas.")
