@@ -143,4 +143,4 @@ class AccountEmailPdfLanguageTests(TestCase):
         self.assertIn("Abweichung", text)
         self.assertIn(self.sensor_id, text)
         self.assertIn("2026-11-10 14:30:00", text)
-        self.assertIn("27.5", text)
+        self.assertIn("27,5", text)

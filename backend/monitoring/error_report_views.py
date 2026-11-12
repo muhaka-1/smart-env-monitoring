@@ -6,7 +6,7 @@ from django.core.paginator import InvalidPage, Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import formats, timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
@@ -88,7 +88,10 @@ def error_report_pdf(request):
     for alert in alerts.iterator(chunk_size=500):
         rows.append([paragraph(value) for value in (
             alert.sensor_id, alert.get_metric_display(), utc_text(alert.timestamp),
-            alert.value, alert.unit, alert.threshold, alert.get_status_display(),
+            formats.number_format(alert.value, decimal_pos=1, use_l10n=True),
+            alert.unit,
+            formats.number_format(alert.threshold, decimal_pos=1, use_l10n=True),
+            alert.get_status_display(),
         )])
     if len(rows) == 1:
         story.append(paragraph(_("Inga sparade avvikelser finns för valt filter.")))

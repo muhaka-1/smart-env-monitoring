@@ -78,9 +78,9 @@ class HistoryPdfTests(TestCase):
         self.assertIn("Historiska mätvärden", text)
         self.assertIn(self.sensor_id, text)
         self.assertIn("Turbiditet", text)
-        self.assertIn("11.0", text)
-        self.assertIn("22.0", text)
-        self.assertNotIn("99.0", text)
+        self.assertIn("11,0", text)
+        self.assertIn("22,0", text)
+        self.assertNotIn("99,0", text)
 
     def test_time_filter_is_applied(self):
         self.client.force_login(self.user)
@@ -96,8 +96,8 @@ class HistoryPdfTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         text = self.pdf_text(response)
-        self.assertNotIn("11.0", text)
-        self.assertIn("22.0", text)
+        self.assertNotIn("11,0", text)
+        self.assertIn("22,0", text)
 
     def test_empty_result_is_explained(self):
         self.client.force_login(self.user)

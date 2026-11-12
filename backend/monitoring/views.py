@@ -5,7 +5,7 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import connection, transaction
-from django.utils import timezone
+from django.utils import formats, timezone
 from django.utils.translation import get_language, gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -288,7 +288,7 @@ def history_pdf(request):
         for row in rows:
             table_data.append([
                 row.timestamp.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-                f"{row.value:.1f}",
+                formats.number_format(row.value, decimal_pos=1, use_l10n=True),
                 row.unit,
                 str(status_labels.get(str(row.status), row.status)),
             ])

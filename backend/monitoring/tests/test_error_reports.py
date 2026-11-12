@@ -74,8 +74,8 @@ class ErrorReportTests(TestCase):
             self.assertIn(expected, text)
         self.assertContains(response, "Avvikelse")
         self.assertIn("Avvikelse", text)
-        self.assertIn("27.1", text)
-        self.assertIn("25.0", text)
+        self.assertIn("27,1", text)
+        self.assertIn("25,0", text)
 
     def test_sensor_and_inclusive_time_filters_match_on_screen_and_pdf(self):
         self.login()
@@ -83,8 +83,8 @@ class ErrorReportTests(TestCase):
         response = self.client.get(self.page_url, params)
         self.assertEqual(list(response.context["page_obj"]), [self.first])
         text = self.text(self.client.get(self.pdf_url, params))
-        self.assertIn("27.1", text)
-        self.assertNotIn("28.2", text)
+        self.assertIn("27,1", text)
+        self.assertNotIn("28,2", text)
         self.assertNotIn("oak-turbidity", text)
         self.assertNotIn("hidden-temperature", text)
 
@@ -120,8 +120,8 @@ class ErrorReportTests(TestCase):
             saved = list(response.context["page_obj"])[0]
             self.assertEqual((saved.value, saved.threshold, saved.status), (27.1, 25, "ANOMALY"))
             text = self.text(self.client.get(self.pdf_url, {"end": self.start.isoformat()}))
-        self.assertIn("27.1", text)
-        self.assertIn("25.0", text)
+        self.assertIn("27,1", text)
+        self.assertIn("25,0", text)
 
     def test_invalid_filters_return_400_on_both_routes(self):
         self.login()
