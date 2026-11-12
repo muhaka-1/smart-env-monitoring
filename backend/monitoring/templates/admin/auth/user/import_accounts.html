@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Start</a> &rsaquo; <a href="{% url 'admin:auth_user_changelist' %}">Användare</a> &rsaquo; Importera konton</div>
+{% endblock %}
+{% block content %}
+{% if error %}<ul class="messagelist"><li class="error">{{ error }}</li></ul>{% endif %}
+{% if report %}
+  <h2>Förhandsgranskning</h2>
+  <p>{{ report.rows|length }} rader lästa: <strong>{{ report.valid_rows|length }} giltiga</strong>,
+     <strong>{{ report.invalid_rows|length }} med fel</strong>. Inget konto har skapats ännu.</p>
+  <table>
+    <thead><tr><th>Rad</th><th>Användarnamn</th><th>E-postadress</th><th>Resultat</th></tr></thead>
+    <tbody>
+    {% for row in report.rows %}
+      <tr>
+        <td>{{ row.number }}</td><td>{{ row.username }}</td><td>{{ row.email }}</td>
+        <td>{% if row.valid %}OK – skapas{% else %}<strong>Skapas inte:</strong> {{ row.errors|join:" " }}{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" style="margin-top:1em">{% csrf_token %}
+    <input type="hidden" name="step" value="confirm">
+    {% if report.valid_rows %}
+      <p>Vid bekräftelse skapas {{ report.valid_rows|length }} inaktiva konton och en inbjudan skickas till varje adress.
+         {% if report.invalid_rows %}De {{ report.invalid_rows|length }} raderna med fel hoppas över.{% endif %}</p>
+      <input type="submit" value="Bekräfta import av {{ report.valid_rows|length }} konton" class="default">
+    {% else %}
+      <p>Ingen rad är giltig, så det finns inget att importera.</p>
+    {% endif %}
+    <a href="{% url 'admin:auth_user_import' %}?restart=1">Avbryt och välj ny fil</a>
+  </form>
+{% elif result %}
+  <h2>Import klar</h2>
+  <p>{{ result.created }} konton skapades. {{ result.sent }} inbjudningar skickades.</p>
+  {% if result.failed %}<p>Inbjudan kunde inte skickas till: {{ result.failed|join:", " }}. Kontona finns kvar inaktiva; använd åtgärden <em>Skicka ny inbjudan</em>.</p>{% endif %}
+  {% if result.skipped %}<p>{{ result.skipped }} rader hoppades över (ogiltiga eller dubbletter).</p>{% endif %}
+  <p><a href="{% url 'admin:auth_user_changelist' %}">Till användarlistan</a></p>
+{% else %}
+  <p>Ladda upp en CSV-fil (UTF-8, kommatecken eller semikolon) med kolumnerna <code>username</code> och <code>email</code>.
+     Filen kontrolleras och förhandsgranskas innan något konto sparas. Högst 500 rader.</p>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    <input type="hidden" name="step" value="preview">
+    <input type="file" name="file" accept=".csv,text/csv" required>
+    <input type="submit" value="Förhandsgranska" class="default">
+  </form>
+{% endif %}
+{% endblock %}

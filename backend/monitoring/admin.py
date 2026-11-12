@@ -3,8 +3,11 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.template.response import TemplateResponse
+from django.urls import path
 
+from . import account_import
 from .emails import EmailDeliveryError
 from .invitations import send_invitation
 from .models import Reading
@@ -64,6 +67,61 @@ class InvitedUserAdmin(UserAdmin):
     add_form = InvitedUserForm
     add_fieldsets = ((None, {"fields": ("username", "email")}),)
     actions = ("resend_invitations",)
+    IMPORT_SESSION_KEY = "account_import_csv"
+
+    def get_urls(self):
+        custom = [path("import/", self.admin_site.admin_view(self.import_view), name="auth_user_import")]
+        return custom + super().get_urls()
+
+    def import_view(self, request):
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+        context = {**self.admin_site.each_context(request), "title": "Importera konton", "opts": self.model._meta}
+        template = "admin/auth/user/import_accounts.html"
+        if request.method == "GET":
+            if request.GET.get("restart"):
+                request.session.pop(self.IMPORT_SESSION_KEY, None)
+            return TemplateResponse(request, template, context)
+        try:
+            if request.POST.get("step") == "confirm":
+                text = request.session.get(self.IMPORT_SESSION_KEY)
+                if not text:
+                    raise account_import.ImportFileError("Ingen förhandsgranskad fil hittades. Ladda upp filen igen.")
+                # Kontrollen görs om vid bekräftelse: kontona kan ha ändrats sedan förhandsgranskningen.
+                report = account_import.validate(text)
+                request.session.pop(self.IMPORT_SESSION_KEY, None)
+                context["result"] = self._create_accounts(request, report)
+            else:
+                upload = request.FILES.get("file")
+                if not upload:
+                    raise account_import.ImportFileError("Välj en CSV-fil.")
+                text = account_import.decode(upload.read(account_import.MAX_BYTES + 1))
+                context["report"] = account_import.validate(text)
+                request.session[self.IMPORT_SESSION_KEY] = text
+        except account_import.ImportFileError as exc:
+            context["error"] = str(exc)
+        return TemplateResponse(request, template, context)
+
+    def _create_accounts(self, request, report):
+        created, failed_rows = [], []
+        for row in report.valid_rows:
+            try:
+                with transaction.atomic():
+                    user = User(username=row.username, email=row.email, is_active=False)
+                    user.set_unusable_password()
+                    user.save()
+                created.append(user)
+            except IntegrityError:
+                failed_rows.append(row)
+        sent, failed = 0, []
+        for user in created:
+            try:
+                send_invitation(user.pk)
+                sent += 1
+            except (EmailDeliveryError, ImproperlyConfigured, ValidationError):
+                failed.append(user.username)
+        return {"created": len(created), "sent": sent, "failed": failed,
+                "skipped": len(report.invalid_rows) + len(failed_rows)}
 
     def get_readonly_fields(self, request, obj=None):
         fields = super().get_readonly_fields(request, obj)
