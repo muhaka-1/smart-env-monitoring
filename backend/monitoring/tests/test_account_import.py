@@ -1,10 +1,14 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from monitoring import account_import
+from monitoring.emails import EmailDeliveryError
 from monitoring.models import AccountInvitation
 
 User = get_user_model()
@@ -60,6 +64,13 @@ class ValidateTests(TestCase):
         with self.assertRaises(account_import.ImportFileError):
             account_import.validate("username,email\n" + "a,a@example.test\n" * (account_import.MAX_ROWS + 1))
 
+    def test_oversized_field_gives_readable_error_not_csv_error(self):
+        # Under 1 MB men över csv-modulens fältgräns (131072 tecken).
+        text = "username,email\n" + "x" * 200_000 + ",a@example.test\n"
+        self.assertLess(len(text), account_import.MAX_BYTES)
+        with self.assertRaisesRegex(account_import.ImportFileError, "kunde inte läsas"):
+            account_import.validate(text)
+
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend", PLATFORM_BASE_URL="https://platform.example.test")
 class ImportViewTests(TestCase):
@@ -114,6 +125,29 @@ class ImportViewTests(TestCase):
         self.assertContains(self.confirm(), "Ladda upp filen igen")
         self.assertContains(self.preview("namn,adress\nx,y\n"), "obligatoriska kolumner")
         self.assertContains(self.client.post(self.url, {"step": "preview"}), "Välj en CSV-fil")
+
+    def test_oversized_field_shows_message_in_view(self):
+        response = self.preview("username,email\n" + "x" * 200_000 + ",a@example.test\n")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "CSV-filen kunde inte läsas")
+        self.assertEqual(User.objects.count(), 2)
+
+    def test_failed_invitation_is_reported_and_account_kept(self):
+        self.preview(CSV)
+        with patch("monitoring.admin.send_invitation", side_effect=EmailDeliveryError("fel")):
+            response = self.confirm()
+        self.assertContains(response, "2 konton skapades. 0 inbjudningar skickades.")
+        self.assertContains(response, "anna, bo")
+        self.assertTrue(User.objects.filter(username="anna", is_active=False).exists())
+
+    def test_import_button_hidden_without_add_permission(self):
+        self.assertContains(self.client.get(reverse("admin:auth_user_changelist")), self.url)
+        staff = User.objects.create_user("viewer", "viewer@example.test", PASSWORD, is_staff=True)
+        staff.user_permissions.add(Permission.objects.get(codename="view_user"))
+        self.client.force_login(staff)
+        response = self.client.get(reverse("admin:auth_user_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.url)
 
     def test_requires_add_permission(self):
         staff = User.objects.create_user("staff", "staff@example.test", PASSWORD, is_staff=True)

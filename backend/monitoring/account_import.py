@@ -96,7 +96,11 @@ def _read(text):
 
 def validate(text):
     """Returnerar en Report. Kastar ImportFileError om filen inte går att tolka."""
-    rows = _read(text)
+    try:
+        rows = _read(text)
+    except csv.Error:
+        # T.ex. ett enskilt fält över csv-modulens fältgräns; visa ett begripligt fel i stället för HTTP 500.
+        raise ImportFileError("CSV-filen kunde inte läsas. Kontrollera filformatet.") from None
     User = get_user_model()
     existing_names = {n.lower() for n in User.objects.values_list("username", flat=True)}
     existing_emails = {e.lower() for e in User.objects.exclude(email="").values_list("email", flat=True)}
