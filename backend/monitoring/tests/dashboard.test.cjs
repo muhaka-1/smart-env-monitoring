@@ -116,6 +116,56 @@ context.dashboard.renderChart({ metric: "turbidity", unit: "NTU", threshold: 30,
 assert.equal(elements.chart.hidden, true);
 assert.match(elements["history-message"].textContent, /Inga mätvärden/);
 
+const localizedElements = {
+  cards: new Element(), chart: new Element(), "history-message": new Element(),
+  "chart-explanation": new Element(),
+  "dashboard-i18n": new Element(),
+};
+localizedElements["dashboard-i18n"].textContent = JSON.stringify({
+  locale: "de", turbidity: "Trübung", temperature: "Temperatur", value: "Wert",
+  threshold: "Grenzwert", threshold_label: "Grenzwert",
+});
+const localizedMain = new Element();
+localizedMain.dataset.readingStaleSeconds = "300";
+const localizedDocument = {
+  body: { dataset: { canViewHistory: "false" } },
+  querySelector: () => localizedMain,
+  querySelectorAll: () => [],
+  getElementById: (id) => localizedElements[id],
+  createElement: () => new Element(),
+};
+const localizedContext = vm.createContext({
+  document: localizedDocument, Chart: ChartMock, Date, Number, Set, URLSearchParams,
+});
+vm.runInContext(
+  source.slice(0, initIndex) + "\nglobalThis.dashboard = { renderCards, renderChart };",
+  localizedContext
+);
+localizedContext.dashboard.renderCards([{
+  ...reading, value: 12.3, threshold: 30.5, sensor_id: "test-turbidity",
+  timestamp: new Date(now - 1000).toISOString(),
+}]);
+assert.match(text(localizedElements.cards.children[0]), /12,3/);
+assert.match(text(localizedElements.cards.children[0]), /Grenzwert 30,5 NTU/);
+localizedContext.dashboard.renderChart({
+  metric: "turbidity", unit: "NTU", threshold: 30.5,
+  results: [{ ...reading, value: 12.3, timestamp: new Date(now).toISOString() }],
+});
+const localizedChart = vm.runInContext("chart", localizedContext);
+assert.equal(localizedChart.options.locale, "de");
+assert.match(
+  localizedChart.options.plugins.tooltip.callbacks.label({
+    datasetIndex: 0, parsed: { y: 12.3 }, raw: localizedChart.data.datasets[0].data[0],
+  }),
+  /Trübung \(NTU\): 12,3 NTU/
+);
+assert.match(
+  localizedChart.options.plugins.tooltip.callbacks.label({
+    datasetIndex: 1, parsed: { y: 30.5 }, raw: localizedChart.data.datasets[1].data[0],
+  }),
+  /Grenzwert: 30,5 NTU/
+);
+
 const publicElements = {
   cards: new Element(), error: new Element(), updated: new Element(),
 };

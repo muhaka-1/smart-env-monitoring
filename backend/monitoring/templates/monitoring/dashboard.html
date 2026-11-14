@@ -1,27 +1,27 @@
 {% extends "monitoring/base.html" %}
-{% load static tz %}
-{% block title %}{% if user.is_authenticated %}Min översikt{% else %}Mätvärden{% endif %}{% endblock %}
+{% load static tz i18n %}
+{% block title %}{% if user.is_authenticated %}{% translate "Min översikt" %}{% else %}{% translate "Mätvärden" %}{% endif %}{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">MILJÖÖVERVAKNING</p><h1>{% if user.is_authenticated %}Min översikt{% else %}Badvattenkvalitet{% endif %}</h1><p>{% if user.is_authenticated %}Senaste mätvärdena och dina sparade meddelanden på ett ställe.{% else %}Följ de senaste mätvärdena för temperatur och turbiditet.{% endif %}</p><p class="small mt-2">Simulerade datasetvärden · Inte ett badråd.</p></div><span id="updated" class="update-status" role="status">Laddar…</span></div>
+<div class="page-heading"><div><p class="eyebrow">{% translate "MILJÖÖVERVAKNING" %}</p><h1>{% if user.is_authenticated %}{% translate "Min översikt" %}{% else %}{% translate "Badvattenkvalitet" %}{% endif %}</h1><p>{% if user.is_authenticated %}{% translate "Senaste mätvärdena och dina sparade meddelanden på ett ställe." %}{% else %}{% translate "Följ de senaste mätvärdena för temperatur och turbiditet." %}{% endif %}</p><p class="small mt-2">{% translate "Simulerade datasetvärden · Inte ett badråd." %}</p></div><span id="updated" class="update-status" role="status">{% translate "Laddar…" %}</span></div>
 {% if user.is_authenticated %}
-<div class="summary-grid" aria-label="Sammanfattning av senaste mätvärden">
-  <article class="summary-card"><p>Mätpunkter</p><strong id="summary-total">—</strong><small>Med ett senaste mätvärde</small></article>
-  <article class="summary-card"><p>Avvikelser</p><strong id="summary-anomaly">—</strong><small>Enligt senast uppmätt status</small></article>
-  <article class="summary-card"><p>Inaktuella mätningar</p><strong id="summary-stale">—</strong><small>Behöver en ny uppdatering</small></article>
+<div class="summary-grid" aria-label="{% translate 'Sammanfattning av senaste mätvärden' %}">
+  <article class="summary-card"><p>{% translate "Mätpunkter" %}</p><strong id="summary-total">—</strong><small>{% translate "Med ett senaste mätvärde" %}</small></article>
+  <article class="summary-card"><p>{% translate "Avvikelser" %}</p><strong id="summary-anomaly">—</strong><small>{% translate "Enligt senast uppmätt status" %}</small></article>
+  <article class="summary-card"><p>{% translate "Inaktuella mätningar" %}</p><strong id="summary-stale">—</strong><small>{% translate "Behöver en ny uppdatering" %}</small></article>
 </div>
 {% endif %}
-<noscript><p class="alert alert-info">Aktivera JavaScript för att hämta de senaste mätvärdena.</p></noscript>
+<noscript><p class="alert alert-info">{% translate "Aktivera JavaScript för att hämta de senaste mätvärdena." %}</p></noscript>
 <section id="readings" aria-labelledby="readings-heading">
-<div class="section-heading"><h2 id="readings-heading">Senaste mätvärden</h2>{% if user.is_authenticated %}<a href="{% url 'history' %}">Visa historik →</a>{% endif %}</div>
+<div class="section-heading"><h2 id="readings-heading">{% translate "Senaste mätvärden" %}</h2>{% if user.is_authenticated %}<a href="{% url 'history' %}">{% translate "Visa historik" %} →</a>{% endif %}</div>
 <div id="error" class="alert alert-danger d-none" role="alert"></div>
-<div class="row g-3 mb-4" id="cards"><p class="text-muted">Hämtar mätvärden…</p></div>
+<div class="row g-3 mb-4" id="cards"><p class="text-muted">{% translate "Hämtar mätvärden…" %}</p></div>
 </section>
-<details class="reading-note" id="about-readings"><summary>Om mätvärdena och deras status</summary><p>Mätvärdena kommer från en simulator som återspelar verkliga datasetvärden, inte aktuella mätningar på plats. Tiden som visas är simulatorns sändtid.</p><p><strong>✔ OK</strong> betyder att värdet inte överstiger projektets gräns. <strong>⚠ Avvikelse</strong> betyder att gränsen har överskridits. Informationen är inte ett badråd och bedömer inte om vattnet är säkert att bada i.</p></details>
+<details class="reading-note" id="about-readings"><summary>{% translate "Om mätvärdena och deras status" %}</summary><p>{% translate "Mätvärdena kommer från en simulator som återspelar verkliga datasetvärden, inte aktuella mätningar på plats. Tiden som visas är simulatorns sändtid." %}</p><p><strong>✔ OK</strong> {% translate "betyder att värdet inte överstiger projektets gräns." %} <strong>⚠ {% translate "Avvikelse" %}</strong> {% translate "betyder att gränsen har överskridits. Informationen är inte ett badråd och bedömer inte om vattnet är säkert att bada i." %}</p></details>
 {% if user.is_authenticated %}
-<section class="mt-4" aria-labelledby="messages-heading"><div class="section-heading"><h2 id="messages-heading">Dina senaste meddelanden</h2><a href="{% url 'message-list' %}">Visa alla →</a></div>
+<section class="mt-4" aria-labelledby="messages-heading"><div class="section-heading"><h2 id="messages-heading">{% translate "Dina senaste meddelanden" %}</h2><a href="{% url 'message-list' %}">{% translate "Visa alla" %} →</a></div>
 <div class="panel">
-{% for notification in recent_notifications %}<article class="message-preview"><div><h3 class="h6">{{ notification.alert.get_metric_display }} · {{ notification.alert.sensor_id }}</h3><p class="mb-0 text-muted small">{% timezone "UTC" %}{{ notification.alert.timestamp|date:"Y-m-d H:i" }}{% endtimezone %} UTC · {{ notification.alert.value }} {{ notification.alert.unit }}</p></div><span class="badge bg-danger">Avvikelse</span></article>{% empty %}<div class="empty-state"><h3 class="h5">Inga meddelanden ännu</h3><p>Dina sparade avvikelser visas här när det finns några.</p></div>{% endfor %}
+{% for notification in recent_notifications %}<article class="message-preview"><div><h3 class="h6">{{ notification.alert.get_metric_display }} · {{ notification.alert.sensor_id }}</h3><p class="mb-0 text-muted small">{% timezone "UTC" %}{{ notification.alert.timestamp|date:"Y-m-d H:i" }}{% endtimezone %} UTC · {{ notification.alert.value }} {{ notification.alert.unit }}</p></div><span class="badge bg-danger">{% translate "Avvikelse" %}</span></article>{% empty %}<div class="empty-state"><h3 class="h5">{% translate "Inga meddelanden ännu" %}</h3><p>{% translate "Dina sparade avvikelser visas här när det finns några." %}</p></div>{% endfor %}
 </div></section>
-{% else %}<div class="panel mt-4"><h2 class="h5">Få tillgång till mer</h2><p>Logga in för att öppna historik, meddelanden och rapporter.</p><a class="btn btn-primary" href="{% url 'login' %}">Logga in</a></div>{% endif %}
+{% else %}<div class="panel mt-4"><h2 class="h5">{% translate "Få tillgång till mer" %}</h2><p>{% translate "Logga in för att öppna historik, meddelanden och rapporter." %}</p><a class="btn btn-primary" href="{% url 'login' %}">{% translate "Logga in" %}</a></div>{% endif %}
 {% endblock %}
-{% block scripts %}<script src="{% static 'monitoring/dashboard.js' %}"></script>{% endblock %}
+{% block scripts %}{{ dashboard_i18n|json_script:"dashboard-i18n" }}<script src="{% static 'monitoring/dashboard.js' %}"></script>{% endblock %}

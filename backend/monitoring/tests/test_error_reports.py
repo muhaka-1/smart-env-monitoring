@@ -72,7 +72,7 @@ class ErrorReportTests(TestCase):
         for expected in ("oak-temperature", "oak-turbidity", "Temperatur", "Turbiditet", "2026-01-01 10:00:00", "°C", "NTU", "Gränsvärde", "Status"):
             self.assertContains(response, expected)
             self.assertIn(expected, text)
-        self.assertContains(response, "ANOMALY")
+        self.assertContains(response, "Avvikelse")
         self.assertIn("Avvikelse", text)
         self.assertIn("27.1", text)
         self.assertIn("25.0", text)

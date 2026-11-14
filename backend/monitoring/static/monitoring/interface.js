@@ -1,4 +1,8 @@
 const navigationButton = document.querySelector(".nav-toggle");
+document.querySelectorAll(".language-switcher select").forEach((select) => {
+  document.body.classList.add("language-switching-ready");
+  select.addEventListener("change", () => select.form.submit());
+});
 const navigation = document.getElementById("app-navigation");
 if (navigationButton && navigation) {
   document.body.classList.add("navigation-ready");

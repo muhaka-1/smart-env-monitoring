@@ -1,3 +1,4 @@
 {% extends "monitoring/error_page.html" %}
-{% block title %}Sidan kunde inte hittas{% endblock %}
-{% block content %}{% with code="404" heading="Sidan kunde inte hittas" explanation="Kontrollera adressen eller gå tillbaka till startsidan." %}{{ block.super }}{% endwith %}{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Sidan kunde inte hittas" %}{% endblock %}
+{% block content %}{% translate "Sidan kunde inte hittas" as heading %}{% translate "Kontrollera adressen eller gå tillbaka till startsidan." as explanation %}{% with code="404" heading=heading explanation=explanation %}{{ block.super }}{% endwith %}{% endblock %}

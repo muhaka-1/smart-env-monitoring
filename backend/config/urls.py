@@ -8,6 +8,7 @@ from monitoring.error_report_views import error_report
 from monitoring.views import DashboardView, HistoryView, ReportListView
 
 urlpatterns = [
+    path("i18n/", include("django.conf.urls.i18n")),
     path("history/", HistoryView.as_view(), name="history"),
     path("reports/", ReportListView.as_view(), name="report-list"),
     path("reports/errors/", error_report, name="error-report"),

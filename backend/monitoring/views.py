@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import connection, transaction
 from django.utils import timezone
+from django.utils.translation import get_language, gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.utils.dateparse import parse_datetime
@@ -58,6 +59,42 @@ class DashboardView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["reading_stale_seconds"] = max(
             1, settings.READING_STALE_SECONDS)
+        context["dashboard_i18n"] = {
+            "locale": get_language() or settings.LANGUAGE_CODE,
+            "turbidity": _("Turbiditet"),
+            "temperature": _("Temperatur"),
+            "measurement": _("Mätvärde"),
+            "range_hour": _("senaste timmen"),
+            "range_day": _("senaste dygnet"),
+            "range_week": _("senaste 7 dagarna"),
+            "range_all": _("senaste 200 mätningarna"),
+            "fetch_error": _("Mätvärdena kunde inte hämtas."),
+            "no_readings": _("Inga mätvärden ännu."),
+            "latest_status": _("Senaste status: "),
+            "anomaly": _("Avvikelse"),
+            "threshold": _("gräns"),
+            "stale": _("Mätningen är inaktuell eller saknar giltig tid."),
+            "show_history": _("Visa historik"),
+            "show_history_for": _("Visa historik för %(sensor)s"),
+            "mixed_history": _("Historiken innehåller olika mätstorheter och kan inte visas i samma diagram."),
+            "no_interval_readings": _("Inga mätvärden finns för det valda intervallet."),
+            "threshold_label": _("Gränsvärde"),
+            "chart_explanation": _("● OK · ▲ Avvikelse. Statusen följer projektets konfigurerade gränsregel och är inte en officiell bedömning av badvattnet."),
+            "time_local": _("Tid (lokal tid)"),
+            "value": _("Värde"),
+            "choose_both": _("Välj både Från och Till, eller använd ett snabbval."),
+            "invalid_date": _("Tidsintervallet innehåller ett ogiltigt datum."),
+            "from_before_to": _("Från måste vara tidigare än Till."),
+            "interval": _("Intervall: %(range)s."),
+            "custom_interval": _("Eget intervall: %(start)s – %(end)s."),
+            "custom_incomplete": _("Eget intervall är inte komplett."),
+            "choose_sensor": _("Välj en sensor innan rapporten skapas."),
+            "session_expired": _("Din session har gått ut eller saknar behörighet. Logga in igen för att visa historiken."),
+            "unavailable": _("Mätvärdena är inte tillgängliga just nu."),
+            "updated": _("Uppdaterad %(time)s"),
+            "update_failed": _("Uppdateringen misslyckades"),
+            "refresh_error": _("Kunde inte hämta nya mätvärden. Kontrollera anslutningen eller logga in igen. Ett nytt försök görs automatiskt."),
+        }
         if self.request.user.is_authenticated and self.template_name == "monitoring/dashboard.html":
             context["recent_notifications"] = messages_for(self.request.user)[:3]
         return context
