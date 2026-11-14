@@ -37,6 +37,26 @@ class InvitationTokens:
         ).exists()
 
 
+def invitation_status(user):
+    """Läsbar status för kontots inbjudan, för administratörens användarlista."""
+    try:
+        invitation = user.accountinvitation
+    except AccountInvitation.DoesNotExist:
+        invitation = None
+    if user.is_active:
+        return "Aktiverad" if invitation else "–"
+    if user.has_usable_password():
+        return "–"
+    if invitation is None:
+        return "Ingen inbjudan"
+    if invitation.sent_at is None:
+        return "Ej skickad (leveransfel)"
+    expires = invitation.issued_at + INVITATION_LIFETIME
+    if expires <= timezone.now():
+        return "Utgången"
+    return f"Skickad, giltig till {timezone.localtime(expires):%Y-%m-%d %H:%M}"
+
+
 def send_invitation(user_id):
     with transaction.atomic():
         user = get_user_model().objects.select_for_update().get(pk=user_id)
@@ -44,14 +64,23 @@ def send_invitation(user_id):
             raise ValidationError("Endast inaktiva konton utan lösenord kan bjudas in.")
         validate_email(user.email)
         token = secrets.token_urlsafe(32)
+        digest = token_digest(user, token)
         AccountInvitation.objects.update_or_create(
             user=user,
-            defaults={"token_digest": token_digest(user, token), "issued_at": timezone.now()},
+            defaults={"token_digest": digest, "issued_at": timezone.now(), "sent_at": None},
         )
         action_path = reverse("invitation_accept", kwargs={
             "uidb64": urlsafe_base64_encode(force_bytes(user.pk)), "token": token,
         })
-    send_platform_email(user.email, "invitation", action_path=action_path, context={"username": user.username})
+    try:
+        send_platform_email(user.email, "invitation", action_path=action_path, context={"username": user.username})
+    except Exception:
+        # Länken nådde aldrig mottagaren: gör den oanvändbar och låt statusen visa "Ej skickad".
+        AccountInvitation.objects.filter(user_id=user_id, token_digest=digest).update(token_digest="", sent_at=None)
+        raise
+    # Giltigheten räknas från bekräftat utskick. Villkoret på digest hindrar att ett samtidigt omskick skrivs över.
+    confirmed = timezone.now()
+    AccountInvitation.objects.filter(user_id=user_id, token_digest=digest).update(issued_at=confirmed, sent_at=confirmed)
 
 
 class InvitationAcceptView(PasswordResetConfirmView):

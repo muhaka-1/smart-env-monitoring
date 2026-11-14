@@ -45,6 +45,8 @@ class AccountInvitation(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     token_digest = models.CharField(max_length=64, blank=True)
     issued_at = models.DateTimeField()
+    # Satt först när e-posttjänsten har accepterat utskicket; None betyder att inbjudan inte skickades.
+    sent_at = models.DateTimeField(null=True, blank=True)
 
 
 class Alert(models.Model):

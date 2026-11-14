@@ -21,6 +21,25 @@ Aktiva konton eller konton med ett användbart lösenord bjuds inte in på nytt.
 Administratören kan inte aktivera ett väntande konto eller sätta dess lösenord
 via de vanliga ändringsformulären; mottagaren ska först slutföra inbjudan.
 
+## Inbjudningsstatus (#95)
+
+Användarlistan i admin har kolumnen **Inbjudan**:
+
+| Status | Betydelse |
+| --- | --- |
+| Skickad, giltig till … | E-posttjänsten har accepterat utskicket och länken kan användas |
+| Utgången | Länken är äldre än 72 timmar; använd *Skicka ny inbjudan* |
+| Ej skickad (leveransfel) | Utskicket misslyckades. Länken har gjorts oanvändbar; skicka ny inbjudan |
+| Ingen inbjudan | Inaktivt konto utan lösenord som aldrig har bjudits in |
+| Aktiverad | Mottagaren har valt lösenord |
+| – | Konton som inte skapats via inbjudan |
+
+`AccountInvitation.sent_at` sätts först när `send_platform_email` har lyckats, och de 72 timmarna räknas från det
+bekräftade utskicket (`issued_at` uppdateras då). Misslyckas utskicket töms token och `sent_at` förblir tomt, så en
+länk som mottagaren aldrig fick kan inte användas. Ett omskick som misslyckas ogiltigförklarar också den tidigare länken.
+Statusen avslöjar aldrig SMTP-felets text. Migreringen `0005_accountinvitation_sent_at` sätter `sent_at` på befintliga
+inbjudningar till `issued_at`.
+
 ## Mottagare och säkerhet
 
 - `/accounts/invite/<uidb64>/<token>/` kontrollerar länken och flyttar token till

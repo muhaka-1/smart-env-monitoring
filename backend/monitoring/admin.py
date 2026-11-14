@@ -9,7 +9,7 @@ from django.urls import path
 
 from . import account_import
 from .emails import EmailDeliveryError
-from .invitations import send_invitation
+from .invitations import invitation_status, send_invitation
 from .models import Reading
 
 
@@ -67,6 +67,14 @@ class InvitedUserAdmin(UserAdmin):
     add_form = InvitedUserForm
     add_fieldsets = ((None, {"fields": ("username", "email")}),)
     actions = ("resend_invitations",)
+    list_display = (*UserAdmin.list_display, "invitation")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("accountinvitation")
+
+    @admin.display(description="Inbjudan")
+    def invitation(self, user):
+        return invitation_status(user)
     IMPORT_SESSION_KEY = "account_import_csv"
 
     def get_urls(self):
