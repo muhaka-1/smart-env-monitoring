@@ -156,6 +156,8 @@
   .language-switcher select { max-width: 112px; }
   .account-name { display: none; }
   .account-avatar { width: 30px; height: 30px; }
+  .account-menu { position: static; }
+  .account-dropdown { left: 18px; right: auto; width: min(280px, calc(100vw - 36px)); }
   .public-navigation { width: 100%; justify-content: space-between; gap: 12px; }
   .public-navigation > a:not(.btn) { font-size: .8rem; }
   .app-sidebar { width: 100%; padding: 18px; border-right: 0; border-bottom: 1px solid var(--line); }
