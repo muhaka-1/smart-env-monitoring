@@ -67,6 +67,7 @@ class AlertSerializer(serializers.ModelSerializer):
 
 class NotificationSerializer(serializers.ModelSerializer):
     alert = AlertSerializer(read_only=True)
+    delivery_error = serializers.CharField(source="get_delivery_error_display", read_only=True)
 
     class Meta:
         model = Notification

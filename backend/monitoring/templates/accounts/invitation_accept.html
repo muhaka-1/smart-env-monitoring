@@ -1,18 +1,18 @@
-{% extends "accounts/base.html" %}
-{% block title %}Aktivera konto{% endblock %}
+{% extends "accounts/base.html" %}{% load i18n %}
+{% block title %}{% translate "Aktivera konto" %}{% endblock %}
 {% block account_content %}
 {% if validlink %}
-<h1>Aktivera konto</h1>
-<p>Välj ditt lösenord för att aktivera kontot.</p>
+<h1>{% translate "Aktivera konto" %}</h1>
+<p>{% translate "Välj ditt lösenord för att aktivera kontot." %}</p>
 <form method="post" novalidate>
   {% csrf_token %}
   {% for error in form.non_field_errors %}<p role="alert">{{ error }}</p>{% endfor %}
   {% include "accounts/_field.html" with field=form.new_password1 %}
   {% include "accounts/_field.html" with field=form.new_password2 %}
-  <button type="submit">Aktivera konto</button>
+  <button type="submit">{% translate "Aktivera konto" %}</button>
 </form>
 {% else %}
-<h1>Länken fungerar inte</h1>
-<p role="alert">Inbjudningslänken är ogiltig, har gått ut eller har redan använts. Kontakta administratören för en ny inbjudan.</p>
+<h1>{% translate "Länken fungerar inte" %}</h1>
+<p role="alert">{% translate "Inbjudningslänken är ogiltig, har gått ut eller har redan använts. Kontakta administratören för en ny inbjudan." %}</p>
 {% endif %}
 {% endblock %}

@@ -6,9 +6,10 @@ from monitoring import accounts
 from monitoring.message_views import MessageListView
 from monitoring.error_report_views import error_report
 from monitoring.views import DashboardView, HistoryView, ReportListView
+from monitoring.language_preferences import set_language
 
 urlpatterns = [
-    path("i18n/", include("django.conf.urls.i18n")),
+    path("i18n/setlang/", set_language, name="set_language"),
     path("history/", HistoryView.as_view(), name="history"),
     path("reports/", ReportListView.as_view(), name="report-list"),
     path("reports/errors/", error_report, name="error-report"),

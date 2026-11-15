@@ -48,6 +48,12 @@ class AccountInvitation(models.Model):
     issued_at = models.DateTimeField()
 
 
+class UserLanguagePreference(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name="language_preference")
+    language = models.CharField(max_length=10, choices=settings.LANGUAGES)
+
+
 class Alert(models.Model):
     reading = models.OneToOneField(Reading, on_delete=models.PROTECT)
     sensor_id = models.CharField(max_length=100)
@@ -73,6 +79,17 @@ class Notification(models.Model):
     delivery_error = models.CharField(max_length=255, blank=True)
     email_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_delivery_error_display(self):
+        messages = {
+            "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen.": _(
+                "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen."),
+            "Mottagaren är inte längre aktiv eller saknar giltig e-postadress.": _(
+                "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen."),
+            "E-postförsöket misslyckades. Meddelandet finns kvar i plattformen.": _(
+                "E-postförsöket misslyckades. Meddelandet finns kvar i plattformen."),
+        }
+        return messages.get(self.delivery_error, self.delivery_error)
 
     class Meta:
         ordering = ["-created_at", "-pk"]

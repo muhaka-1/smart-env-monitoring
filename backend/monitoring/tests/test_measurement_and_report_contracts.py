@@ -95,7 +95,7 @@ class InternalNotificationEligibilityTests(TestCase):
             self.assertEqual(response.status_code, 200)
             text = pdf_text(response)
             self.assertIn("rainbow-beach-turbidity", text)
-            self.assertIn("58.1", text)
+            self.assertIn("58,1", text)
 
 
 class HistoryExportContractTests(TestCase):
@@ -131,6 +131,6 @@ class HistoryExportContractTests(TestCase):
         self.assertEqual(response.status_code, 200)
         text = pdf_text(response)
         for expected in ("Tidsintervall (UTC)", "Rapport skapad (UTC)", "Tid (UTC)",
-                         "2026-11-01 12:00", "12.3", "Visar 1 av 1"):
+                         "2026-11-01 12:00", "12,3", "Visar 1 av 1"):
             self.assertIn(expected, text)
-        self.assertNotIn("99.0", text)
+        self.assertNotIn("99,0", text)

@@ -7,6 +7,20 @@ Direkt importerad äldre demodata bearbetas inte i efterhand och utlöser inga u
 
 ## Lagring och mottagare
 
+### Språk
+
+Den inloggade användarens språkval sparas i `UserLanguagePreference`. Ett val före
+inloggning sparas vid inloggningen; inloggning utan språk-cookie skriver inte över
+ett tidigare sparat val. Bakgrundslarm använder varje mottagares sparade språk,
+oberoende av HTTP-anropets eller MQTT-processens språk. Konton som ännu inte valt
+språk använder `LANGUAGE_CODE` (svenska). Befintliga konton och lösenord ändras inte
+av migration `0005_user_language_preference`, som ska tillämpas före omstart.
+
+Sparade leveransfel översätts när de visas i sidan eller API:t. Äldre kända
+feltexter stöds utan att historiska `delivery_error`-värden skrivs om.
+
+### Mottagning och leverans
+
 - `Alert` har en unik koppling till `Reading` och sparar sensor-ID, mätstorhet,
   mättid, värde, enhet, status och gränsvärdet som användes vid mottagningen.
   Senare ändringar i konfigurationen ändrar inte den sparade varningen.

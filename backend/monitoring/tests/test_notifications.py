@@ -7,6 +7,7 @@ from django.core import mail
 from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.translation import override as language_override
 from rest_framework.exceptions import ValidationError
 
 from monitoring import services
@@ -85,11 +86,12 @@ class NotificationTests(TestCase):
         self.assertEqual(mail.outbox, [])
 
     def test_email_explains_sensor_value_threshold_and_protected_link(self):
-        self.ingest()
-        for message in mail.outbox:
-            for expected in ("oak-temperature", "temperature", "27", "25", "°C", "ANOMALY", "https://monitor.example.test/messages/", "inte en myndighetsbedömning"):
-                self.assertIn(expected, message.body)
-            self.assertEqual(message.subject, "Datavarning från Smart Environmental Monitoring")
+        with language_override("sv"):
+            self.ingest()
+            for message in mail.outbox:
+                for expected in ("oak-temperature", "Temperatur", "27", "25", "°C", "Avvikelse", "https://monitor.example.test/messages/", "inte en myndighetsbedömning"):
+                    self.assertIn(expected, message.body)
+                self.assertEqual(message.subject, "Datavarning från Smart Environmental Monitoring")
 
     def test_http_and_mqtt_create_the_same_kind_of_alert(self):
         with self.captureOnCommitCallbacks(execute=True):

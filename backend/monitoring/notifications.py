@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from .emails import EmailDeliveryError, send_platform_email
 from .models import Alert, Notification, Reading
+from .language_preferences import recipient_language
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def deliver_notification(notification_id):
     ).update(delivery_status=Notification.DeliveryStatus.SENDING)
     if not claimed:
         return
-    message = Notification.objects.select_related("alert", "user").filter(pk=notification_id).first()
+    message = Notification.objects.select_related("alert", "user__language_preference").filter(pk=notification_id).first()
     if message is None:
         return
     if not valid_recipient(message.user):
@@ -71,6 +72,7 @@ def deliver_notification(notification_id):
     try:
         send_platform_email(
             message.user.email, "data_alert", action_path=reverse("message-list"),
+            language=recipient_language(message.user),
             context={field: getattr(alert, field) for field in (
                 "sensor_id", "metric", "timestamp", "value", "unit", "threshold", "status",
             )},

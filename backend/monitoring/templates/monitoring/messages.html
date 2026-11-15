@@ -18,7 +18,7 @@
     <div><dt>{% translate "Status" %}</dt><dd>{{ message.alert.get_status_display }}</dd></div>
     <div><dt>{% translate "E-post" %}</dt><dd>{{ message.get_delivery_status_display }}</dd></div>
   </dl>
-  {% if message.delivery_error %}<p>{{ message.delivery_error }}</p>{% endif %}
+  {% if message.delivery_error %}<p>{{ message.get_delivery_error_display }}</p>{% endif %}
 </article>
 {% empty %}
 <p>{% translate "Du har inga sparade meddelanden." %}</p>

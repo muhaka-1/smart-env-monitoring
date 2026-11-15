@@ -5,7 +5,7 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import connection, transaction
-from django.utils import timezone
+from django.utils import formats, timezone
 from django.utils.translation import get_language, gettext as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -192,16 +192,16 @@ def history_pdf(request):
     sensor_id = request.GET.get("sensor_id", "")
 
     if not SENSOR_ID_RE.fullmatch(sensor_id):
-        return HttpResponseBadRequest("Välj ett giltigt sensor-ID.")
+        return HttpResponseBadRequest(_("Välj ett giltigt sensor-ID."))
 
     try:
         start = _parse_dt(request.GET["start"], "start") if request.GET.get("start") else None
         end = _parse_dt(request.GET["end"], "end") if request.GET.get("end") else None
     except ValidationError:
-        return HttpResponseBadRequest("Start- eller sluttiden har ogiltigt format.")
+        return HttpResponseBadRequest(_("Start- eller sluttiden har ogiltigt format."))
 
     if start is not None and end is not None and start > end:
-        return HttpResponseBadRequest("Starttiden måste vara tidigare än sluttiden.")
+        return HttpResponseBadRequest(_("Starttiden måste vara tidigare än sluttiden."))
 
     matches = Reading.objects.filter(sensor_id=sensor_id)
     if start is not None:
@@ -222,17 +222,25 @@ def history_pdf(request):
         leftMargin=18 * mm,
         topMargin=18 * mm,
         bottomMargin=18 * mm,
-        title="Historiska mätvärden - Senaste 200",
+        title=_("Historiska mätvärden - Senaste 200"),
     )
     styles = getSampleStyleSheet()
     styles["Title"].textColor = colors.HexColor("#183247")
     story = [
-        Paragraph("Badvattenkvalitet | Miljöövervakning", styles["Normal"]),
-        Paragraph("Historiska mätvärden - Senaste 200", styles["Title"]),
-        Paragraph(f"Visar {len(rows)} av {total} matchande mätningar.", styles["BodyText"]),
-        Paragraph(f"{total - len(rows)} matchande mätningar ingår inte. Rapporten visar högst de senaste 200, inte nödvändigtvis hela tidsintervallet.", styles["BodyText"]),
+        Paragraph(_("Badvattenkvalitet | Miljöövervakning"), styles["Normal"]),
+        Paragraph(_("Historiska mätvärden - Senaste 200"), styles["Title"]),
+        Paragraph(
+            _("Visar %(shown)d av %(total)d matchande mätningar.")
+            % {"shown": len(rows), "total": total},
+            styles["BodyText"],
+        ),
+        Paragraph(
+            _("%(omitted)d matchande mätningar ingår inte. Rapporten visar högst de senaste 200, inte nödvändigtvis hela tidsintervallet.")
+            % {"omitted": total - len(rows)},
+            styles["BodyText"],
+        ),
         Spacer(1, 5 * mm),
-        Paragraph(f"<b>Sensor-ID:</b> {sensor_id}", styles["BodyText"]),
+        Paragraph(_("<b>Sensor-ID:</b> %(sensor_id)s") % {"sensor_id": sensor_id}, styles["BodyText"]),
     ]
 
     if rows:
@@ -243,35 +251,36 @@ def history_pdf(request):
             metric_labels.get(row.metric, row.metric)
             for row in rows
         }
-        metric_name = next(iter(metric_names)) if len(metric_names) == 1 else "Blandade mätstorheter"
-        story.append(Paragraph(f"<b>Mätstorhet:</b> {metric_name}", styles["BodyText"]))
+        metric_name = next(iter(metric_names)) if len(metric_names) == 1 else _("Blandade mätstorheter")
+        story.append(Paragraph(_("<b>Mätstorhet:</b> %(metric)s") % {"metric": metric_name}, styles["BodyText"]))
     else:
-        story.append(Paragraph("<b>Mätstorhet:</b> Ingen data", styles["BodyText"]))
+        story.append(Paragraph(_("<b>Mätstorhet:</b> Ingen data"), styles["BodyText"]))
 
     interval_start = (
         start.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")
-        if start else "Ingen startgräns"
+        if start else _("Ingen startgräns")
     )
     interval_end = (
         end.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")
-        if end else "Ingen slutgräns"
+        if end else _("Ingen slutgräns")
     )
 
     story.extend([
         Paragraph(
-            f"<b>Tidsintervall (UTC):</b> {interval_start} – {interval_end}",
+            _("<b>Tidsintervall (UTC):</b> %(start)s – %(end)s")
+            % {"start": interval_start, "end": interval_end},
             styles["BodyText"],
         ),
         Paragraph(
-            f"<b>Rapport skapad (UTC):</b> "
-            f"{timezone.now().astimezone(dt_timezone.utc).strftime('%Y-%m-%d %H:%M')}",
+            _("<b>Rapport skapad (UTC):</b> %(created)s")
+            % {"created": timezone.now().astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M")},
             styles["BodyText"],
         ),
         Spacer(1, 6 * mm),
     ])
 
     if rows:
-        table_data = [["Tid (UTC)", "Värde", "Enhet", "Status"]]
+        table_data = [[_("Tid (UTC)"), _("Värde"), _("Enhet"), _("Status")]]
 
         status_labels = {
             str(status): label for status, label in Reading.Status.choices
@@ -279,7 +288,7 @@ def history_pdf(request):
         for row in rows:
             table_data.append([
                 row.timestamp.astimezone(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-                f"{row.value:.1f}",
+                formats.number_format(row.value, decimal_pos=1, use_l10n=True),
                 row.unit,
                 str(status_labels.get(str(row.status), row.status)),
             ])
@@ -307,7 +316,7 @@ def history_pdf(request):
         story.append(table)
     else:
         story.append(Paragraph(
-            "Inga mätvärden finns för den valda sensorn och tidsperioden.",
+            _("Inga mätvärden finns för den valda sensorn och tidsperioden."),
             styles["BodyText"],
         ))
 
@@ -315,8 +324,8 @@ def history_pdf(request):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#536578"))
-        canvas.drawString(18 * mm, 10 * mm, "Badvattenkvalitet | Simulerade data")
-        canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, f"Sida {doc.page}")
+        canvas.drawString(18 * mm, 10 * mm, _("Badvattenkvalitet | Simulerade data"))
+        canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, _("Sida %(page)d") % {"page": doc.page})
         canvas.restoreState()
 
     document.build(story, onFirstPage=footer, onLaterPages=footer)
