@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from monitoring.emails import EmailDeliveryError
-from monitoring.invitations import invitation_status, send_invitation
+from monitoring.invitations import InvitationTokens, invitation_status, send_invitation
 from monitoring.models import AccountInvitation
 
 User = get_user_model()
@@ -45,6 +45,37 @@ class InvitationStatusTests(TestCase):
         self.assertIsNotNone(invitation.sent_at)
         self.assertEqual(invitation.sent_at, invitation.issued_at)
         self.assertTrue(self.status(user).startswith("Skickad, giltig till "))
+
+    def test_link_is_rejected_until_email_service_confirms_send(self):
+        user = self.invitee()
+        path = None
+        from monitoring.emails import send_platform_email
+
+        def pending_send(*args, **kwargs):
+            nonlocal path
+            path = kwargs["action_path"]
+            token = path.rstrip("/").split("/")[-1]
+            self.assertIsNone(AccountInvitation.objects.get(user=user).sent_at)
+            self.assertFalse(InvitationTokens().check_token(user, token))
+            self.assertEqual(self.client.get(path).status_code, 200)
+            return send_platform_email(*args, **kwargs)
+
+        with patch("monitoring.invitations.send_platform_email", side_effect=pending_send):
+            send_invitation(user.pk)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(self.client.get(path).status_code, 302)
+
+    def test_pending_invitation_cannot_activate_account(self):
+        user = self.invitee()
+        send_invitation(user.pk)
+        response = self.client.get(self.link())
+        form_url = response["Location"]
+        AccountInvitation.objects.filter(user=user).update(sent_at=None)
+        response = self.client.post(form_url, {"new_password1": PASSWORD, "new_password2": PASSWORD})
+        self.assertEqual(response.status_code, 200)
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
+        self.assertFalse(user.has_usable_password())
 
     def test_validity_counts_from_confirmed_send(self):
         user = self.invitee()

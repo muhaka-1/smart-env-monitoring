@@ -33,6 +33,7 @@ class InvitationTokens:
         return AccountInvitation.objects.filter(
             user=user,
             token_digest=token_digest(user, token),
+            sent_at__isnull=False,
             issued_at__gt=timezone.now() - INVITATION_LIFETIME,
         ).exists()
 
@@ -95,6 +96,7 @@ class InvitationAcceptView(PasswordResetConfirmView):
             if user is not None and self.token_generator.check_token(user, token):
                 claimed = AccountInvitation.objects.filter(
                     user=user, token_digest=token_digest(user, token),
+                    sent_at__isnull=False,
                     issued_at__gt=timezone.now() - INVITATION_LIFETIME,
                 ).update(token_digest="")
                 if claimed:

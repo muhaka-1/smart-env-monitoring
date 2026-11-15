@@ -40,6 +40,9 @@ länk som mottagaren aldrig fick kan inte användas. Ett omskick som misslyckas 
 Statusen avslöjar aldrig SMTP-felets text. Migreringen `0005_accountinvitation_sent_at` sätter `sent_at` på befintliga
 inbjudningar till `issued_at`.
 
+Länken kan användas först när utskicket har bekräftats (`sent_at` är satt). Kör migrationerna till
+`0006_merge_invitation_and_language`, som förenar inbjudnings- och språkmigrationerna utan att ändra dem.
+
 ## Mottagare och säkerhet
 
 - `/accounts/invite/<uidb64>/<token>/` kontrollerar länken och flyttar token till
