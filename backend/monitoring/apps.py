@@ -7,3 +7,4 @@ class MonitoringConfig(AppConfig):
 
     def ready(self):
         from . import checks
+        from . import language_preferences

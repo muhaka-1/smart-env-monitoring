@@ -723,3 +723,18 @@ msgstr "Sensor ID"
 #, python-format
 msgid "Antal händelser: %(count)d"
 msgstr "Number of events: %(count)d"
+
+msgid "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen."
+msgstr "Email could not be sent: the account is inactive or has no valid email address. The message remains available in the platform."
+
+msgid "E-postförsöket misslyckades. Meddelandet finns kvar i plattformen."
+msgstr "The email attempt failed. The message remains available in the platform."
+
+msgid "Välj ett giltigt sensor-ID."
+msgstr "Choose a valid sensor ID."
+
+msgid "Start- eller sluttiden har ogiltigt format."
+msgstr "The start or end time has an invalid format."
+
+msgid "Starttiden måste vara tidigare än sluttiden."
+msgstr "The start time must be before the end time."

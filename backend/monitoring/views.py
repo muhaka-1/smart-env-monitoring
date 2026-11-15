@@ -192,16 +192,16 @@ def history_pdf(request):
     sensor_id = request.GET.get("sensor_id", "")
 
     if not SENSOR_ID_RE.fullmatch(sensor_id):
-        return HttpResponseBadRequest("Välj ett giltigt sensor-ID.")
+        return HttpResponseBadRequest(_("Välj ett giltigt sensor-ID."))
 
     try:
         start = _parse_dt(request.GET["start"], "start") if request.GET.get("start") else None
         end = _parse_dt(request.GET["end"], "end") if request.GET.get("end") else None
     except ValidationError:
-        return HttpResponseBadRequest("Start- eller sluttiden har ogiltigt format.")
+        return HttpResponseBadRequest(_("Start- eller sluttiden har ogiltigt format."))
 
     if start is not None and end is not None and start > end:
-        return HttpResponseBadRequest("Starttiden måste vara tidigare än sluttiden.")
+        return HttpResponseBadRequest(_("Starttiden måste vara tidigare än sluttiden."))
 
     matches = Reading.objects.filter(sensor_id=sensor_id)
     if start is not None:
