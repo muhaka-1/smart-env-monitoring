@@ -1,10 +1,19 @@
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
+from pathlib import Path
+import sqlite3
+from tempfile import TemporaryDirectory
+from threading import Event
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib import admin
 from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.db import connection, connections
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 
 from monitoring import account_import
@@ -87,8 +96,32 @@ class ImportViewTests(TestCase):
         return self.client.post(self.url, {"step": "preview", "file": SimpleUploadedFile("k.csv", text.encode())})
 
     def confirm(self):
+        preview = self.client.session.get("account_import_csv", {})
         with self.captureOnCommitCallbacks(execute=True):
-            return self.client.post(self.url, {"step": "confirm"})
+            return self.client.post(self.url, {"step": "confirm", "preview_token": preview.get("token", "")})
+
+    def test_invalid_replacement_discards_previous_preview(self):
+        for replacement in ("bad,header\nx,y\n", None):
+            with self.subTest(replacement=replacement):
+                self.preview(CSV)
+                token = self.client.session["account_import_csv"]["token"]
+                if replacement is None:
+                    self.client.post(self.url, {"step": "preview"})
+                else:
+                    self.preview(replacement)
+                response = self.client.post(self.url, {"step": "confirm", "preview_token": token})
+                self.assertContains(response, "Ladda upp filen igen")
+                self.assertFalse(User.objects.filter(username="anna").exists())
+                self.assertEqual(len(mail.outbox), 0)
+
+    def test_old_confirmation_cannot_import_replacement(self):
+        self.preview(CSV)
+        token = self.client.session["account_import_csv"]["token"]
+        self.preview("username,email\nnew,new@example.test\n")
+        response = self.client.post(self.url, {"step": "confirm", "preview_token": token})
+        self.assertContains(response, "Ladda upp filen igen")
+        self.assertFalse(User.objects.filter(username="new").exists())
+        self.assertContains(self.confirm(), "1 konton skapades")
 
     def test_preview_saves_nothing_and_reports_errors(self):
         before = User.objects.count()
@@ -155,3 +188,54 @@ class ImportViewTests(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 403)
         self.client.logout()
         self.assertEqual(self.client.get(self.url).status_code, 302)
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+class ConcurrentImportTests(TransactionTestCase):
+    def test_overlapping_imports_do_not_create_duplicate_emails(self):
+        user = User.objects.create_superuser("import-admin", "admin@example.test", PASSWORD)
+        first_locked, second_started = Event(), Event()
+        validate = account_import.validate
+
+        def synchronized_validate(text):
+            if "first," in text:
+                first_locked.set()
+                if not second_started.wait(5):
+                    raise AssertionError("Den andra importen startade inte.")
+            return validate(text)
+
+        def run_import(name, email):
+            try:
+                if name == "second":
+                    if not first_locked.wait(5):
+                        raise AssertionError("Den första importen tog inte skrivlåset.")
+                    second_started.set()
+                return admin.site._registry[User]._create_accounts(
+                    SimpleNamespace(user=user), f"username,email\n{name},{email}\n"
+                )
+            finally:
+                connections.close_all()
+
+        # En filbaserad testdatabas använder samma SQLite-låsning som lokal drift.
+        with TemporaryDirectory() as folder:
+            database = str(Path(folder) / "concurrent.sqlite3")
+            with closing(sqlite3.connect(database)) as target:
+                connection.connection.backup(target)
+            original_name = connections.databases["default"]["NAME"]
+            connections.databases["default"]["NAME"] = database
+            try:
+                with patch("monitoring.admin.account_import.validate", side_effect=synchronized_validate), \
+                     patch("monitoring.admin.send_invitation") as send, \
+                     ThreadPoolExecutor(max_workers=2) as pool:
+                    first = pool.submit(run_import, "first", "shared@example.test")
+                    second = pool.submit(run_import, "second", "SHARED@example.test")
+                    results = [first.result(timeout=10), second.result(timeout=10)]
+                self.assertEqual(sorted(r["created"] for r in results), [0, 1])
+                self.assertEqual(sum(r["skipped"] for r in results), 1)
+                self.assertEqual(send.call_count, 1)
+                with closing(sqlite3.connect(database)) as target:
+                    self.assertEqual(target.execute(
+                        "SELECT COUNT(*) FROM auth_user WHERE lower(email) = 'shared@example.test'"
+                    ).fetchone()[0], 1)
+            finally:
+                connections.databases["default"]["NAME"] = original_name

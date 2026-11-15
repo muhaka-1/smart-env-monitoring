@@ -21,6 +21,7 @@
   </table>
   <form method="post" style="margin-top:1em">{% csrf_token %}
     <input type="hidden" name="step" value="confirm">
+    <input type="hidden" name="preview_token" value="{{ preview_token }}">
     {% if report.valid_rows %}
       <p>Vid bekräftelse skapas {{ report.valid_rows|length }} inaktiva konton och en inbjudan skickas till varje adress.
          {% if report.invalid_rows %}De {{ report.invalid_rows|length }} raderna med fel hoppas över.{% endif %}</p>
