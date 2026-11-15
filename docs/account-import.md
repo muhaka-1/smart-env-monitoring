@@ -28,7 +28,7 @@ UTF-8 (BOM tillåten), komma eller semikolon som avgränsare, rubrikrad med `use
 | Dubblett inom filen | Senare rad markeras och pekar på första förekomsten |
 
 Om filen inte går att tolka (fel kodning, saknade kolumner, tom, för stor) visas ett felmeddelande och ingen rapport.
-Leveransfel för inbjudan redovisas efter importen; kontot finns kvar och åtgärden *Skicka ny inbjudan* används.
+Efter importen visas antal skapade konton, antal skickade inbjudningar och vilka som inte kunde skickas. Bestående status per konto syns i kolumnen *Inbjudan* i användarlistan (se [invitations.md](invitations.md)). Kontot finns kvar vid leveransfel och åtgärden *Skicka ny inbjudan* används.
 
 ```bash
 python -B backend/manage.py test monitoring.tests.test_account_import
