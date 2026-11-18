@@ -3,24 +3,23 @@ för issue #3: val av strand, minst 20 användbara rader, kolumnmappning och ant
 
 Körs från mappen sensor/:
     python -m tools.fetch_real_sample                          # visar antal användbara rader per strand
-    python -m tools.fetch_real_sample --beach "Oak Street Beach" --rows 25
+    python -m tools.fetch_real_sample --beach "Ohio Street Beach" --rows 25
 """
 import argparse
 import json
 from collections import Counter
+from dataclasses import replace
 from pathlib import Path
 
-import requests
-
-from sensor_sim.data_source import normalize, slugify
-
-URL = "https://data.cityofchicago.org/resource/qmqz-2xku.json"
+from sensor_sim.config import Config
+from sensor_sim.data_source import fetch_remote, normalize, slugify
 
 
-def fetch(limit: int, timeout: float = 30) -> list[dict]:
-    resp = requests.get(URL, params={"$limit": limit, "$order": "measurement_timestamp DESC"}, timeout=timeout)
-    resp.raise_for_status()
-    return resp.json()
+def fetch(limit: int, beach: str | None = None) -> list[dict]:
+    cfg = replace(Config(), rows_per_beach=limit)
+    if beach:
+        cfg = replace(cfg, beaches=(beach,))
+    return fetch_remote(cfg)
 
 
 def usable_turbidity_per_beach(raw: list[dict]) -> Counter:
@@ -57,15 +56,17 @@ def markdown_table(rows: list[dict]) -> str:
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--beach", help='Strandnamn exakt som i datasetet, t.ex. "Oak Street Beach"')
+    p.add_argument("--beach", help='Strandnamn exakt som i datasetet, t.ex. "Ohio Street Beach"')
     p.add_argument("--rows", type=int, default=25, help="antal användbara rader att visa/spara")
-    p.add_argument("--limit", type=int, default=3000, help="antal senaste rader att hämta från datasetet")
     p.add_argument("--out", help="sökväg för JSON-fil med de sparade raderna")
     args = p.parse_args()
 
-    raw = fetch(args.limit)
-    print(f"Hämtade {len(raw)} rader (senaste först). Tidsspann: "
-          f"{raw[-1].get('measurement_timestamp')} - {raw[0].get('measurement_timestamp')}\n")
+    if args.rows < 1:
+        p.error("--rows måste vara minst 1")
+    raw = fetch(args.rows, args.beach)
+    print(f"Hämtade {len(raw)} giltiga rader. Tidsspann: "
+          f"{min(r['measurement_timestamp'] for r in raw)} - "
+          f"{max(r['measurement_timestamp'] for r in raw)}\n")
 
     if not args.beach:
         print("Användbara turbiditetsvärden per strand (välj stranden med flest):")
@@ -81,7 +82,7 @@ def main() -> None:
           f"avvisade värden: {dict(skipped) or 'inga'}\n")
     print(markdown_table(good))
     if len(good) < 20:
-        print(f"\nVARNING: bara {len(good)} användbara rader. Välj en annan strand eller höj --limit.")
+        print(f"\nVARNING: bara {len(good)} användbara rader. Välj en annan strand eller justera --rows.")
     out = Path(args.out or f"data/real_sample_{slugify(args.beach)}.json")
     out.write_text(json.dumps(good, indent=1), encoding="utf-8")
     print(f"\nSparade {len(good)} rader i {out}")
