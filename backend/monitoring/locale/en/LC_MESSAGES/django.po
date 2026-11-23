@@ -1,0 +1,75 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: smart-env-monitoring (AI)\n"
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Misstänkt sensorfel"
+msgstr "Suspected sensor fault"
+
+msgid "Statistisk avvikelse"
+msgstr "Statistical deviation"
+
+msgid "Fastfruset värde"
+msgstr "Stuck value"
+
+msgid "Plötsligt nollvärde"
+msgstr "Sudden zero value"
+
+msgid "Orimligt hopp"
+msgstr "Implausible jump"
+
+msgid "Avviker från tidigare värden"
+msgstr "Differs from earlier values"
+
+msgid "%(n)d mätpunkt har ett senaste mätvärde."
+msgid_plural "%(n)d mätpunkter har ett senaste mätvärde."
+msgstr[0] "%(n)d measuring point has a latest reading."
+msgstr[1] "%(n)d measuring points have a latest reading."
+
+msgid "%(n)d mätpunkt överskrider projektets gräns:"
+msgid_plural "%(n)d mätpunkter överskrider projektets gräns:"
+msgstr[0] "%(n)d measuring point exceeds the project limit:"
+msgstr[1] "%(n)d measuring points exceed the project limit:"
+
+msgid "%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s."
+msgstr "%(sensor)s (%(metric)s) %(value)s %(unit)s, limit %(threshold)s."
+
+msgid "Inget mätvärde överskrider projektets gränser."
+msgstr "No reading exceeds the project limits."
+
+msgid "Misstänkt sensorfel: %(sensors)s."
+msgstr "Suspected sensor fault: %(sensors)s."
+
+msgid "Obs: mätvärdet misstänks vara ett sensorfel (%(reason)s). Kontrollera sensorn innan åtgärd."
+msgstr "Note: the reading is suspected to be a sensor fault (%(reason)s). Check the sensor before taking action."
+
+msgid "Förklaring (AI-genererad, kontrollera mot värdena ovan):"
+msgstr "Explanation (AI-generated, check against the values above):"
+
+msgid "Läget just nu"
+msgstr "Current situation"
+
+msgid "AI-genererad"
+msgstr "AI-generated"
+
+msgid "Automatisk sammanfattning"
+msgstr "Automatic summary"
+
+msgid "Skapad"
+msgstr "Created"
+
+msgid "Sammanfattningen kunde inte hämtas."
+msgstr "The summary could not be loaded."
+
+msgid "AI-text kan innehålla fel. Kontrollera mot mätvärdena nedan; statusen är projektens gränsregel och inte ett badråd."
+msgstr "AI text can contain errors. Check it against the readings below; the status is the project's limit rule, not bathing advice."
+
+msgid "Datakvalitet"
+msgstr "Data quality"
+
+msgid "Inga misstänkta sensorfel eller statistiska avvikelser."
+msgstr "No suspected sensor faults or statistical deviations."
+

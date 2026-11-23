@@ -43,7 +43,10 @@ class InvitationLanguageMigrationTests(TransactionTestCase):
             self.assertEqual(preference.objects.get(user_id=user.pk).language, "de")
         else:
             self.assertFalse(preference.objects.filter(user_id=user.pk).exists())
-        self.assertEqual(executor.loader.graph.leaf_nodes("monitoring"), self.target)
+        # Senare migrationer får byggas ovanpå sammanslagningen, men grenarna måste vara sammanslagna.
+        leaves = executor.loader.graph.leaf_nodes("monitoring")
+        self.assertEqual(len(leaves), 1)
+        self.assertIn(self.target[0], executor.loader.graph.forwards_plan(leaves[0]))
 
     def test_upgrade_from_language_migration_preserves_accounts_and_preferences(self):
         self.verify_upgrade([("monitoring", "0005_user_language_preference")], has_sent_at=False)

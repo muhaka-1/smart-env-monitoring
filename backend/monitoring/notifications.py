@@ -8,6 +8,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from .ai import explain
 from .emails import EmailDeliveryError, send_platform_email
 from .models import Alert, Notification, Reading
 from .language_preferences import recipient_language
@@ -69,13 +70,20 @@ def deliver_notification(notification_id):
         )
         return
     alert = message.alert
+    language = recipient_language(message.user)
+    context = {field: getattr(alert, field) for field in (
+        "sensor_id", "metric", "timestamp", "value", "unit", "threshold", "status",
+    )}
+    try:
+        # Tilläggen får aldrig hindra utskicket: saknas de skickas mejlet som vanligt.
+        context["quality_note"] = explain.quality_note(alert, language)
+        context["ai_note"] = explain.explain_alert(alert, language)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Tillägg till e-post hoppades över (%s).", type(exc).__name__)
     try:
         send_platform_email(
             message.user.email, "data_alert", action_path=reverse("message-list"),
-            language=recipient_language(message.user),
-            context={field: getattr(alert, field) for field in (
-                "sensor_id", "metric", "timestamp", "value", "unit", "threshold", "status",
-            )},
+            language=language, context=context,
         )
     except (EmailDeliveryError, ImproperlyConfigured, ValidationError):
         Notification.objects.filter(pk=notification_id).update(
