@@ -23,6 +23,10 @@ def trend(previous: list[float], value: float, metric: str) -> str:
     if len(previous) < 3:
         return "unknown"
     base = mean(previous[-TREND_WINDOW:])
+    return trend_from_baseline(base, value, metric)
+
+
+def trend_from_baseline(base: float, value: float, metric: str) -> str:
     limit = max(0.05 * abs(base), MIN_SCALE.get(metric, DEFAULT_MIN_SCALE))
     if value - base > limit:
         return "rising"

@@ -13,7 +13,9 @@ User = get_user_model()
 SETTINGS = dict(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
                 PLATFORM_BASE_URL="https://monitor.example.test",
                 ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25}, AI_COOLDOWN_SECONDS="0")
-EXPLANATION = "ohio-turbidity (turbiditet) 34.0 NTU, gräns 30.0."
+EXPLANATION = ("ohio-turbidity (turbiditet) 34.0 NTU, gräns 30.0. "
+               "Värdet överskrider projektets gräns. "
+               "Värdet är högre än medelvärdet under de senaste 3 timmarna.")
 
 
 @override_settings(**SETTINGS)

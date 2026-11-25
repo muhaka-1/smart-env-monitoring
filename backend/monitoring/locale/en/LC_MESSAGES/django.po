@@ -73,3 +73,18 @@ msgstr "Data quality"
 msgid "Inga misstänkta sensorfel eller statistiska avvikelser."
 msgstr "No suspected sensor faults or statistical deviations."
 
+
+msgid "Värdet överskrider projektets gräns."
+msgstr "The value exceeds the project limit."
+
+msgid "Värdet är högre än medelvärdet under de senaste %(hours)d timmarna."
+msgstr "The value is higher than the average over the last %(hours)d hours."
+
+msgid "Värdet är lägre än medelvärdet under de senaste %(hours)d timmarna."
+msgstr "The value is lower than the average over the last %(hours)d hours."
+
+msgid "Värdet är ungefär lika med medelvärdet under de senaste %(hours)d timmarna."
+msgstr "The value is approximately equal to the average over the last %(hours)d hours."
+
+msgid "För få tidigare mätningar under de senaste %(hours)d timmarna för att bedöma trenden."
+msgstr "Too few earlier readings over the last %(hours)d hours to assess the trend."

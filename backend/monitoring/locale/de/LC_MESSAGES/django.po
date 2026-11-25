@@ -73,3 +73,18 @@ msgstr "Datenqualität"
 msgid "Inga misstänkta sensorfel eller statistiska avvikelser."
 msgstr "Keine vermuteten Sensorfehler oder statistischen Abweichungen."
 
+
+msgid "Värdet överskrider projektets gräns."
+msgstr "Der Wert überschreitet den Projektgrenzwert."
+
+msgid "Värdet är högre än medelvärdet under de senaste %(hours)d timmarna."
+msgstr "Der Wert liegt über dem Mittelwert der letzten %(hours)d Stunden."
+
+msgid "Värdet är lägre än medelvärdet under de senaste %(hours)d timmarna."
+msgstr "Der Wert liegt unter dem Mittelwert der letzten %(hours)d Stunden."
+
+msgid "Värdet är ungefär lika med medelvärdet under de senaste %(hours)d timmarna."
+msgstr "Der Wert entspricht ungefähr dem Mittelwert der letzten %(hours)d Stunden."
+
+msgid "För få tidigare mätningar under de senaste %(hours)d timmarna för att bedöma trenden."
+msgstr "Zu wenige frühere Messwerte in den letzten %(hours)d Stunden für eine Trendbewertung."
