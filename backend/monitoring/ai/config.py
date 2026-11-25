@@ -5,6 +5,8 @@ from urllib.parse import urlsplit
 
 from django.conf import settings
 
+MAX_HTTP_TIMEOUT = 300  # seconds per Ollama request
+
 DEFAULTS = {
     "AI_ENABLED": "0",
     "OLLAMA_URL": "http://127.0.0.1:11434",
@@ -23,12 +25,12 @@ def _raw(name):
     return value
 
 
-def _number(name, minimum):
+def _number(name, minimum, *, maximum=None):
     try:
         value = float(_raw(name))
-        if not isfinite(value):
-            raise ValueError("non-finite setting")
     except (TypeError, ValueError):
+        value = float(DEFAULTS[name])
+    if not isfinite(value) or (maximum is not None and value > maximum):
         value = float(DEFAULTS[name])
     return max(value, minimum)
 
@@ -54,11 +56,11 @@ def base_url() -> str:
 
 
 def timeout() -> float:
-    return _number("AI_TIMEOUT", 1)
+    return _number("AI_TIMEOUT", 1, maximum=MAX_HTTP_TIMEOUT)
 
 
 def mail_timeout() -> float:
-    return _number("AI_MAIL_TIMEOUT", 1)
+    return _number("AI_MAIL_TIMEOUT", 1, maximum=MAX_HTTP_TIMEOUT)
 
 
 def cooldown_seconds() -> float:

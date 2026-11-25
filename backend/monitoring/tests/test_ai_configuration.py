@@ -27,6 +27,13 @@ class NumericConfigurationTests(SimpleTestCase):
                     self.assertTrue(math.isfinite(result))
                     self.assertEqual(result, expected)
 
+    def test_http_timeouts_accept_limit_and_default_above_it(self):
+        options = (("AI_TIMEOUT", config.timeout, 30), ("AI_MAIL_TIMEOUT", config.mail_timeout, 8))
+        for name, read, default in options:
+            for value, expected in (("300", 300), ("301", default), ("1e20", default)):
+                with self.subTest(name=name, value=value), override_settings(**{name: value}):
+                    self.assertEqual(read(), expected)
+
     @override_settings(AI_ENABLED="1", AI_TIMEOUT="inf")
     def test_request_receives_the_finite_default_timeout(self):
         clean_state()
@@ -46,15 +53,20 @@ class FailureFallbackTests(TestCase):
                                value=22.5, unit="°C", timestamp=timezone.now(), status="OK")
 
     def test_timeout_with_invalid_numeric_settings_still_returns_public_fallback(self):
-        with patch("monitoring.ai.client.requests.post", side_effect=requests.Timeout("private-request-marker")) as post:
-            with self.assertLogs("monitoring.ai.client", level="WARNING") as logs:
-                response = self.client.get(reverse("ai-summary"))
-            second = self.client.get(reverse("ai-summary"))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(second.status_code, 200)
-        self.assertEqual(response.json()["source"], "fallback")
-        self.assertIsNone(response.json()["model"])
-        self.assertIn("22.5 °C", response.json()["text"])
-        self.assertEqual(second.json()["source"], "fallback")
-        self.assertEqual(post.call_count, 1)
-        self.assertNotIn("private-request-marker", "\n".join(logs.output))
+        for value in ("nan", "1e20"):
+            with self.subTest(value=value), override_settings(AI_TIMEOUT=value):
+                clean_state()
+                error = requests.Timeout("private-request-marker")
+                with patch("monitoring.ai.client.requests.post", side_effect=error) as post:
+                    with self.assertLogs("monitoring.ai.client", level="WARNING") as logs:
+                        response = self.client.get(reverse("ai-summary"))
+                    second = self.client.get(reverse("ai-summary"))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(second.status_code, 200)
+                self.assertEqual(response.json()["source"], "fallback")
+                self.assertIsNone(response.json()["model"])
+                self.assertIn("22.5 °C", response.json()["text"])
+                self.assertEqual(second.json()["source"], "fallback")
+                self.assertEqual(post.call_count, 1)
+                self.assertEqual(post.call_args.kwargs["timeout"], 30)
+                self.assertNotIn("private-request-marker", "\n".join(logs.output))
