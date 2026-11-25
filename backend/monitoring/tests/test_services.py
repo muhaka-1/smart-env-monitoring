@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from django.db import IntegrityError
 from django.test import SimpleTestCase, TestCase, override_settings
 from rest_framework.exceptions import ValidationError
 
@@ -47,3 +50,15 @@ class IngestTests(TestCase):
         services.ingest_reading(self.payload())
         with self.assertRaises(ValidationError):
             services.ingest_reading(self.payload())
+
+    def test_unrelated_save_integrity_error_is_not_reported_as_duplicate(self):
+        with patch.object(services.ReadingSerializer, "save", side_effect=IntegrityError("other constraint")):
+            with self.assertRaises(IntegrityError):
+                services.ingest_reading(self.payload())
+        self.assertFalse(Reading.objects.exists())
+
+    def test_alert_integrity_error_rolls_back_reading_and_is_not_hidden(self):
+        with patch.object(services, "create_alert", side_effect=IntegrityError("alert constraint")):
+            with self.assertRaises(IntegrityError):
+                services.ingest_reading(self.payload())
+        self.assertFalse(Reading.objects.exists())

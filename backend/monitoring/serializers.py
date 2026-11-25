@@ -4,16 +4,24 @@ import re
 from django.conf import settings
 from rest_framework import serializers
 
-from .models import Reading
+from .models import Alert, Notification, Reading
 
 SENSOR_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_\-]{0,99}$")
 DEFAULT_UNITS = {"turbidity": "NTU", "temperature": "°C"}
+
+
+class ReadingValueField(serializers.FloatField):
+    def to_internal_value(self, data):
+        if isinstance(data, bool):
+            self.fail("invalid")
+        return super().to_internal_value(data)
 
 
 class ReadingSerializer(serializers.ModelSerializer):
     """Validerar inkommande sensordata och serialiserar utdata."""
 
     threshold = serializers.SerializerMethodField()
+    value = ReadingValueField()
 
     class Meta:
         model = Reading
@@ -48,3 +56,20 @@ class ReadingSerializer(serializers.ModelSerializer):
             # Fri text i enhetsfältet visas i dashboarden; endast känd enhet per mätstorhet tillåts (issue #43)
             raise serializers.ValidationError({"unit": f"Enheten för {metric} måste vara '{expected}'."})
         return attrs
+
+
+class AlertSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Alert
+        fields = ["id", "reading_id", "sensor_id", "metric", "timestamp", "value", "unit", "threshold", "status"]
+        read_only_fields = fields
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    alert = AlertSerializer(read_only=True)
+    delivery_error = serializers.CharField(source="get_delivery_error_display", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = ["id", "alert", "delivery_status", "delivery_error", "email_sent_at", "created_at"]
+        read_only_fields = fields

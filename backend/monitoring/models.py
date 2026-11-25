@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Reading(models.Model):
@@ -11,11 +13,11 @@ class Reading(models.Model):
 
     class Status(models.TextChoices):
         OK = "OK", "OK"
-        ANOMALY = "ANOMALY", "Avvikelse"
+        ANOMALY = "ANOMALY", _("Avvikelse")
 
     class Metric(models.TextChoices):
-        TURBIDITY = "turbidity", "Turbiditet"
-        TEMPERATURE = "temperature", "Temperatur"
+        TURBIDITY = "turbidity", _("Turbiditet")
+        TEMPERATURE = "temperature", _("Temperatur")
 
     sensor_id = models.CharField(max_length=100)
     metric = models.CharField(max_length=20, choices=Metric.choices, default=Metric.TURBIDITY)
@@ -38,3 +40,59 @@ class Reading(models.Model):
 
     def __str__(self):
         return f"{self.sensor_id} @ {self.timestamp:%Y-%m-%d %H:%M:%S} = {self.value}"
+
+
+class AccountInvitation(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token_digest = models.CharField(max_length=64, blank=True)
+    issued_at = models.DateTimeField()
+    # Satt först när e-posttjänsten har accepterat utskicket; None betyder att inbjudan inte skickades.
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+
+class UserLanguagePreference(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name="language_preference")
+    language = models.CharField(max_length=10, choices=settings.LANGUAGES)
+
+
+class Alert(models.Model):
+    reading = models.OneToOneField(Reading, on_delete=models.PROTECT)
+    sensor_id = models.CharField(max_length=100)
+    metric = models.CharField(max_length=20, choices=Reading.Metric.choices)
+    timestamp = models.DateTimeField()
+    value = models.FloatField()
+    unit = models.CharField(max_length=20)
+    threshold = models.FloatField()
+    status = models.CharField(max_length=10, choices=Reading.Status.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Notification(models.Model):
+    class DeliveryStatus(models.TextChoices):
+        PENDING = "pending", _("Väntar på e-postförsök")
+        SENDING = "sending", _("Påbörjat utskick, utfall ännu inte bekräftat")
+        SENT = "sent", _("Accepterat av e-postservern")
+        FAILED = "failed", _("E-postförsöket misslyckades")
+
+    alert = models.ForeignKey(Alert, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    delivery_status = models.CharField(max_length=10, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING)
+    delivery_error = models.CharField(max_length=255, blank=True)
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_delivery_error_display(self):
+        messages = {
+            "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen.": _(
+                "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen."),
+            "Mottagaren är inte längre aktiv eller saknar giltig e-postadress.": _(
+                "E-post kunde inte skickas: kontot är inaktivt eller saknar giltig e-postadress. Meddelandet finns kvar i plattformen."),
+            "E-postförsöket misslyckades. Meddelandet finns kvar i plattformen.": _(
+                "E-postförsöket misslyckades. Meddelandet finns kvar i plattformen."),
+        }
+        return messages.get(self.delivery_error, self.delivery_error)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        constraints = [models.UniqueConstraint(fields=["alert", "user"], name="uniq_alert_user")]

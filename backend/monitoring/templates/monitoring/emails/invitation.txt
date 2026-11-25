@@ -1,0 +1,13 @@
+{% load i18n %}{% autoescape off %}{% translate "Hej!" %}
+
+{% translate "Du har bjudits in till Smart Environmental Monitoring." %}
+{% if username %}{% blocktranslate %}Ditt användarnamn är: {{ username }}{% endblocktranslate %}
+{% endif %}
+{% translate "Välj ditt lösenord via länken:" %}
+{{ action_url }}
+
+{% translate "Inbjudan gäller i högst tre dagar. Om länken har gått ut, kontakta administratören för en ny inbjudan." %}
+
+{% translate "Hälsningar," %}
+Smart Environmental Monitoring
+{% endautoescape %}
