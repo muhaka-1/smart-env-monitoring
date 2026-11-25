@@ -1,5 +1,6 @@
 """AI-inställningar. Värden läses från Django-inställningar och annars från miljön."""
 import os
+from math import isfinite
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -25,6 +26,8 @@ def _raw(name):
 def _number(name, minimum):
     try:
         value = float(_raw(name))
+        if not isfinite(value):
+            raise ValueError("non-finite setting")
     except (TypeError, ValueError):
         value = float(DEFAULTS[name])
     return max(value, minimum)
