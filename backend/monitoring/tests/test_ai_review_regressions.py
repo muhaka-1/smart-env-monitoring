@@ -16,7 +16,9 @@ from .ai_helpers import clean_state, ollama_response
 
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend", AI_ENABLED="1",
-                   READING_STALE_SECONDS=300, AI_COOLDOWN_SECONDS="0")
+                   READING_STALE_SECONDS=300, AI_COOLDOWN_SECONDS="0", AI_SUMMARY_CACHE_SECONDS="300",
+                   AI_TIMEOUT="30", AI_MAIL_TIMEOUT="8", OLLAMA_MODEL="llama3.2:3b",
+                   OLLAMA_URL="http://127.0.0.1:11434")
 class ReviewRegressionsTests(TestCase):
     def setUp(self):
         clean_state()

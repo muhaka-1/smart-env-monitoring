@@ -50,11 +50,11 @@ def explain_alert(alert, language: str) -> str | None:
     system = (
         "Du förklarar en datavarning från en kommuns miljöövervakning för en handläggare. "
         f"Skriv högst två korta meningar på {facts_module.language_name(language)}: vad värdet betyder i förhållande "
-        "till gränsvärdet och hur de senaste värdena har utvecklats. Använd ENDAST tal och namn som finns i underlaget. "
-        "Hitta inte på orsaker. Ge inga badråd. Svara som JSON med fältet explanation."
+        "till gränsen och hur de senaste värdena har utvecklats. Använd bara ord och namn som finns i underlaget och "
+        "skriv aldrig koder som ANOMALY. Hitta inte på orsaker och ge inga badråd. Svara som JSON med fältet explanation."
     )
     system += " Om svaret innehåller siffror, använd endast hela meningar från denna lista, ordagrant: " + json.dumps(numeric_statements(facts, language), ensure_ascii=False)
-    user = "Underlag (JSON):\n" + json.dumps(facts, ensure_ascii=False)
+    user = "Underlag (JSON):\n" + json.dumps(facts_module.prompt_alert_facts(facts, language), ensure_ascii=False)
     try:
         result = client.chat_json(system, user, SCHEMA, timeout=config.mail_timeout())
     except client.AIUnavailable:
@@ -63,7 +63,8 @@ def explain_alert(alert, language: str) -> str | None:
     if not isinstance(text, str) or not text.strip() or len(text) > MAX_LENGTH:
         return None
     text = text.strip()
-    if not facts_module.numbers_are_grounded(text, facts) or facts_module.contains_bathing_advice(text):
+    if (not facts_module.numbers_are_grounded(text, facts) or facts_module.contains_bathing_advice(text)
+            or facts_module.contains_raw_codes(text)):
         log.warning("AI-förklaring avvisades för varning %s.", alert.pk)
         return None
     cache.set(key, text, timeout=_CACHE_SECONDS)

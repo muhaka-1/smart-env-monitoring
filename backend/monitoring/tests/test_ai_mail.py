@@ -12,7 +12,9 @@ from .ai_helpers import clean_state, http_error, make_readings, ollama_response,
 User = get_user_model()
 SETTINGS = dict(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
                 PLATFORM_BASE_URL="https://monitor.example.test",
-                ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25}, AI_COOLDOWN_SECONDS="0")
+                ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25}, AI_COOLDOWN_SECONDS="0",
+                AI_ENABLED="0", AI_TIMEOUT="30", AI_MAIL_TIMEOUT="8", AI_SUMMARY_CACHE_SECONDS="300",
+                OLLAMA_MODEL="llama3.2:3b", OLLAMA_URL="http://127.0.0.1:11434")
 EXPLANATION = "ohio-turbidity (turbiditet) 34.0 NTU, gräns 30.0."
 
 

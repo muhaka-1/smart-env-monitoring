@@ -15,7 +15,9 @@ from monitoring.ai.grounding import numeric_statements
 from .ai_helpers import clean_state, make_readings, ollama_response, raw_response, steady
 
 SETTINGS = dict(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-                ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25}, AI_COOLDOWN_SECONDS="0")
+                ANOMALY_THRESHOLDS={"turbidity": 30, "temperature": 25}, AI_COOLDOWN_SECONDS="0",
+                AI_ENABLED="0", AI_TIMEOUT="30", AI_MAIL_TIMEOUT="8", AI_SUMMARY_CACHE_SECONDS="300",
+                OLLAMA_MODEL="llama3.2:3b", OLLAMA_URL="http://127.0.0.1:11434")
 
 
 class GroundingTests(SimpleTestCase):
@@ -107,8 +109,8 @@ class SummaryTests(TestCase):
         messages = post.call_args.kwargs["json"]["messages"]
         self.assertIn("English", messages[0]["content"])
         payload = json.loads(messages[1]["content"].split("\n", 1)[1])
-        self.assertEqual(payload["sensor_points"], 2)
-        self.assertEqual(payload["over_threshold"], 1)
+        self.assertEqual(payload["measuring_points"], 2)
+        self.assertEqual(payload["over_limit"], 1)
         self.assertEqual({i["sensor"] for i in payload["items"]}, {"beach-temp", "beach-turb"})
 
     @override_settings(AI_ENABLED="1")

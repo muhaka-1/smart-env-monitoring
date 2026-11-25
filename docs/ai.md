@@ -12,7 +12,7 @@ Plattformen kan använda en **lokal** AI-modell via [Ollama](https://ollama.com)
 
 ## Principer
 
-- **Fakta från data.** Modellen får färdiga värden (sensor, värde, enhet, gräns, status, trend), aldrig fri databasåtkomst. Numeriska svar kontrolleras som hela sensorbundna meningar, inte som en lös mängd tillåtna tal. Innehåller svaret ett annat tal, ett badråd (till exempel "säkert att bada"), är tomt eller för långt används det inte.
+- **Fakta från data.** Modellen får färdiga värden (sensor, värde, enhet, gräns, status, trend), aldrig fri databasåtkomst. Numeriska svar kontrolleras som hela sensorbundna meningar, inte som en lös mängd tillåtna tal. Innehåller svaret ett annat tal, ett badråd (till exempel "säkert att bada"), är tomt eller för långt används det inte. Statuskoder, trender och datakvalitet översätts till ord på målspråket (till exempel "över gränsen" i stället för `ANOMALY`) innan modellen får dem, och modellen får kopiera färdiga meningar ordagrant för de mätpunkter som ligger över gränsen. Svar som ändå innehåller råa koder (till exempel `ANOMALY`) används inte.
 - **Alltid en reserv.** Är AI avstängd, långsam, nere eller opålitlig visas en vanlig text byggd på mätdatan (dashboard) eller så utelämnas AI-stycket (mejl). Mejl skickas alltid.
 - **Tydlig märkning.** AI-text märks "AI-genererad". Statusen är projektets gränsregel, inte ett badråd.
 - **Integritet.** Inga användare, e-postadresser eller andra personuppgifter skickas till modellen. Loggarna innehåller bara feltyp, aldrig prompt eller svar.
@@ -95,7 +95,7 @@ Manuell provning med riktig modell:
 python backend/manage.py ai_compare_models --models llama3.2:3b,qwen2.5:3b,gemma2:2b --language sv --output docs/ai-model-comparison.md
 ```
 
-Kommandot ställer samma tre scenarier (alla OK, gräns överskriden, misstänkt sensorfel) till varje modell och skriver en tabell med svarstid, giltig JSON, att alla tal kommer ur datan, att inget badråd ges och en enkel språkkontroll. Ett uppvärmningsanrop (modellen laddas) görs först och räknas inte. Kolumnen "Manuell bedömning (1–5)" fylls i av teamet efter att ha läst texterna; språkkontrollen ersätter inte en mänsklig bedömning.
+Kommandot ställer samma tre scenarier (alla OK, gräns överskriden, misstänkt sensorfel) till varje modell och skriver en tabell med svarstid, giltig JSON, att alla tal kommer ur datan, att inget badråd ges, att inga råa koder skrivs ut och en enkel språkkontroll. Ett uppvärmningsanrop (modellen laddas) görs först och räknas inte. Kolumnen "Manuell bedömning (1–5)" fylls i av teamet efter att ha läst texterna; språkkontrollen ersätter inte en mänsklig bedömning.
 
 ### Resultat
 

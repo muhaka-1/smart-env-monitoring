@@ -4,6 +4,7 @@ from statistics import mean
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext as _, override
 
 from .grounding import numeric_text_is_grounded
 
@@ -68,6 +69,61 @@ def latest_facts() -> dict:
         "suspected_sensor_faults": sum(1 for i in items if i["data_quality"] == "sensor_fault"),
         "items": items,
     }
+
+
+def metric_label(metric: str) -> str:
+    return {"temperature": _("Temperatur"), "turbidity": _("Turbiditet")}.get(metric, metric).lower()
+
+
+def trend_word(value: str) -> str:
+    return {"rising": _("stigande"), "falling": _("fallande"), "steady": _("stabil")}.get(value, _("okänd trend"))
+
+
+def quality_word(kind: str | None) -> str | None:
+    return {"sensor_fault": _("misstänkt sensorfel"), "deviation": _("statistisk avvikelse")}.get(kind)
+
+
+def prompt_facts(facts: dict, language: str) -> dict:
+    """Underlaget som modellen får: koder (ANOMALY, rising) ersätts av ord på målspråket."""
+    with override(language):
+        items = []
+        for item in facts["items"]:
+            entry = {
+                "sensor": item["sensor"], "measure": metric_label(item["metric"]),
+                "value": item["value"], "unit": item["unit"], "limit": item["threshold"],
+                "status": _("över gränsen") if item["status"] == Reading.Status.ANOMALY else _("inom gränsen"),
+                "trend": trend_word(item["trend"]),
+            }
+            if quality_word(item["data_quality"]):
+                entry["data_quality"] = quality_word(item["data_quality"])
+            if item.get("stale"):
+                entry["outdated"] = True
+            items.append(entry)
+    return {"measuring_points": facts["sensor_points"], "over_limit": facts["over_threshold"],
+            "suspected_sensor_faults": facts["suspected_sensor_faults"], "items": items}
+
+
+def prompt_alert_facts(facts: dict, language: str) -> dict:
+    """Samma ordöversättning för en enskild varning (mejlförklaring)."""
+    with override(language):
+        entry = {
+            "sensor": facts["sensor"], "measure": metric_label(facts["metric"]),
+            "value": facts["value"], "unit": facts["unit"], "limit": facts["threshold"],
+            "percent_over_limit": facts["percent_over_threshold"],
+            "previous_values": facts["previous_values"], "status": _("över gränsen"),
+            "trend": trend_word(facts["trend"]),
+        }
+        if quality_word(facts["data_quality"]):
+            entry["data_quality"] = quality_word(facts["data_quality"])
+    return entry
+
+
+# Rå koder som aldrig ska visas för en läsare (modellen ska använda orden i underlaget).
+_RAW_CODES = re.compile(r"\b(?:ANOMALY|sensor_fault|measuring_points|over_limit|data_quality)\b")
+
+
+def contains_raw_codes(text: str) -> bool:
+    return bool(_RAW_CODES.search(text))
 
 
 def numbers_are_grounded(text: str, facts: dict) -> bool:

@@ -53,15 +53,21 @@ def fallback_text(facts: dict, language: str) -> str:
 
 
 def _prompt(facts: dict, language: str):
+    over = [item for item in facts["items"] if item["status"] == "ANOMALY"]
+    sentences = numeric_statements({"sensor_points": facts["sensor_points"], "items": over}, language)
     system = (
         "Du sammanfattar mätdata för en kommuns övervakning av badvatten. "
-        f"Skriv 2–3 korta meningar på {facts_module.language_name(language)}. "
-        "Använd ENDAST de tal och sensornamn som finns i underlaget. Hitta inte på värden. "
-        "Ge inga badråd och bedöm inte om vattnet är säkert; statusen är projektets gränsregel. "
-        "Svara som JSON med fältet summary."
+        f"Skriv 2–4 korta, begripliga meningar på {facts_module.language_name(language)}. Regler: "
+        "1) Använd bara ord och sensornamn som finns i underlaget och skriv aldrig koder som ANOMALY. "
+        "2) Siffror får bara förekomma i hela meningar som du kopierar ordagrant från listan nedan. "
+        "3) Beskriv först de mätpunkter som ligger över gränsen (kopiera deras meningar) och säg sedan kort att övriga "
+        "ligger inom gränsen. Ligger ingen över gränsen, säg det. "
+        "4) Nämn misstänkt sensorfel om det finns. "
+        "5) Hitta inte på värden, ge inga badråd och bedöm inte om vattnet är säkert; statusen är projektets gränsregel. "
+        "Svara som JSON med fältet summary. Meningar att kopiera ordagrant: "
+        + json.dumps(sentences, ensure_ascii=False)
     )
-    system += " Om svaret innehåller siffror, använd endast hela meningar från denna lista, ordagrant: " + json.dumps(numeric_statements(facts, language), ensure_ascii=False)
-    user = "Underlag (JSON):\n" + json.dumps(facts, ensure_ascii=False)
+    user = "Underlag (JSON):\n" + json.dumps(facts_module.prompt_facts(facts, language), ensure_ascii=False)
     return system, user
 
 
@@ -79,6 +85,9 @@ def generate(facts: dict, language: str, *, timeout=None) -> str:
     if facts_module.contains_bathing_advice(text):
         log.warning("AI-sammanfattning avvisades: innehåller badråd.")
         raise client.AIUnavailable("badråd")
+    if facts_module.contains_raw_codes(text):
+        log.warning("AI-sammanfattning avvisades: innehåller råa koder.")
+        raise client.AIUnavailable("råa koder")
     return text
 
 

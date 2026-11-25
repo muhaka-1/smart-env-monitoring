@@ -84,12 +84,13 @@ class Command(BaseCommand):
                                       timeout=config.timeout() * 4)
         except client.AIUnavailable as exc:
             return {"seconds": time.perf_counter() - started, "json": False, "numbers": False,
-                    "advice_free": False, "language": False, "text": f"(fel: {exc})"}
+                    "advice_free": False, "codes_free": False, "language": False, "text": f"(fel: {exc})"}
         seconds = time.perf_counter() - started
         text = str(result.get("summary", "")).strip()
         return {
             "seconds": seconds, "json": bool(text), "numbers": bool(text) and facts.numbers_are_grounded(text, scenario),
-            "advice_free": not facts.contains_bathing_advice(text), "language": language_ok(text, language),
+            "advice_free": not facts.contains_bathing_advice(text),
+            "codes_free": not facts.contains_raw_codes(text), "language": language_ok(text, language),
             "text": text,
         }
 
@@ -97,15 +98,15 @@ class Command(BaseCommand):
     def _markdown(rows, language):
         mark = lambda ok: "✔" if ok else "✘"  # noqa: E731
         lines = [f"# Modelljämförelse ({language})", "",
-                 "| Modell | Scenario | Tid (s) | JSON | Tal ur data | Inget badråd | Språk | Manuell bedömning (1–5) | Text |",
-                 "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+                 "| Modell | Scenario | Tid (s) | JSON | Tal ur data | Inget badråd | Inga koder | Språk | Manuell bedömning (1–5) | Text |",
+                 "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
         for r in rows:
             text = r["text"].replace("|", "/").replace("\n", " ")
             lines.append(f"| {r['model']} | {r['scenario']} | {r['seconds']:.1f} | {mark(r['json'])} | "
-                         f"{mark(r['numbers'])} | {mark(r['advice_free'])} | {mark(r['language'])} |  | {text} |")
+                         f"{mark(r['numbers'])} | {mark(r['advice_free'])} | {mark(r['codes_free'])} | {mark(r['language'])} |  | {text} |")
         lines += ["", "## Sammanfattning per modell", "", "| Modell | Medeltid (s) | Godkända kontroller |", "| --- | --- | --- |"]
         for model in dict.fromkeys(r["model"] for r in rows):
             own = [r for r in rows if r["model"] == model]
-            passed = sum(all(r[k] for k in ("json", "numbers", "advice_free", "language")) for r in own)
+            passed = sum(all(r[k] for k in ("json", "numbers", "advice_free", "codes_free", "language")) for r in own)
             lines.append(f"| {model} | {sum(r['seconds'] for r in own) / len(own):.1f} | {passed}/{len(own)} |")
         return "\n".join(lines) + "\n"

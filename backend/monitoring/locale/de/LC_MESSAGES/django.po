@@ -73,3 +73,27 @@ msgstr "Datenqualität"
 msgid "Inga misstänkta sensorfel eller statistiska avvikelser."
 msgstr "Keine vermuteten Sensorfehler oder statistischen Abweichungen."
 
+msgid "över gränsen"
+msgstr "über dem Grenzwert"
+
+msgid "inom gränsen"
+msgstr "innerhalb des Grenzwerts"
+
+msgid "stigande"
+msgstr "steigend"
+
+msgid "fallande"
+msgstr "fallend"
+
+msgid "stabil"
+msgstr "stabil"
+
+msgid "okänd trend"
+msgstr "unbekannter Trend"
+
+msgid "misstänkt sensorfel"
+msgstr "Verdacht auf Sensorfehler"
+
+msgid "statistisk avvikelse"
+msgstr "statistische Abweichung"
+
