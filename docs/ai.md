@@ -46,6 +46,12 @@ OLLAMA_MODEL=llama3.2:3b
 | `AI_COOLDOWN_SECONDS` | `60` | Paus efter fel |
 | `AI_SUMMARY_CACHE_SECONDS` | `300` | Hur länge en sammanfattning återanvänds |
 
+Tomma, icke-numeriska eller icke ändliga tidsvärden (t.ex. `NaN` och `Infinity`)
+ersätts med standardvärdet för respektive inställning. För `AI_TIMEOUT` och
+`AI_MAIL_TIMEOUT` gäller det även värden över 300 sekunder. Fel loggas utan prompt,
+svar eller undantagets meddelande. Timeout och anslutningsfel ger aktuell reservtext
+på dashboarden och vanliga avvikelsemejl utan modellförklaring.
+
 **Stänga av:** sätt `AI_ENABLED=0` (eller ta bort raden) och starta om. Detektionen fortsätter då, men inga modellanrop görs.
 
 ## Avvikelsedetektion (statistik)
