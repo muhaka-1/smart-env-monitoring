@@ -82,7 +82,10 @@ class AlertMailExplanationTests(TestCase):
     @override_settings(AI_ENABLED="1")
     def test_explanation_is_written_in_each_recipients_language(self):
         UserLanguagePreference.objects.create(user=self.erik, language="de")
-        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"explanation": EXPLANATION})) as post:
+        def answer(url, **kwargs):
+            text = kwargs["json"]["format"]["properties"]["explanation"]["enum"][0]
+            return ollama_response({"explanation": text})
+        with patch("monitoring.ai.client.requests.post", side_effect=answer) as post:
             self.ingest()
         prompts = [c.kwargs["json"]["messages"][0]["content"] for c in post.call_args_list]
         self.assertEqual(len(prompts), 2)

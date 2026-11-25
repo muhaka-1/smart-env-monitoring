@@ -40,3 +40,33 @@ def numeric_text_is_grounded(text, facts):
             return False
         remaining = remaining[len(max(matches, key=len)):].lstrip()
     return True
+
+
+def response_schema(field, facts, language, max_length):
+    """Constrain generation as well as validation to complete trusted facts."""
+    statements = numeric_statements(facts, language)
+    options = list(statements)
+    if "sensor_points" in facts and statements:
+        count, *measurements = statements
+        options.extend(f"{count} {line}" for line in measurements)
+        options.extend(f"{count} {first} {second}"
+                       for first, second in zip(measurements, measurements[1:]))
+    options = list(dict.fromkeys(text for text in options if len(text) <= max_length))
+    if not options:
+        raise ValueError("No trusted statements available")
+    return {
+        "type": "object",
+        "properties": {field: {"type": "string", "enum": options, "maxLength": max_length}},
+        "required": [field],
+        "additionalProperties": False,
+    }
+
+
+def selected_text(result, field, schema):
+    """Do not assume that the model/server enforced its response schema."""
+    if set(result) != {field}:
+        return None
+    text = result[field]
+    if not isinstance(text, str) or text not in schema["properties"][field]["enum"]:
+        return None
+    return text
