@@ -3,6 +3,7 @@ import hashlib
 import secrets
 from datetime import timedelta
 
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.exceptions import ValidationError
@@ -45,24 +46,24 @@ def invitation_status(user):
     except AccountInvitation.DoesNotExist:
         invitation = None
     if user.is_active:
-        return "Aktiverad" if invitation else "–"
+        return _("Aktiverad") if invitation else "–"
     if user.has_usable_password():
         return "–"
     if invitation is None:
-        return "Ingen inbjudan"
+        return _("Ingen inbjudan")
     if invitation.sent_at is None:
-        return "Ej skickad (leveransfel)"
+        return _("Ej skickad (leveransfel)")
     expires = invitation.issued_at + INVITATION_LIFETIME
     if expires <= timezone.now():
-        return "Utgången"
-    return f"Skickad, giltig till {timezone.localtime(expires):%Y-%m-%d %H:%M}"
+        return _("Utgången")
+    return _("Skickad, giltig till %(expires)s") % {"expires": timezone.localtime(expires).strftime("%Y-%m-%d %H:%M")}
 
 
 def send_invitation(user_id):
     with transaction.atomic():
         user = get_user_model().objects.select_for_update().get(pk=user_id)
         if user.is_active or user.has_usable_password():
-            raise ValidationError("Endast inaktiva konton utan lösenord kan bjudas in.")
+            raise ValidationError(_("Endast inaktiva konton utan lösenord kan bjudas in."))
         validate_email(user.email)
         token = secrets.token_urlsafe(32)
         digest = token_digest(user, token)

@@ -1,20 +1,21 @@
 {% extends "admin/base_site.html" %}
+{% load i18n %}
 {% block breadcrumbs %}
-<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Start</a> &rsaquo; <a href="{% url 'admin:auth_user_changelist' %}">Användare</a> &rsaquo; Importera konton</div>
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate 'Start' %}</a> &rsaquo; <a href="{% url 'admin:auth_user_changelist' %}">{% translate 'Användare' %}</a> &rsaquo; {% translate 'Importera konton' %}</div>
 {% endblock %}
 {% block content %}
 {% if error %}<ul class="messagelist"><li class="error">{{ error }}</li></ul>{% endif %}
 {% if report %}
-  <h2>Förhandsgranskning</h2>
-  <p>{{ report.rows|length }} rader lästa: <strong>{{ report.valid_rows|length }} giltiga</strong>,
-     <strong>{{ report.invalid_rows|length }} med fel</strong>. Inget konto har skapats ännu.</p>
+  <h2>{% translate 'Förhandsgranskning' %}</h2>
+  <p>{% blocktranslate with count=report.rows|length %}{{ count }} rader lästa:{% endblocktranslate %} <strong>{% blocktranslate with count=report.valid_rows|length %}{{ count }} giltiga{% endblocktranslate %}</strong>,
+     <strong>{% blocktranslate with count=report.invalid_rows|length %}{{ count }} med fel{% endblocktranslate %}</strong>. {% translate 'Inget konto har skapats ännu.' %}</p>
   <table>
-    <thead><tr><th>Rad</th><th>Användarnamn</th><th>E-postadress</th><th>Resultat</th></tr></thead>
+    <thead><tr><th>{% translate 'Rad' %}</th><th>{% translate 'Användarnamn' %}</th><th>{% translate 'E-postadress' %}</th><th>{% translate 'Resultat' %}</th></tr></thead>
     <tbody>
     {% for row in report.rows %}
       <tr>
         <td>{{ row.number }}</td><td>{{ row.username }}</td><td>{{ row.email }}</td>
-        <td>{% if row.valid %}OK – skapas{% else %}<strong>Skapas inte:</strong> {{ row.errors|join:" " }}{% endif %}</td>
+        <td>{% if row.valid %}{% translate 'OK – skapas' %}{% else %}<strong>{% translate 'Skapas inte:' %}</strong> {{ row.errors|join:" " }}{% endif %}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -23,27 +24,27 @@
     <input type="hidden" name="step" value="confirm">
     <input type="hidden" name="preview_token" value="{{ preview_token }}">
     {% if report.valid_rows %}
-      <p>Vid bekräftelse skapas {{ report.valid_rows|length }} inaktiva konton och en inbjudan skickas till varje adress.
-         {% if report.invalid_rows %}De {{ report.invalid_rows|length }} raderna med fel hoppas över.{% endif %}</p>
-      <input type="submit" value="Bekräfta import av {{ report.valid_rows|length }} konton" class="default">
+      <p>{% blocktranslate with count=report.valid_rows|length %}Vid bekräftelse skapas {{ count }} inaktiva konton och en inbjudan skickas till varje adress.{% endblocktranslate %}
+         {% if report.invalid_rows %}{% blocktranslate with count=report.invalid_rows|length %}De {{ count }} raderna med fel hoppas över.{% endblocktranslate %}{% endif %}</p>
+      <input type="submit" value="{% blocktranslate with count=report.valid_rows|length %}Bekräfta import av {{ count }} konton{% endblocktranslate %}" class="default">
     {% else %}
-      <p>Ingen rad är giltig, så det finns inget att importera.</p>
+      <p>{% translate 'Ingen rad är giltig, så det finns inget att importera.' %}</p>
     {% endif %}
-    <a href="{% url 'admin:auth_user_import' %}?restart=1">Avbryt och välj ny fil</a>
+    <a href="{% url 'admin:auth_user_import' %}?restart=1">{% translate 'Avbryt och välj ny fil' %}</a>
   </form>
 {% elif result %}
-  <h2>Import klar</h2>
-  <p>{{ result.created }} konton skapades. {{ result.sent }} inbjudningar skickades.</p>
-  {% if result.failed %}<p>Inbjudan kunde inte skickas till: {{ result.failed|join:", " }}. Kontona finns kvar inaktiva; använd åtgärden <em>Skicka ny inbjudan</em>.</p>{% endif %}
-  {% if result.skipped %}<p>{{ result.skipped }} rader hoppades över (ogiltiga eller dubbletter).</p>{% endif %}
-  <p><a href="{% url 'admin:auth_user_changelist' %}">Till användarlistan</a></p>
+  <h2>{% translate 'Import klar' %}</h2>
+  <p>{% blocktranslate with created=result.created sent=result.sent %}{{ created }} konton skapades. {{ sent }} inbjudningar skickades.{% endblocktranslate %}</p>
+  {% if result.failed %}<p>{% blocktranslate with users=result.failed|join:", " %}Inbjudan kunde inte skickas till: {{ users }}. Kontona finns kvar inaktiva; använd åtgärden Skicka ny inbjudan.{% endblocktranslate %}</p>{% endif %}
+  {% if result.skipped %}<p>{% blocktranslate with count=result.skipped %}{{ count }} rader hoppades över (ogiltiga eller dubbletter).{% endblocktranslate %}</p>{% endif %}
+  <p><a href="{% url 'admin:auth_user_changelist' %}">{% translate 'Till användarlistan' %}</a></p>
 {% else %}
-  <p>Ladda upp en CSV-fil (UTF-8, kommatecken eller semikolon) med kolumnerna <code>username</code> och <code>email</code>.
-     Filen kontrolleras och förhandsgranskas innan något konto sparas. Högst 500 rader.</p>
+  <p>{% translate 'Ladda upp en CSV-fil (UTF-8, kommatecken eller semikolon) med kolumnerna' %} <code>username</code> {% translate 'och' %} <code>email</code>.
+     {% translate 'Filen kontrolleras och förhandsgranskas innan något konto sparas. Högst 500 rader.' %}</p>
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
     <input type="hidden" name="step" value="preview">
     <input type="file" name="file" accept=".csv,text/csv" required>
-    <input type="submit" value="Förhandsgranska" class="default">
+    <input type="submit" value="{% translate 'Förhandsgranska' %}" class="default">
   </form>
 {% endif %}
 {% endblock %}

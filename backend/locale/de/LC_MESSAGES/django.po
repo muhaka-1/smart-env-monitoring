@@ -738,3 +738,210 @@ msgstr "Die Start- oder Endzeit hat ein ungültiges Format."
 
 msgid "Starttiden måste vara tidigare än sluttiden."
 msgstr "Die Startzeit muss vor der Endzeit liegen."
+
+msgid "BEHÖRIG ÅTKOMST"
+msgstr "BERECHTIGTER ZUGANG"
+
+msgid "Logga in som administratör"
+msgstr "Als Administrator anmelden"
+
+msgid "Använd ditt personliga administratörskonto för att hantera plattformen."
+msgstr "Verwende dein persönliches Administratorkonto zur Verwaltung der Plattform."
+
+msgid "Hantera plattformens konton, behörigheter och sparade mätvärden."
+msgstr "Verwalte Konten, Berechtigungen und gespeicherte Messwerte der Plattform."
+
+msgid "Visa"
+msgstr "Anzeigen"
+
+msgid "Öppna"
+msgstr "Öffnen"
+
+msgid "Till plattformen"
+msgstr "Zur Plattform"
+
+msgid "Simulerade miljödata"
+msgstr "Simulierte Umweltdaten"
+
+msgid "Turbiditet får inte vara negativ."
+msgstr "Die Trübung darf nicht negativ sein."
+
+msgid "E-postadress"
+msgstr "E-Mail-Adresse"
+
+msgid "E-postadressen används redan av ett konto."
+msgstr "Die E-Mail-Adresse wird bereits von einem Konto verwendet."
+
+msgid "Inbjudan"
+msgstr "Einladung"
+
+msgid "Importera konton"
+msgstr "Konten importieren"
+
+msgid "Ingen förhandsgranskad fil hittades. Ladda upp filen igen."
+msgstr "Keine Dateivorschau gefunden. Lade die Datei erneut hoch."
+
+msgid "Välj en CSV-fil."
+msgstr "Wähle eine CSV-Datei."
+
+msgid "Inbjudan kunde inte skickas. Kontot är fortsatt inaktivt; försök igen via åtgärden Skicka ny inbjudan."
+msgstr "Die Einladung konnte nicht gesendet werden. Das Konto bleibt inaktiv; versuche es erneut mit Einladung erneut senden."
+
+msgid "Inbjudan skickad. Länken gäller i 72 timmar."
+msgstr "Einladung gesendet. Der Link ist 72 Stunden gültig."
+
+msgid "Skicka ny inbjudan (ogiltigförklarar tidigare länk)"
+msgstr "Einladung erneut senden (macht den vorherigen Link ungültig)"
+
+msgid "Aktiva konton eller konton med lösenord kan inte bjudas in igen."
+msgstr "Aktive Konten oder Konten mit Passwort können nicht erneut eingeladen werden."
+
+msgid "Aktiverad"
+msgstr "Aktiviert"
+
+msgid "Ingen inbjudan"
+msgstr "Keine Einladung"
+
+msgid "Ej skickad (leveransfel)"
+msgstr "Nicht gesendet (Zustellfehler)"
+
+msgid "Utgången"
+msgstr "Abgelaufen"
+
+#, python-format
+msgid "Skickad, giltig till %(expires)s"
+msgstr "Gesendet, gültig bis %(expires)s"
+
+msgid "Endast inaktiva konton utan lösenord kan bjudas in."
+msgstr "Nur inaktive Konten ohne Passwort können eingeladen werden."
+
+msgid "Filen är för stor (högst 1 MB)."
+msgstr "Die Datei ist zu groß (höchstens 1 MB)."
+
+msgid "Filen måste vara UTF-8-kodad CSV."
+msgstr "Die Datei muss eine UTF-8-kodierte CSV-Datei sein."
+
+msgid "Filen är tom."
+msgstr "Die Datei ist leer."
+
+msgid "Filen innehåller inga kontorader."
+msgstr "Die Datei enthält keine Kontozeilen."
+
+msgid "CSV-filen kunde inte läsas. Kontrollera filformatet."
+msgstr "Die CSV-Datei konnte nicht gelesen werden. Prüfe das Dateiformat."
+
+msgid "Användarnamn saknas."
+msgstr "Der Benutzername fehlt."
+
+msgid "Användarnamnet får bara innehålla bokstäver, siffror och @/./+/-/_."
+msgstr "Der Benutzername darf nur Buchstaben, Zahlen und @/./+/-/_ enthalten."
+
+msgid "E-postadress saknas."
+msgstr "Die E-Mail-Adresse fehlt."
+
+msgid "E-postadressen är ogiltig."
+msgstr "Die E-Mail-Adresse ist ungültig."
+
+msgid "Användarnamnet används redan av ett konto."
+msgstr "Der Benutzername wird bereits von einem Konto verwendet."
+
+#, python-format
+msgid "Filen har fler än %(limit)s rader. Dela upp importen."
+msgstr "Die Datei hat mehr als %(limit)s Zeilen. Teile den Import auf."
+
+#, python-format
+msgid "Användarnamnet är längre än %(limit)s tecken."
+msgstr "Der Benutzername ist länger als %(limit)s Zeichen."
+
+#, python-format
+msgid "Användarnamnet förekommer även på rad %(row)s i filen."
+msgstr "Der Benutzername steht auch in Zeile %(row)s der Datei."
+
+#, python-format
+msgid "E-postadressen förekommer även på rad %(row)s i filen."
+msgstr "Die E-Mail-Adresse steht auch in Zeile %(row)s der Datei."
+
+#, python-format
+msgid "Rubrikraden saknar obligatoriska kolumner: %(columns)s. Använd kolumnerna username och email (eller användarnamn och e-post)."
+msgstr "In der Kopfzeile fehlen Pflichtspalten: %(columns)s. Verwende die Spalten username und email (oder användarnamn und e-post)."
+
+msgid "Start"
+msgstr "Startseite"
+
+msgid "Användare"
+msgstr "Benutzer"
+
+msgid "Förhandsgranskning"
+msgstr "Vorschau"
+
+msgid "Rad"
+msgstr "Zeile"
+
+msgid "OK – skapas"
+msgstr "OK – wird erstellt"
+
+msgid "Skapas inte:"
+msgstr "Wird nicht erstellt:"
+
+msgid "Ingen rad är giltig, så det finns inget att importera."
+msgstr "Keine Zeile ist gültig, daher gibt es nichts zu importieren."
+
+msgid "Avbryt och välj ny fil"
+msgstr "Abbrechen und neue Datei wählen"
+
+msgid "Import klar"
+msgstr "Import abgeschlossen"
+
+msgid "Till användarlistan"
+msgstr "Zur Benutzerliste"
+
+msgid "Förhandsgranska"
+msgstr "Vorschau"
+
+msgid "Ladda upp en CSV-fil (UTF-8, kommatecken eller semikolon) med kolumnerna"
+msgstr "Lade eine CSV-Datei (UTF-8, Komma oder Semikolon) mit den Spalten"
+
+msgid "och"
+msgstr "und"
+
+msgid "Filen kontrolleras och förhandsgranskas innan något konto sparas. Högst 500 rader."
+msgstr "Die Datei wird geprüft und als Vorschau angezeigt, bevor Konten gespeichert werden. Höchstens 500 Zeilen."
+
+msgid "Inget konto har skapats ännu."
+msgstr "Es wurden noch keine Konten erstellt."
+
+#, python-format
+msgid "%(count)s rader lästa:"
+msgstr "%(count)s Zeilen gelesen:"
+
+#, python-format
+msgid "%(count)s giltiga"
+msgstr "%(count)s gültig"
+
+#, python-format
+msgid "%(count)s med fel"
+msgstr "%(count)s mit Fehlern"
+
+#, python-format
+msgid "Vid bekräftelse skapas %(count)s inaktiva konton och en inbjudan skickas till varje adress."
+msgstr "Die Bestätigung erstellt %(count)s inaktive Konten und sendet eine Einladung an jede Adresse."
+
+#, python-format
+msgid "De %(count)s raderna med fel hoppas över."
+msgstr "Die %(count)s fehlerhaften Zeilen werden übersprungen."
+
+#, python-format
+msgid "Bekräfta import av %(count)s konton"
+msgstr "Import von %(count)s Konten bestätigen"
+
+#, python-format
+msgid "%(created)s konton skapades. %(sent)s inbjudningar skickades."
+msgstr "%(created)s Konten erstellt. %(sent)s Einladungen gesendet."
+
+#, python-format
+msgid "Inbjudan kunde inte skickas till: %(users)s. Kontona finns kvar inaktiva; använd åtgärden Skicka ny inbjudan."
+msgstr "Einladungen konnten nicht gesendet werden an: %(users)s. Die Konten bleiben inaktiv; verwende Einladung erneut senden."
+
+#, python-format
+msgid "%(count)s rader hoppades över (ogiltiga eller dubbletter)."
+msgstr "%(count)s Zeilen übersprungen (ungültig oder doppelt)."
