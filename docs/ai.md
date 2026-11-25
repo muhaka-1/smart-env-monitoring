@@ -97,19 +97,66 @@ Manuell provning med riktig modell:
 
 ## Modelljämförelse
 
-```bash
-python backend/manage.py ai_compare_models --models llama3.2:3b,qwen2.5:3b,gemma2:2b --language sv --output docs/ai-model-comparison.md
+Starta Ollama och kör från projektroten med den virtuella Python-miljön aktiv.
+Exempel för PowerShell:
+
+```powershell
+ollama pull llama3.2:3b
+ollama pull qwen2.5:3b
+$env:OLLAMA_URL = "http://127.0.0.1:11434"
+$env:EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+foreach ($modell in @("llama3.2:3b", "qwen2.5:3b", "qwen2.5:3b", "llama3.2:3b")) {
+    python backend/manage.py ai_compare_models --models $modell --language sv
+    (Invoke-RestMethod "$env:OLLAMA_URL/api/ps").models |
+        Where-Object { $_.name -eq $modell } |
+        Select-Object name, size, size_vram, context_length
+}
 ```
 
-Kommandot ställer samma tre scenarier (alla OK, gräns överskriden, misstänkt sensorfel) till varje modell och skriver en tabell med svarstid, giltig JSON, att alla tal kommer ur datan, att inget badråd ges och en enkel språkkontroll. Ett uppvärmningsanrop (modellen laddas) görs först och räknas inte. Kolumnen "Manuell bedömning (1–5)" fylls i av teamet efter att ha läst texterna; språkkontrollen ersätter inte en mänsklig bedömning.
+Varje modell får samma tre scenarier: alla värden inom gränsen, överskriden
+gräns och misstänkt sensorfel. Omgång två körs i omvänd modellordning.
+Kommandot utesluter ett uppvärmningsanrop per modell och omgång från tidmätningen.
+Ett scenario godkänns när samtliga automatiska kontroller passerar: JSON-svar
+med text, godkänt textalternativ med tal ur underlaget, inget badråd och enkel
+språkkontroll. Läs också texterna manuellt för begriplighet och för att se att
+status, trend och misstänkt sensorfel framgår.
 
 ### Resultat
 
-> **Ej körd ännu.** Jämförelsen kräver Ollama och modellerna på teamets datorer. Kör kommandot ovan, klistra in tabellen här och skriv en kort slutsats (svenskans kvalitet, hastighet, minnesbehov, vald standardmodell).
+Kört lokalt 2026-11-25 på `development` (`7eece13`) med Ollama 0.40.18,
+Windows, Intel Core i7-10510U, 15,8 GiB RAM och NVIDIA GeForce GTX 1650 Max-Q.
+Båda modellerna använde Q4_K_M och ett kontextfönster på 4 096 token vid testet.
+Varje modell fick sex mätta anrop. Medeltiden är beräknad från kommandots
+avrundade svarstider. Se [issue #106](https://github.com/muhaka-1/smart-env-monitoring/issues/106).
 
-| Modell | Medeltid (s) | Godkända kontroller | Slutsats |
+| Modell | Inom gränsen (s) | Över gränsen (s) | Misstänkt sensorfel (s) | Medel (s) | Godkända scenarier |
+| --- | --- | --- | --- | --- | --- |
+| `llama3.2:3b` | 4,1 / 4,0 | 5,5 / 5,6 | 6,0 / 5,8 | 5,2 | 6/6 |
+| `qwen2.5:3b` | 3,0 / 3,0 | 4,3 / 3,0 | 4,5 / 3,1 | 3,5 | 6/6 |
+
+| Modell | Laddad modell totalt | Varav VRAM | Resterande del utanför VRAM |
 | --- | --- | --- | --- |
-|  |  |  |  |
+| `llama3.2:3b` | 2,73 GiB | 2,19 GiB | 0,55 GiB |
+| `qwen2.5:3b` | 2,01 GiB | 2,01 GiB | 0,00 GiB |
+
+Minnesvärdena är Ollamas rapporterade `size` och `size_vram` efter respektive
+omgång. Den resterande delen beräknas i byte före avrundning. Tabellen avser
+den laddade modellen. Ollamas processer och resten av systemet kan använda
+ytterligare RAM eller VRAM.
+
+**Svenskans kvalitet.** Modellerna valde identiska texter i alla tre scenarier.
+Vid manuell läsning var status och trend begripliga, och scenariot med sensorfel
+skilde tydligt på ”Misstänkt sensorfel” för turbiditeten och ”Avvikelse” för
+temperaturen. Visningen är fortfarande teknisk, med sensor-ID:n och decimalpunkt.
+Texterna kommer från fördefinierade svenska alternativ i Django. Testet mäter
+hur väl modellerna väljer en giltig text i projektet. Deras förmåga att skriva
+fri svensk text behöver bedömas med ett annat test.
+
+**Slutsats.** Välj `qwen2.5:3b` för demo på den testade datorn
+(`OLLAMA_MODEL=qwen2.5:3b`). Den gav samma verifierade texter, svarade snabbare
+och krävde mindre laddat modellminne i båda omgångarna. Projektets nuvarande
+standard är `llama3.2:3b`. Verifiera valet på andra datorer innan standarden
+ändras, eftersom svarstid och minnesfördelning beror på hårdvaran.
 
 ## Kända begränsningar
 
