@@ -7,45 +7,25 @@ import time
 from django.core.cache import cache
 from django.conf import settings
 from django.utils import timezone
-from django.utils.translation import gettext as _, ngettext, override
+from django.utils.translation import gettext as _, override
 
 from . import client, config, facts as facts_module
-from .grounding import response_schema, selected_text
+from .grounding import numeric_statements, response_schema, selected_text
+from .beach_summary import beach_blocks
 
 log = logging.getLogger(__name__)
-MAX_LENGTH = 700
+MAX_LENGTH = 2000
 
-
-
-def _metric_label(metric):
-    return {"temperature": _("Temperatur"), "turbidity": _("Turbiditet")}.get(metric, metric)
 
 
 def fallback_text(facts: dict, language: str) -> str:
-    """Deterministisk sammanfattning som bara bygger på mätdatan."""
+    """Show every beach even when generation is disabled or unavailable."""
     with override(language):
         if not facts["sensor_points"]:
             return _("Inga mätvärden ännu.")
-        parts = [ngettext(
-            "%(n)d mätpunkt har ett senaste mätvärde.",
-            "%(n)d mätpunkter har ett senaste mätvärde.", facts["sensor_points"]) % {"n": facts["sensor_points"]}]
-        over = [i for i in facts["items"] if i["status"] == "ANOMALY" and not i.get("stale", False)]
-        if over:
-            parts.append(ngettext(
-                "%(n)d mätpunkt överskrider projektets gräns:",
-                "%(n)d mätpunkter överskrider projektets gräns:", len(over)) % {"n": len(over)})
-            for item in over:
-                parts.append(_("%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s.") % {
-                    "sensor": item["sensor"], "metric": _metric_label(item["metric"]).lower(),
-                    "value": f"{item['value']:.1f}", "unit": item["unit"], "threshold": f"{item['threshold']:.1f}"})
-        elif not any(i.get("stale", False) for i in facts["items"]):
-            parts.append(_("Inget mätvärde överskrider projektets gränser."))
-        if any(i.get("stale", False) for i in facts["items"]):
-            parts.append(_("Mätningen är inaktuell eller saknar giltig tid."))
-        faults = [i for i in facts["items"] if i["data_quality"] == "sensor_fault" and not i.get("stale", False)]
-        if faults:
-            parts.append(_("Misstänkt sensorfel: %(sensors)s.") % {"sensors": ", ".join(i["sensor"] for i in faults)})
-        return " ".join(parts)
+        count, *measurements = numeric_statements(facts, language)
+        blocks = beach_blocks(facts["items"], measurements, language)
+        return "\n\n".join([count, *blocks])
 
 
 def _prompt(facts: dict, language: str):
@@ -63,8 +43,11 @@ def _prompt(facts: dict, language: str):
 
 def generate(facts: dict, language: str, *, timeout=None) -> str:
     """Anropar modellen och kontrollerar svaret. Kastar AIUnavailable vid fel eller otillåtet innehåll."""
-    system, user = _prompt(facts, language)
-    schema = response_schema("summary", facts, language, MAX_LENGTH)
+    try:
+        system, user = _prompt(facts, language)
+        schema = response_schema("summary", facts, language, MAX_LENGTH)
+    except ValueError as exc:
+        raise client.AIUnavailable("underlaget ryms inte i sammanfattningen") from exc
     result = client.chat_json(system, user, schema, timeout=timeout)
     text = selected_text(result, "summary", schema)
     if not isinstance(text, str) or not text.strip() or len(text) > MAX_LENGTH:
@@ -92,7 +75,7 @@ def get_summary(language: str) -> dict:
     if not config.enabled() or not facts["sensor_points"] or any(i.get("stale", False) for i in facts["items"]):
         return fallback
     signature = hashlib.sha256(json.dumps(facts, sort_keys=True).encode()).hexdigest()
-    key = f"ai-summary:v3:{language}:{signature}"
+    key = f"ai-summary:v4:{language}:{signature}"
     cached = cache.get(key)
     if cached and now - cached["generated_at"] < config.summary_cache_seconds():
         return cached

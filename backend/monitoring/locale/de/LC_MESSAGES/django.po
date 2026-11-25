@@ -88,3 +88,27 @@ msgstr "Der Wert entspricht ungefähr dem Mittelwert der letzten %(hours)d Stund
 
 msgid "För få tidigare mätningar under de senaste %(hours)d timmarna för att bedöma trenden."
 msgstr "Zu wenige frühere Messwerte in den letzten %(hours)d Stunden für eine Trendbewertung."
+
+msgid "Högre än tidigare medelvärde"
+msgstr "Höher als der vorherige Mittelwert"
+
+msgid "Lägre än tidigare medelvärde"
+msgstr "Niedriger als der vorherige Mittelwert"
+
+msgid "Ungefär oförändrat"
+msgstr "Ungefähr unverändert"
+
+msgid "Otillräckligt underlag"
+msgstr "Unzureichende Daten"
+
+msgid "Okänd status"
+msgstr "Unbekannter Status"
+
+msgid "Senaste status: %(status)s. Mätningen är inaktuell eller saknar giltig tid."
+msgstr "Letzter Status: %(status)s. Der Messwert ist veraltet oder hat keinen gültigen Zeitstempel."
+
+msgid "Status: %(status)s. Trend: %(trend)s."
+msgstr "Status: %(status)s. Trend: %(trend)s."
+
+msgid "%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns saknas."
+msgstr "%(sensor)s (%(metric)s) %(value)s %(unit)s, Grenzwert nicht verfügbar."

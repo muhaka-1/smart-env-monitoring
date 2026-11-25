@@ -16,7 +16,7 @@
   data-label-ai-note="{% translate 'AI-text kan innehålla fel. Kontrollera mot mätvärdena nedan; statusen är projektens gränsregel och inte ett badråd.' %}"
   data-label-quality="{% translate 'Datakvalitet' %}" data-label-no-flags="{% translate 'Inga misstänkta sensorfel eller statistiska avvikelser.' %}">
   <div class="section-heading mt-0"><h2 id="ai-status-heading">{% translate "Läget just nu" %}</h2><span id="ai-status-badge" class="badge bg-secondary">…</span></div>
-  <p id="ai-status-text" class="mb-1" role="status">{% translate "Laddar…" %}</p>
+  <div id="ai-status-text" class="mb-1" role="status">{% translate "Laddar…" %}</div>
   <p id="ai-status-meta" class="small text-muted mb-3"></p>
   {% if user.is_authenticated %}<h3 class="h6">{% translate "Datakvalitet" %}</h3>
   <ul id="ai-quality-list" class="small mb-0"></ul>{% endif %}

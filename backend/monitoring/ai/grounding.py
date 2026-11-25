@@ -3,6 +3,8 @@ import re
 
 from django.utils.translation import gettext as _, ngettext, override
 
+from .beach_summary import beach_blocks
+
 
 def numeric_statements(facts, language):
     with override(language):
@@ -14,13 +16,14 @@ def numeric_statements(facts, language):
                 "%(n)d mätpunkt har ett senaste mätvärde.",
                 "%(n)d mätpunkter har ett senaste mätvärde.", count) % {"n": count})
         for item in items:
-            if item.get("threshold") is None:
-                continue
             metric = {"temperature": _("Temperatur"), "turbidity": _("Turbiditet")}.get(item["metric"], item["metric"])
-            statement = _("%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s.") % {
+            template = (_("%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns saknas.")
+                        if item.get("threshold") is None else
+                        _("%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s."))
+            statement = template % {
                 "sensor": item["sensor"], "metric": metric.lower(),
                 "value": f"{item['value']:.1f}", "unit": item["unit"],
-                "threshold": f"{item['threshold']:.1f}",
+                "threshold": "" if item.get("threshold") is None else f"{item['threshold']:.1f}",
             }
             if "trend_window_hours" in item:
                 trend_text = {
@@ -41,7 +44,10 @@ def numeric_text_is_grounded(text, facts):
         return True
     allowed = set()
     for language in ("sv", "en", "de"):
-        allowed.update(numeric_statements(facts, language))
+        statements = numeric_statements(facts, language)
+        allowed.update(statements)
+        if "sensor_points" in facts:
+            allowed.update(beach_blocks(facts["items"], statements[1:], language))
     remaining = text.strip()
     while remaining:
         matches = [line for line in allowed if remaining.startswith(line)]
@@ -57,9 +63,10 @@ def response_schema(field, facts, language, max_length):
     options = list(statements)
     if "sensor_points" in facts and statements:
         count, *measurements = statements
-        options.extend(f"{count} {line}" for line in measurements)
-        options.extend(f"{count} {first} {second}"
-                       for first, second in zip(measurements, measurements[1:]))
+        blocks = beach_blocks(facts["items"], measurements, language)
+        options = ["\n\n".join([count, *blocks])]
+        if len(blocks) > 1:
+            options.append("\n\n".join([count, *reversed(blocks)]))
     options = list(dict.fromkeys(text for text in options if len(text) <= max_length))
     if not options:
         raise ValueError("No trusted statements available")
