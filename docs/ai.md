@@ -134,3 +134,19 @@ avvisas. Modellen prioriterar vilken verifierad text som visas; den skriver inte
 fri numerisk prosa. Ett modellsvar som avviker ger fortfarande reservtext.
 
 Se [Ollamas dokumentation om strukturerade svar](https://docs.ollama.com/capabilities/structured-outputs).
+
+### Trend i avvikelsemejl
+
+Förklaringen anger att värdet överskrider projektets gräns och jämför det med
+medelvärdet för samma sensor och mätstorhet under de tre timmarna före varningen
+(inklusive periodens början, exklusive varningens tid). Alla mätningar i perioden
+ingår i databasens medelvärde; historiken skickas inte till modellen. Minst tre
+tidigare mätningar krävs, annars anges att underlaget inte räcker. Högre/lägre
+avser skillnaden mot periodens medelvärde, inte en beräknad regressionslutning.
+Befintlig tolerans används: fem procent av medelvärdets absolutvärde, dock minst
+mätstorhetens `MIN_SCALE`. Gränsvärden och larmregler ändras inte.
+
+Texten finns på svenska, engelska och tyska och binds till samma verifierade
+faktaunderlag som mätvärdet. AI-avstängning, otillgänglig modell eller ogiltigt
+svar lämnar det vanliga avvikelsemejlet oförändrat. Inga personuppgifter ingår
+i modellunderlaget. Gamla förklaringar återanvänds inte från föregående cacheversion.

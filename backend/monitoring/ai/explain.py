@@ -1,6 +1,9 @@
 """Förklaring av en avvikelse i e-post, samt en vanlig varning vid misstänkt sensorfel."""
 import json
 import logging
+from datetime import timedelta
+
+from django.db.models import Avg, Count
 
 from django.core.cache import cache
 from django.utils.translation import gettext as _, override
@@ -10,12 +13,20 @@ from .grounding import response_schema, selected_text
 
 log = logging.getLogger(__name__)
 MAX_LENGTH = 400
+TREND_HOURS = 3
 _CACHE_SECONDS = 24 * 3600
 
 
 def alert_facts(alert) -> dict:
     from ..models import Reading
-    previous = facts_module._previous_values(alert.sensor_id, alert.metric, alert.timestamp)
+    history = Reading.objects.filter(
+        sensor_id=alert.sensor_id, metric=alert.metric,
+        timestamp__gte=alert.timestamp - timedelta(hours=TREND_HOURS),
+        timestamp__lt=alert.timestamp,
+    ).aggregate(count=Count("pk"), baseline=Avg("value"))
+    trend = "unknown"
+    if history["count"] >= 3:
+        trend = facts_module.trend_from_baseline(history["baseline"], alert.value, alert.metric)
     over = None
     if alert.threshold:
         over = round((alert.value - alert.threshold) / abs(alert.threshold) * 100, 1)
@@ -23,8 +34,9 @@ def alert_facts(alert) -> dict:
         "sensor": alert.sensor_id, "metric": alert.metric,
         "value": round(alert.value, 1), "unit": alert.unit, "threshold": round(alert.threshold, 1),
         "percent_over_threshold": over,
-        "previous_values": [round(v, 1) for v in previous],
-        "trend": facts_module.trend(previous, alert.value, alert.metric),
+        "trend_window_hours": TREND_HOURS,
+        "trend_sample_count": history["count"],
+        "trend": trend,
         "data_quality": getattr(getattr(alert.reading, "assessment", None), "kind", None),
         "status": Reading.Status.ANOMALY,
     }
@@ -35,7 +47,7 @@ def explain_alert(alert, language: str) -> str | None:
     if not config.enabled():
         return None
     language = (language or "sv")[:2]
-    key = f"ai-explain:v2:{alert.pk}:{language}"
+    key = f"ai-explain:v3:{alert.pk}:{language}"
     cached = cache.get(key)
     if cached:
         return cached

@@ -17,11 +17,20 @@ def numeric_statements(facts, language):
             if item.get("threshold") is None:
                 continue
             metric = {"temperature": _("Temperatur"), "turbidity": _("Turbiditet")}.get(item["metric"], item["metric"])
-            statements.append(_("%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s.") % {
+            statement = _("%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s.") % {
                 "sensor": item["sensor"], "metric": metric.lower(),
                 "value": f"{item['value']:.1f}", "unit": item["unit"],
                 "threshold": f"{item['threshold']:.1f}",
-            })
+            }
+            if "trend_window_hours" in item:
+                trend_text = {
+                    "rising": _("Värdet är högre än medelvärdet under de senaste %(hours)d timmarna."),
+                    "falling": _("Värdet är lägre än medelvärdet under de senaste %(hours)d timmarna."),
+                    "steady": _("Värdet är ungefär lika med medelvärdet under de senaste %(hours)d timmarna."),
+                    "unknown": _("För få tidigare mätningar under de senaste %(hours)d timmarna för att bedöma trenden."),
+                }[item["trend"]] % {"hours": item["trend_window_hours"]}
+                statement += " " + _("Värdet överskrider projektets gräns.") + " " + trend_text
+            statements.append(statement)
         return statements
 
 
