@@ -48,8 +48,12 @@ class ReviewRegressionsTests(TestCase):
         self.assertNotContains(response, 'id="ai-quality-list"')
         self.assertContains(response, 'id="ai-status"')
 
+    def answer(self, url, **kwargs):
+        text = kwargs["json"]["format"]["properties"]["summary"]["enum"][0]
+        return ollama_response({"summary": text})
+
     def test_cached_summary_is_invalidated_by_new_reading(self):
-        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": "1 mätpunkt har ett senaste mätvärde."})) as post:
+        with patch("monitoring.ai.client.requests.post", side_effect=self.answer) as post:
             first = summary.get_summary("sv")
             self.assertEqual(summary.get_summary("sv"), first)
             self.assertEqual(post.call_count, 1)
@@ -69,7 +73,7 @@ class ReviewRegressionsTests(TestCase):
         self.assertNotIn("Inget mätvärde överskrider", data["text"])
 
     def test_lock_and_cooldown_cannot_return_expired_summary(self):
-        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": "1 mätpunkt har ett senaste mätvärde."})):
+        with patch("monitoring.ai.client.requests.post", side_effect=self.answer):
             summary.get_summary("sv")
         with override_settings(AI_SUMMARY_CACHE_SECONDS=0), patch("monitoring.ai.client.available", return_value=False):
             self.assertEqual(summary.get_summary("sv")["source"], "fallback")

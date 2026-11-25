@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from monitoring.ai import facts, summary
 from monitoring.models import Reading
-from monitoring.ai.grounding import numeric_statements
+from monitoring.ai.grounding import numeric_statements, response_schema
 
 from .ai_helpers import clean_state, make_readings, ollama_response, raw_response, steady
 
@@ -47,7 +47,9 @@ class SummaryTests(TestCase):
         make_readings("beach-turb", "turbidity", steady(8.0, count=10), start=timezone.now() - timedelta(minutes=10))
         Reading.objects.filter(value=26.3).update(status=Reading.Status.ANOMALY)
 
-    def good(self, text="beach-temp (temperatur) 26.3 °C, gräns 25.0."):
+    def good(self, text=None):
+        if text is None:
+            text = response_schema("summary", facts.latest_facts(), "sv", summary.MAX_LENGTH)["properties"]["summary"]["enum"][0]
         return ollama_response({"summary": text})
 
     def test_disabled_returns_a_plain_text_from_the_data(self):
@@ -89,7 +91,7 @@ class SummaryTests(TestCase):
             "påhittat tal": self.good("Temperaturen är 31,5 °C."),
             "badråd": self.good("Det är säkert att bada."),
             "tom": self.good("   "),
-            "för lång": self.good("a" * 800),
+            "för lång": self.good("a" * (summary.MAX_LENGTH + 1)),
             "ingen json": raw_response("hej"),
             "fel fält": ollama_response({"annat": "x"}),
         }
@@ -114,7 +116,7 @@ class SummaryTests(TestCase):
     @override_settings(AI_ENABLED="1")
     def test_concurrent_generation_is_not_started_twice(self):
         signature = summary.hashlib.sha256(json.dumps(facts.latest_facts(), sort_keys=True).encode()).hexdigest()
-        cache.set(f"ai-summary:v3:sv:{signature}:lock", 1, 30)
+        cache.set(f"ai-summary:v4:sv:{signature}:lock", 1, 30)
         with patch("monitoring.ai.client.requests.post") as post:
             data = summary.get_summary("sv")
         post.assert_not_called()
@@ -127,7 +129,8 @@ class SummaryTests(TestCase):
         with patch("monitoring.ai.client.requests.post", return_value=raw_response("fel")):
             again = summary.get_summary("sv")
         self.assertEqual(again["source"], "fallback")
-        self.assertNotEqual(again["text"], fresh["text"])
+        self.assertEqual(fresh["source"], "ai")
+        self.assertIsNone(again["model"])
 
     def test_trend_labels(self):
         self.assertEqual(facts.trend([10, 10, 10, 10], 14, "turbidity"), "rising")
@@ -153,7 +156,7 @@ class SummaryApiAndDashboardTests(TestCase):
 
     @override_settings(AI_ENABLED="1")
     def test_summary_endpoint_marks_ai_text(self):
-        answer = ollama_response({"summary": numeric_statements(facts.latest_facts(), "sv")[0]})
+        answer = ollama_response({"summary": response_schema("summary", facts.latest_facts(), "sv", summary.MAX_LENGTH)["properties"]["summary"]["enum"][0]})
         with patch("monitoring.ai.client.requests.post", return_value=answer):
             body = self.client.get(reverse("ai-summary")).json()
         self.assertEqual((body["source"], body["ai_enabled"], body["model"]), ("ai", True, "llama3.2:3b"))

@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
@@ -19,28 +20,28 @@ class OutputContractTests(SimpleTestCase):
 
     def test_schema_constrains_each_candidate_to_grounded_numeric_text(self):
         for language in ("sv", "en", "de"):
-            schema = response_schema("summary", self.FACTS, language, 700)
+            schema = response_schema("summary", self.FACTS, language, summary.MAX_LENGTH)
             options = schema["properties"]["summary"]["enum"]
             self.assertFalse(schema["additionalProperties"])
             self.assertTrue(options)
             for text in options:
                 with self.subTest(language=language, text=text):
                     self.assertTrue(facts.numbers_are_grounded(text, self.FACTS))
-                    self.assertLessEqual(len(text), 700)
+                    self.assertLessEqual(len(text), summary.MAX_LENGTH)
                     self.assertEqual(selected_text({"summary": text}, "summary", schema), text)
 
     def test_prompt_and_format_share_the_same_language_specific_enum(self):
         for language in ("sv", "en", "de"):
-            option = numeric_statements(self.FACTS, language)[-1]
+            option = response_schema("summary", self.FACTS, language, summary.MAX_LENGTH)["properties"]["summary"]["enum"][0]
             with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": option})) as post:
                 self.assertEqual(summary.generate(self.FACTS, language), option)
             request = post.call_args.kwargs["json"]
             self.assertIn(option, request["format"]["properties"]["summary"]["enum"])
-            self.assertIn(option, request["messages"][0]["content"])
+            self.assertIn(json.dumps(option, ensure_ascii=False), request["messages"][0]["content"])
 
     def test_server_revalidates_even_if_ollama_ignores_schema(self):
-        schema = response_schema("summary", self.FACTS, "en", 700)
-        correct = numeric_statements(self.FACTS, "en")[-1]
+        schema = response_schema("summary", self.FACTS, "en", summary.MAX_LENGTH)
+        correct = schema["properties"]["summary"]["enum"][0]
         for result in (
             {"summary": correct.replace("41.7", "30.0").replace("30.0.", "41.7.")},
             {"summary": correct.replace("rainbow", "ohio")},
@@ -56,10 +57,10 @@ class OutputContractTests(SimpleTestCase):
                         summary.generate(self.FACTS, "en")
 
     def test_wrong_language_and_sign_changes_are_not_accepted(self):
-        schema = response_schema("summary", self.FACTS, "en", 700)
-        swedish = numeric_statements(self.FACTS, "sv")[-1]
+        schema = response_schema("summary", self.FACTS, "en", summary.MAX_LENGTH)
+        swedish = response_schema("summary", self.FACTS, "sv", summary.MAX_LENGTH)["properties"]["summary"]["enum"][0]
         self.assertIsNone(selected_text({"summary": swedish}, "summary", schema))
-        negative = numeric_statements(self.FACTS, "en")[1]
+        negative = schema["properties"]["summary"]["enum"][0]
         self.assertIsNone(selected_text({"summary": negative.replace("-2.0", "2.0")}, "summary", schema))
 
     def test_explanation_schema_contains_only_its_own_alert(self):

@@ -63,4 +63,4 @@ def cooldown_seconds() -> float:
 
 
 def summary_cache_seconds() -> float:
-    return _number("AI_SUMMARY_CACHE_SECONDS", 0)
+    return min(_number("AI_SUMMARY_CACHE_SECONDS", 0), 300)

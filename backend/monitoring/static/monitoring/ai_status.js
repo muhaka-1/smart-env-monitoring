@@ -14,7 +14,13 @@
   }
 
   function renderSummary(data) {
-    $("ai-status-text").textContent = data.text;
+    const paragraphs = data.text.split(/\n\n+/).filter(Boolean).map((text) => {
+      const paragraph = document.createElement("p");
+      paragraph.className = "mb-2";
+      paragraph.textContent = text;
+      return paragraph;
+    });
+    $("ai-status-text").replaceChildren(...paragraphs);
     const badge = $("ai-status-badge");
     const isAi = data.source === "ai";
     badge.textContent = isAi ? label("labelAi") : label("labelAuto");

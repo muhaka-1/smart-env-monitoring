@@ -88,3 +88,27 @@ msgstr "The value is approximately equal to the average over the last %(hours)d 
 
 msgid "För få tidigare mätningar under de senaste %(hours)d timmarna för att bedöma trenden."
 msgstr "Too few earlier readings over the last %(hours)d hours to assess the trend."
+
+msgid "Högre än tidigare medelvärde"
+msgstr "Higher than the previous average"
+
+msgid "Lägre än tidigare medelvärde"
+msgstr "Lower than the previous average"
+
+msgid "Ungefär oförändrat"
+msgstr "Approximately unchanged"
+
+msgid "Otillräckligt underlag"
+msgstr "Insufficient data"
+
+msgid "Okänd status"
+msgstr "Unknown status"
+
+msgid "Senaste status: %(status)s. Mätningen är inaktuell eller saknar giltig tid."
+msgstr "Last status: %(status)s. The reading is outdated or has no valid timestamp."
+
+msgid "Status: %(status)s. Trend: %(trend)s."
+msgstr "Status: %(status)s. Trend: %(trend)s."
+
+msgid "%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns saknas."
+msgstr "%(sensor)s (%(metric)s) %(value)s %(unit)s, limit unavailable."

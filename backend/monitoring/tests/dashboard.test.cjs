@@ -301,3 +301,5 @@ console.log("Dashboard labels, status, intervals, axes, empty state and anomaly 
   assert.equal(overviewControls["summary-stale"].textContent, "1");
   console.log("Authenticated overview uses latest-only data and accurate summaries: OK");
 })().catch((error) => { console.error(error); process.exitCode = 1; });
+
+require("./ai_status.test.cjs")().catch((error) => { console.error(error); process.exitCode = 1; });

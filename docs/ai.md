@@ -124,8 +124,8 @@ en utgången AI-text återanvänds inte. Underlaget innehåller mätningarnas ti
 Tal i fritt genererad prosa kan inte kontrolleras semantiskt med en mängd tillåtna
 tal. Svar måste därför väljas bland hela, ordagranna meningar som servern skapar
 från faktaunderlaget. Alternativen skickas både i prompten och som `enum` i
-Ollamas JSON-schema. Sammanfattningar kan innehålla en kombination av upp till
-tre sådana meningar; mejlförklaringar gäller bara den aktuella varningen. Varje mening binder sensor, mätstorhet, värde,
+Ollamas JSON-schema. Sammanfattningar innehåller ett komplett stycke per strand med alla tillgängliga
+mätstorheter, status och trend; mejlförklaringar gäller bara den aktuella varningen. Varje mening binder sensor, mätstorhet, värde,
 enhet och gräns till samma mätning. Ändrade tecken, värden, enheter eller sensorer
 avvisas. Annan numerisk text ger reservsammanfattning eller utelämnad mejlförklaring.
 Django kontrollerar även svaret efter generering: exakt fält, strängtyp, valt
@@ -150,3 +150,19 @@ Texten finns på svenska, engelska och tyska och binds till samma verifierade
 faktaunderlag som mätvärdet. AI-avstängning, otillgänglig modell eller ogiltigt
 svar lämnar det vanliga avvikelsemejlet oförändrat. Inga personuppgifter ingår
 i modellunderlaget. Gamla förklaringar återanvänds inte från föregående cacheversion.
+
+### Sammanfattning per strand
+
+Dashboarden visar ett eget stycke för Ohio Street Beach, 63rd Street Beach och
+Rainbow Beach när mätningar finns. Varje tillgänglig mätstorhet har sensor-ID,
+värde, enhet, projektgräns, status och trend. Trenden jämför det senaste värdet
+med medelvärdet av högst sex tidigare mätningar enligt befintlig tolerans; färre
+än tre ger otillräckligt underlag. Saknad gräns eller inaktuell mätning anges
+uttryckligen. Inaktuella mätningar presenteras inte som aktuella trender.
+
+Modellen får välja ordningen mellan kompletta strandstycken, men får inte
+utelämna stränder eller mätstorheter, ändra status, trend eller tal. Samma
+fullständiga underlag visas deterministiskt vid avstängd eller otillgänglig AI.
+`source` styr märkningen AI-genererad respektive Automatisk sammanfattning.
+Cachetiden är högst 300 sekunder även om en högre tid konfigureras, och begränsas
+även av mätningarnas aktualitet. För stort underlag ger reservtext utan modellanrop.
