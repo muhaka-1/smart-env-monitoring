@@ -6,7 +6,12 @@
 {% translate "Värde" %}: {{ value }} {{ unit }}
 {% translate "Gränsvärde" %}: {{ threshold }} {{ unit }}
 {% translate "Status" %}: {{ status }}
-
+{% if quality_note %}
+{{ quality_note }}
+{% endif %}{% if ai_note %}
+{% translate "Förklaring (AI-genererad, kontrollera mot värdena ovan):" %}
+{{ ai_note }}
+{% endif %}
 {% translate "Logga in på plattformen för att läsa meddelandet:" %}
 {{ action_url }}
 

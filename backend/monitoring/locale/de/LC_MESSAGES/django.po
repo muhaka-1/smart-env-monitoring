@@ -1,0 +1,114 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: smart-env-monitoring (AI)\n"
+"Language: de\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Misstänkt sensorfel"
+msgstr "Verdacht auf Sensorfehler"
+
+msgid "Statistisk avvikelse"
+msgstr "Statistische Abweichung"
+
+msgid "Fastfruset värde"
+msgstr "Eingefrorener Wert"
+
+msgid "Plötsligt nollvärde"
+msgstr "Plötzlicher Nullwert"
+
+msgid "Orimligt hopp"
+msgstr "Unplausibler Sprung"
+
+msgid "Avviker från tidigare värden"
+msgstr "Weicht von früheren Werten ab"
+
+msgid "%(n)d mätpunkt har ett senaste mätvärde."
+msgid_plural "%(n)d mätpunkter har ett senaste mätvärde."
+msgstr[0] "%(n)d Messpunkt hat einen neuesten Messwert."
+msgstr[1] "%(n)d Messpunkte haben einen neuesten Messwert."
+
+msgid "%(n)d mätpunkt överskrider projektets gräns:"
+msgid_plural "%(n)d mätpunkter överskrider projektets gräns:"
+msgstr[0] "%(n)d Messpunkt überschreitet den Projektgrenzwert:"
+msgstr[1] "%(n)d Messpunkte überschreiten den Projektgrenzwert:"
+
+msgid "%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns %(threshold)s."
+msgstr "%(sensor)s (%(metric)s) %(value)s %(unit)s, Grenzwert %(threshold)s."
+
+msgid "Inget mätvärde överskrider projektets gränser."
+msgstr "Kein Messwert überschreitet die Projektgrenzwerte."
+
+msgid "Misstänkt sensorfel: %(sensors)s."
+msgstr "Verdacht auf Sensorfehler: %(sensors)s."
+
+msgid "Obs: mätvärdet misstänks vara ett sensorfel (%(reason)s). Kontrollera sensorn innan åtgärd."
+msgstr "Hinweis: Der Messwert ist möglicherweise ein Sensorfehler (%(reason)s). Prüfen Sie den Sensor, bevor Sie handeln."
+
+msgid "Förklaring (AI-genererad, kontrollera mot värdena ovan):"
+msgstr "Erklärung (KI-generiert, mit den Werten oben abgleichen):"
+
+msgid "Läget just nu"
+msgstr "Aktuelle Lage"
+
+msgid "AI-genererad"
+msgstr "KI-generiert"
+
+msgid "Automatisk sammanfattning"
+msgstr "Automatische Zusammenfassung"
+
+msgid "Skapad"
+msgstr "Erstellt"
+
+msgid "Sammanfattningen kunde inte hämtas."
+msgstr "Die Zusammenfassung konnte nicht geladen werden."
+
+msgid "AI-text kan innehålla fel. Kontrollera mot mätvärdena nedan; statusen är projektens gränsregel och inte ett badråd."
+msgstr "KI-Text kann Fehler enthalten. Mit den Messwerten unten abgleichen; der Status ist die Grenzwertregel des Projekts, keine Badeempfehlung."
+
+msgid "Datakvalitet"
+msgstr "Datenqualität"
+
+msgid "Inga misstänkta sensorfel eller statistiska avvikelser."
+msgstr "Keine vermuteten Sensorfehler oder statistischen Abweichungen."
+
+
+msgid "Värdet överskrider projektets gräns."
+msgstr "Der Wert überschreitet den Projektgrenzwert."
+
+msgid "Värdet är högre än medelvärdet under de senaste %(hours)d timmarna."
+msgstr "Der Wert liegt über dem Mittelwert der letzten %(hours)d Stunden."
+
+msgid "Värdet är lägre än medelvärdet under de senaste %(hours)d timmarna."
+msgstr "Der Wert liegt unter dem Mittelwert der letzten %(hours)d Stunden."
+
+msgid "Värdet är ungefär lika med medelvärdet under de senaste %(hours)d timmarna."
+msgstr "Der Wert entspricht ungefähr dem Mittelwert der letzten %(hours)d Stunden."
+
+msgid "För få tidigare mätningar under de senaste %(hours)d timmarna för att bedöma trenden."
+msgstr "Zu wenige frühere Messwerte in den letzten %(hours)d Stunden für eine Trendbewertung."
+
+msgid "Högre än tidigare medelvärde"
+msgstr "Höher als der vorherige Mittelwert"
+
+msgid "Lägre än tidigare medelvärde"
+msgstr "Niedriger als der vorherige Mittelwert"
+
+msgid "Ungefär oförändrat"
+msgstr "Ungefähr unverändert"
+
+msgid "Otillräckligt underlag"
+msgstr "Unzureichende Daten"
+
+msgid "Okänd status"
+msgstr "Unbekannter Status"
+
+msgid "Senaste status: %(status)s. Mätningen är inaktuell eller saknar giltig tid."
+msgstr "Letzter Status: %(status)s. Der Messwert ist veraltet oder hat keinen gültigen Zeitstempel."
+
+msgid "Status: %(status)s. Trend: %(trend)s."
+msgstr "Status: %(status)s. Trend: %(trend)s."
+
+msgid "%(sensor)s (%(metric)s) %(value)s %(unit)s, gräns saknas."
+msgstr "%(sensor)s (%(metric)s) %(value)s %(unit)s, Grenzwert nicht verfügbar."
