@@ -1,0 +1,3 @@
+{% extends "admin/login.html" %}
+{% block content_title %}<div class="administration-heading"><p class="administration-eyebrow">BEHÖRIG ÅTKOMST</p><h1>Logga in som administratör</h1><p>Använd ditt personliga administratörskonto för att hantera plattformen.</p></div>{% endblock %}
+{% block content %}{{ block.super }}<p class="administration-login-links"><a href="{% url 'password_reset' %}">Glömt lösenord?</a><a href="{% url 'dashboard' %}">Till plattformen</a></p>{% endblock %}

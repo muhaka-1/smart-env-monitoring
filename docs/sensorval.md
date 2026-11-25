@@ -1,5 +1,7 @@
 # Sensorval och rekommenderad omfattning
 
+> **Aktuell läsanvisning 2026-11-11:** äldre bedömningar av README nedan är historisk research. Konton, sparade meddelanden, e-post och PDF-rapporter är nu implementerade; aktuell status beskrivs i README och docs/ARCHITECTURE.md. De ska inte bedömas som framtida arbete utifrån de äldre anteckningarna.
+
 > **Avgränsning beslutad 2026-10-23:** Fysisk sensor, ESP32 och firmware ingår inte i den obligatoriska MVP:n. Projektet ska använda en simulerad sensor som läser det öppna Chicago-datasetet. Dokumentet nedan bevaras endast som research för möjligt framtida arbete. Köp eller implementation av hårdvara ska inte blockera nuvarande projektplan.
 
 **Projekt:** smart-env-monitoring  
@@ -83,7 +85,7 @@ Tillverkarpriser nedan är ungefärliga listpriser i USD den 2026-10-11, exklusi
 ## 3. Jämförelse och beslut
 
 | Sensor/parameter | Teknik och ESP32-S3 | Kalibrering och underhåll | Relativ kostnad | Koppling till öppna data | Beslut |
-|---|---|---|---:|---|---|
+| --- | --- | --- | ---: | --- | --- |
 | **DS18B20, vattentemperatur** | Digital 1-Wire, 3-5,5 V. Kräver normalt 4,7 kOhm pull-up till 3,3 V. Ingen ADC behövs. | Enkel rimlighetskontroll mot referenstermometer. Välj färdig vattentät prob. | Låg, cirka 6,90 USD | Temperatur mäts vid badvattenprovtagning och kustbad kan ha temperaturprognoser i HaV:s API. | **Välj i MVP** |
 | **SEN0189, turbiditet** | Drivs med 5 V. Analog utgång kan vara 0-4,5 V och får inte kopplas direkt till ESP32-S3:s ADC. Kräver spänningsdelare eller extern ADC/signalomvandling. | Behöver noll-/referenspunkter, stabil provgeometri, rengöring och lagring av råspänning. Den enkla proben är inte lämplig för permanent oskyddad utomhusinstallation. | Låg, cirka 9,90 USD | Turbiditet ingår inte i de listade parametrarna i HaV:s öppna badvatten-API. Endast indirekt jämförelse med händelser, alginformation och avrådan. | **Välj i MVP som trend-/demonstrationssensor** |
 | **SEN0161-V2, pH** | 3,3-5,5 V matning och 0-3,0 V analog utgång. Kan mätas av ADC1 med rätt attenuation och kalibrering; extern ADC ger bättre reproducerbarhet. | Tvåpunktskalibrering, pH 4 och 7, rekommenderas. Glasproben måste hållas ren och förvaras rätt. Labproben driver vid långvarig mätning och är inte avsedd för permanent nedsänkning. | Medel, cirka 39,50 USD plus buffert/förvaring | pH finns inte bland de listade kärnparametrarna i HaV:s badvatten-API. | **Fas 2, inte MVP** |
@@ -223,7 +225,7 @@ API:t innehåller bland annat:
 ### Vad som kan jämföras
 
 | Lokal mätning | Öppen data | Tillåten tolkning |
-|---|---|---|
+| --- | --- | --- |
 | DS18B20 vattentemperatur | Uppmätt temperatur eller prognos när den finns | Jämför nivå och trend. En prognos ska märkas som prognos, inte facit. |
 | SEN0189 grumlighetstrend | Datum för alginformation, avrådan eller provtagning | Utforskande tidsmässig jämförelse. Den visar inte orsak eller mikrobiologisk säkerhet. |
 | Lokal nods koordinater | Badplatskoordinater | Koppla noden till närmaste eller uttryckligen vald badplats. Låt gruppen bekräfta matchningen. |

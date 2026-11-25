@@ -44,3 +44,31 @@ class ReadingMetricMigrationTests(TransactionTestCase):
 
         self.assertEqual(metrics["oak-street-beach-turbidity"], "turbidity")
         self.assertEqual(metrics["oak-street-beach-temperature"], "temperature")
+
+
+class LanguagePreferenceMigrationTests(TransactionTestCase):
+    def test_existing_accounts_and_readings_are_unchanged(self):
+        executor = MigrationExecutor(connection)
+        old_target = [("monitoring", "0004_alert_notification")]
+        executor.migrate(old_target)
+        try:
+            old_apps = executor.loader.project_state(old_target).apps
+            User = old_apps.get_model("auth", "User")
+            user = User.objects.create(username="existing-reader", email="reader@example.test",
+                                       password="existing-test-hash", is_active=True)
+            Reading = old_apps.get_model("monitoring", "Reading")
+            reading = Reading.objects.create(sensor_id="rainbow-beach-turbidity", metric="turbidity",
+                timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc), value=38.27, unit="NTU")
+            target = [("monitoring", "0005_user_language_preference")]
+            executor = MigrationExecutor(connection)
+            executor.migrate(target)
+            apps = executor.loader.project_state(target).apps
+            migrated_user = apps.get_model("auth", "User").objects.get(pk=user.pk)
+            migrated_reading = apps.get_model("monitoring", "Reading").objects.get(pk=reading.pk)
+            self.assertEqual((migrated_user.username, migrated_user.email, migrated_user.password,
+                              migrated_user.is_active), ("existing-reader", "reader@example.test", "existing-test-hash", True))
+            self.assertEqual((migrated_reading.value, migrated_reading.unit), (38.27, "NTU"))
+            self.assertEqual(apps.get_model("monitoring", "UserLanguagePreference").objects.count(), 0)
+        finally:
+            executor = MigrationExecutor(connection)
+            executor.migrate(executor.loader.graph.leaf_nodes())
