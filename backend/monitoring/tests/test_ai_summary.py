@@ -1,4 +1,7 @@
 import json
+from datetime import timedelta
+
+from django.utils import timezone
 from unittest.mock import patch
 
 from django.core.cache import cache
@@ -7,6 +10,7 @@ from django.urls import reverse
 
 from monitoring.ai import facts, summary
 from monitoring.models import Reading
+from monitoring.ai.grounding import numeric_statements
 
 from .ai_helpers import clean_state, make_readings, ollama_response, raw_response, steady
 
@@ -15,10 +19,10 @@ SETTINGS = dict(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
 
 
 class GroundingTests(SimpleTestCase):
-    FACTS = {"sensor_points": 2, "items": [{"sensor": "beach-7", "value": 19.4, "threshold": 25.0}]}
+    FACTS = {"sensor_points": 2, "items": [{"sensor": "beach-7", "value": 19.4, "threshold": 25.0, "metric": "temperature", "unit": "°C"}]}
 
     def test_numbers_from_the_facts_and_their_rounding_are_allowed(self):
-        for text in ("Sensor beach-7 visar 19,4 grader.", "Cirka 19 grader, gräns 25.", "2 mätpunkter."):
+        for text in numeric_statements(self.FACTS, "sv"):
             self.assertTrue(facts.numbers_are_grounded(text, self.FACTS), text)
 
     def test_invented_numbers_are_rejected(self):
@@ -39,11 +43,11 @@ class SummaryTests(TestCase):
     def setUp(self):
         clean_state()
         self.addCleanup(clean_state)
-        make_readings("beach-temp", "temperature", steady(20.0, count=10) + [26.3], unit="°C")
-        make_readings("beach-turb", "turbidity", steady(8.0, count=10))
+        make_readings("beach-temp", "temperature", steady(20.0, count=10) + [26.3], unit="°C", start=timezone.now() - timedelta(minutes=10))
+        make_readings("beach-turb", "turbidity", steady(8.0, count=10), start=timezone.now() - timedelta(minutes=10))
         Reading.objects.filter(value=26.3).update(status=Reading.Status.ANOMALY)
 
-    def good(self, text="Temperaturen vid beach-temp är 26,3 °C, över gränsen 25."):
+    def good(self, text="beach-temp (temperatur) 26.3 °C, gräns 25.0."):
         return ollama_response({"summary": text})
 
     def test_disabled_returns_a_plain_text_from_the_data(self):
@@ -109,19 +113,21 @@ class SummaryTests(TestCase):
 
     @override_settings(AI_ENABLED="1")
     def test_concurrent_generation_is_not_started_twice(self):
-        cache.set("ai-summary:sv:lock", 1, 30)
+        signature = summary.hashlib.sha256(json.dumps(facts.latest_facts(), sort_keys=True).encode()).hexdigest()
+        cache.set(f"ai-summary:v2:sv:{signature}:lock", 1, 30)
         with patch("monitoring.ai.client.requests.post") as post:
             data = summary.get_summary("sv")
         post.assert_not_called()
         self.assertEqual(data["source"], "fallback")
 
     @override_settings(AI_ENABLED="1", AI_SUMMARY_CACHE_SECONDS="0")
-    def test_stale_ai_text_is_served_while_the_model_is_unavailable(self):
+    def test_expired_ai_text_is_not_served_when_model_is_unavailable(self):
         with patch("monitoring.ai.client.requests.post", return_value=self.good()):
             fresh = summary.get_summary("sv")
         with patch("monitoring.ai.client.requests.post", return_value=raw_response("fel")):
             again = summary.get_summary("sv")
-        self.assertEqual(again["text"], fresh["text"])
+        self.assertEqual(again["source"], "fallback")
+        self.assertNotEqual(again["text"], fresh["text"])
 
     def test_trend_labels(self):
         self.assertEqual(facts.trend([10, 10, 10, 10], 14, "turbidity"), "rising")
@@ -134,7 +140,7 @@ class SummaryTests(TestCase):
 class SummaryApiAndDashboardTests(TestCase):
     def setUp(self):
         clean_state()
-        make_readings("beach-temp", "temperature", steady(20.0, count=10), unit="°C")
+        make_readings("beach-temp", "temperature", steady(20.0, count=10), unit="°C", start=timezone.now() - timedelta(minutes=10))
 
     def test_summary_endpoint_is_public_and_labels_the_source(self):
         response = self.client.get(reverse("ai-summary"))

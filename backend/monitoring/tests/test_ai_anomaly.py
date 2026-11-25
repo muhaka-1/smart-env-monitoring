@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
@@ -128,10 +129,11 @@ class AssessReadingsCommandTests(TestCase):
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class AssessmentApiTests(TestCase):
     def setUp(self):
+        self.client.force_login(get_user_model().objects.create_user("assessment-reader"))
         make_readings("beach-c", "turbidity", steady(12.0, count=12) + [0.0, 14.5])
         call_command("assess_readings", stdout=io.StringIO())
 
-    def test_lists_assessments_publicly_with_labels(self):
+    def test_lists_assessments_for_authenticated_user_with_labels(self):
         response = self.client.get(reverse("ai-assessments"))
         self.assertEqual(response.status_code, 200)
         results = response.json()["results"]

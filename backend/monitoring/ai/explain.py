@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext as _, override
 
 from . import client, config, facts as facts_module
+from .grounding import numeric_statements
 
 log = logging.getLogger(__name__)
 MAX_LENGTH = 400
@@ -52,6 +53,7 @@ def explain_alert(alert, language: str) -> str | None:
         "till gränsvärdet och hur de senaste värdena har utvecklats. Använd ENDAST tal och namn som finns i underlaget. "
         "Hitta inte på orsaker. Ge inga badråd. Svara som JSON med fältet explanation."
     )
+    system += " Om svaret innehåller siffror, använd endast hela meningar från denna lista, ordagrant: " + json.dumps(numeric_statements(facts, language), ensure_ascii=False)
     user = "Underlag (JSON):\n" + json.dumps(facts, ensure_ascii=False)
     try:
         result = client.chat_json(system, user, SCHEMA, timeout=config.mail_timeout())

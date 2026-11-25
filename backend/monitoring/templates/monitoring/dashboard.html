@@ -10,7 +10,7 @@
   <article class="summary-card"><p>{% translate "Inaktuella mätningar" %}</p><strong id="summary-stale">—</strong><small>{% translate "Behöver en ny uppdatering" %}</small></article>
 </div>
 {% endif %}
-<section id="ai-status" class="panel mb-4" aria-labelledby="ai-status-heading" data-summary-url="{% url 'ai-summary' %}" data-assessments-url="{% url 'ai-assessments' %}"
+<section id="ai-status" class="panel mb-4" aria-labelledby="ai-status-heading" data-summary-url="{% url 'ai-summary' %}" {% if user.is_authenticated %}data-assessments-url="{% url 'ai-assessments' %}"{% endif %}
   data-label-ai="{% translate 'AI-genererad' %}" data-label-auto="{% translate 'Automatisk sammanfattning' %}"
   data-label-generated="{% translate 'Skapad' %}" data-label-error="{% translate 'Sammanfattningen kunde inte hämtas.' %}"
   data-label-ai-note="{% translate 'AI-text kan innehålla fel. Kontrollera mot mätvärdena nedan; statusen är projektens gränsregel och inte ett badråd.' %}"
@@ -18,8 +18,8 @@
   <div class="section-heading mt-0"><h2 id="ai-status-heading">{% translate "Läget just nu" %}</h2><span id="ai-status-badge" class="badge bg-secondary">…</span></div>
   <p id="ai-status-text" class="mb-1" role="status">{% translate "Laddar…" %}</p>
   <p id="ai-status-meta" class="small text-muted mb-3"></p>
-  <h3 class="h6">{% translate "Datakvalitet" %}</h3>
-  <ul id="ai-quality-list" class="small mb-0"></ul>
+  {% if user.is_authenticated %}<h3 class="h6">{% translate "Datakvalitet" %}</h3>
+  <ul id="ai-quality-list" class="small mb-0"></ul>{% endif %}
 </section>
 <noscript><p class="alert alert-info">{% translate "Aktivera JavaScript för att hämta de senaste mätvärdena." %}</p></noscript>
 <section id="readings" aria-labelledby="readings-heading">

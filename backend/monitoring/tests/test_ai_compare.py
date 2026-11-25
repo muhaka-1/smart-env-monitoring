@@ -38,7 +38,7 @@ class CompareModelsTests(SimpleTestCase):
         for scenario in SCENARIOS.values():
             self.assertEqual(set(scenario), {"sensor_points", "over_threshold", "suspected_sensor_faults", "items"})
             self.assertEqual(scenario["sensor_points"], len(scenario["items"]))
-            self.assertTrue(facts.numbers_are_grounded("2 mätpunkter", scenario))
+            self.assertTrue(facts.numbers_are_grounded("2 mätpunkter har ett senaste mätvärde.", scenario))
 
     def test_compares_models_and_runs_even_when_ai_is_switched_off(self):
         output, post = self.run_command("--models", "bra-modell,dålig-modell,saknas", "--no-warmup")

@@ -54,6 +54,7 @@
       $("ai-status-text").textContent = label("labelError");
       $("ai-status-badge").textContent = "—";
     }
+    if (!panel.dataset.assessmentsUrl) return;
     try {
       renderQuality(await getJSON(panel.dataset.assessmentsUrl + "?limit=5"));
     } catch (error) {

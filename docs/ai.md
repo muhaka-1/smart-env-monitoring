@@ -12,7 +12,7 @@ Plattformen kan använda en **lokal** AI-modell via [Ollama](https://ollama.com)
 
 ## Principer
 
-- **Fakta från data.** Modellen får färdiga värden (sensor, värde, enhet, gräns, status, trend), aldrig fri databasåtkomst. Varje tal i svaret kontrolleras mot de värden modellen fick. Innehåller svaret ett annat tal, ett badråd (till exempel "säkert att bada"), är tomt eller för långt används det inte.
+- **Fakta från data.** Modellen får färdiga värden (sensor, värde, enhet, gräns, status, trend), aldrig fri databasåtkomst. Numeriska svar kontrolleras som hela sensorbundna meningar, inte som en lös mängd tillåtna tal. Innehåller svaret ett annat tal, ett badråd (till exempel "säkert att bada"), är tomt eller för långt används det inte.
 - **Alltid en reserv.** Är AI avstängd, långsam, nere eller opålitlig visas en vanlig text byggd på mätdatan (dashboard) eller så utelämnas AI-stycket (mejl). Mejl skickas alltid.
 - **Tydlig märkning.** AI-text märks "AI-genererad". Statusen är projektets gränsregel, inte ett badråd.
 - **Integritet.** Inga användare, e-postadresser eller andra personuppgifter skickas till modellen. Loggarna innehåller bara feltyp, aldrig prompt eller svar.
@@ -61,7 +61,7 @@ Varje ny mätning jämförs med medianen av sensorns 30 senaste mätningar av sa
 
 Bedömningen sparas i `ReadingAssessment` och är **skild från gränsvärdet** (`status`). Ett misstänkt sensorfel **stoppar inte** varning eller mejl; mejlet får i stället en vanlig (icke-AI) rad: "Obs: mätvärdet misstänks vara ett sensorfel". Tröskelvärdena finns överst i `backend/monitoring/ai/anomaly.py`.
 
-- API: `GET /api/ai/assessments/?limit=20&sensor_id=…` (öppet, som övriga mätdata).
+- API: `GET /api/ai/assessments/?limit=20&sensor_id=…` (kräver en inloggad session).
 - Redan sparade mätningar: `python backend/manage.py assess_readings [--sensor ID] [--dry-run]`.
 - Dashboarden visar senaste markeringarna under "Datakvalitet".
 
@@ -111,3 +111,20 @@ Kommandot ställer samma tre scenarier (alla OK, gräns överskriden, misstänkt
 - Sammanfattningen kan blockera den enskilda förfrågan som startar en ny generering i upp till `AI_TIMEOUT`; mejlförklaringen kan fördröja utskicket i upp till `AI_MAIL_TIMEOUT` en gång per varning och språk. Bakgrundsjobb vore en förbättring.
 - Cachen ligger i processens minne (Djangos standard); flera processer har varsin.
 - Ett misstänkt sensorfel undertrycker inte varningar. Vill kommunen det är det ett separat beslut.
+
+### Skydd av historik och aktuellt underlag
+
+`/api/ai/assessments/` kräver en inloggad session, även för HEAD. Den publika
+panelen hämtar endast sammanfattningen och visar inte historiska bedömningar.
+Sammanfattningens cache är knuten till de senaste mätningarna och upphör senast
+när en ingående mätning blir inaktuell enligt `READING_STALE_SECONDS`. Vid ändrade
+eller inaktuella mätningar, timeout eller upptagen modell används aktuell reservtext;
+en utgången AI-text återanvänds inte. Underlaget innehåller mätningarnas tidsstämplar.
+
+Tal i fritt genererad prosa kan inte kontrolleras semantiskt med en mängd tillåtna
+tal. Numeriska svar måste därför bestå av hela, ordagranna meningar ur den lista
+som servern skickar med prompten. Varje mening binder sensor, mätstorhet, värde,
+enhet och gräns till samma mätning. Ändrade tecken, värden, enheter eller sensorer
+avvisas. Annan numerisk text ger reservsammanfattning eller utelämnad mejlförklaring.
+Detta gäller både sammanfattningar och mejlförklaringar; det bevisar inte att all
+sifferfri fritext är semantiskt korrekt. Verifiering med en riktig lokal modell återstår.

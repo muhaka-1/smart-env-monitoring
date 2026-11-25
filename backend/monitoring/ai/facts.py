@@ -1,9 +1,11 @@
 """Faktaunderlag för AI-texter. Modellen får bara dessa värden, aldrig fri databasåtkomst."""
-import json
 import re
 from statistics import mean
 
 from django.conf import settings
+from django.utils import timezone
+
+from .grounding import numeric_text_is_grounded
 
 from ..models import Reading
 from .anomaly import MIN_SCALE, DEFAULT_MIN_SCALE
@@ -52,6 +54,8 @@ def latest_facts() -> dict:
         threshold = settings.ANOMALY_THRESHOLDS.get(metric)
         items.append({
             "sensor": sensor_id, "metric": metric,
+            "timestamp": reading.timestamp.isoformat(),
+            "stale": (timezone.now() - reading.timestamp).total_seconds() > max(1, settings.READING_STALE_SECONDS),
             "value": round(reading.value, 1), "unit": reading.unit,
             "threshold": None if threshold is None else round(threshold, 1),
             "status": reading.status,
@@ -66,28 +70,9 @@ def latest_facts() -> dict:
     }
 
 
-_NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
-
-
-def _numbers(text: str) -> set[float]:
-    found = set()
-    for token in _NUMBER.findall(text):
-        found.add(float(token.replace(",", ".")))
-    return found
-
-
-def allowed_numbers(facts: dict) -> set[float]:
-    """Alla tal som får förekomma i en AI-text: faktatalen, avrundade till heltal och en decimal."""
-    allowed = set()
-    for number in _numbers(json.dumps(facts, ensure_ascii=False)):
-        allowed.update({number, float(round(number)), round(number, 1)})
-    return allowed
-
-
 def numbers_are_grounded(text: str, facts: dict) -> bool:
-    """Sant om varje tal i texten kommer från faktaunderlaget."""
-    allowed = allowed_numbers(facts)
-    return all(number in allowed or round(number, 1) in allowed for number in _numbers(text))
+    """Numeric text must preserve complete sensor/metric/value/threshold statements."""
+    return numeric_text_is_grounded(text, facts)
 
 
 # Modellen får inte formulera badråd (plattformen är "inte ett badråd").
