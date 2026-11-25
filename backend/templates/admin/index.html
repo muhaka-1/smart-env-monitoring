@@ -1,7 +1,7 @@
 {% extends "admin/index.html" %}
 {% load i18n %}
 {% block nav-sidebar %}{% include "admin/nav_sidebar.html" %}{% endblock %}
-{% block content_title %}<div class="administration-heading"><p class="administration-eyebrow">DIN ARBETSPLATS</p><h1>Administration</h1><p>Hantera plattformens konton, behörigheter och sparade mätvärden.</p></div>{% endblock %}
+{% block content_title %}<div class="administration-heading"><p class="administration-eyebrow">{% translate 'DIN ARBETSPLATS' %}</p><h1>{% translate 'Administration' %}</h1><p>{% translate 'Hantera plattformens konton, behörigheter och sparade mätvärden.' %}</p></div>{% endblock %}
 {% block content %}
 <div id="content-main" class="administration-overview">
 {% for app in app_list %}
@@ -12,7 +12,7 @@
 <article class="administration-model">
 <p class="administration-eyebrow">{{ app.name }}</p><h3>{{ model.name }}</h3>
 <div class="administration-model-actions">
-{% if model.admin_url %}<a class="administration-button" href="{{ model.admin_url }}">{% if model.view_only %}Visa{% else %}Öppna{% endif %}<span class="visually-hidden"> {{ model.name }}</span> →</a>{% endif %}
+{% if model.admin_url %}<a class="administration-button" href="{{ model.admin_url }}">{% if model.view_only %}{% translate 'Visa' %}{% else %}{% translate 'Öppna' %}{% endif %}<span class="visually-hidden"> {{ model.name }}</span> →</a>{% endif %}
 {% if model.add_url %}<a class="administration-add" href="{{ model.add_url }}">{% translate 'Add' %}<span class="visually-hidden"> {{ model.name }}</span></a>{% endif %}
 </div></article>
 {% endfor %}
