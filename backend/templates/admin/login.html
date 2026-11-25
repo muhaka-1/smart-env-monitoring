@@ -1,3 +1,4 @@
 {% extends "admin/login.html" %}
-{% block content_title %}<div class="administration-heading"><p class="administration-eyebrow">BEHÖRIG ÅTKOMST</p><h1>Logga in som administratör</h1><p>Använd ditt personliga administratörskonto för att hantera plattformen.</p></div>{% endblock %}
-{% block content %}{{ block.super }}<p class="administration-login-links"><a href="{% url 'password_reset' %}">Glömt lösenord?</a><a href="{% url 'dashboard' %}">Till plattformen</a></p>{% endblock %}
+{% load i18n %}
+{% block content_title %}<div class="administration-heading"><p class="administration-eyebrow">{% translate 'BEHÖRIG ÅTKOMST' %}</p><h1>{% translate 'Logga in som administratör' %}</h1><p>{% translate 'Använd ditt personliga administratörskonto för att hantera plattformen.' %}</p></div>{% endblock %}
+{% block content %}{{ block.super }}<p class="administration-login-links"><a href="{% url 'password_reset' %}">{% translate 'Glömt lösenord?' %}</a><a href="{% url 'dashboard' %}">{% translate 'Till plattformen' %}</a></p>{% endblock %}

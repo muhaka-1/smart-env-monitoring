@@ -738,3 +738,210 @@ msgstr "The start or end time has an invalid format."
 
 msgid "Starttiden måste vara tidigare än sluttiden."
 msgstr "The start time must be before the end time."
+
+msgid "BEHÖRIG ÅTKOMST"
+msgstr "AUTHORIZED ACCESS"
+
+msgid "Logga in som administratör"
+msgstr "Sign in as administrator"
+
+msgid "Använd ditt personliga administratörskonto för att hantera plattformen."
+msgstr "Use your personal administrator account to manage the platform."
+
+msgid "Hantera plattformens konton, behörigheter och sparade mätvärden."
+msgstr "Manage platform accounts, permissions and stored readings."
+
+msgid "Visa"
+msgstr "View"
+
+msgid "Öppna"
+msgstr "Open"
+
+msgid "Till plattformen"
+msgstr "To the platform"
+
+msgid "Simulerade miljödata"
+msgstr "Simulated environmental data"
+
+msgid "Turbiditet får inte vara negativ."
+msgstr "Turbidity must not be negative."
+
+msgid "E-postadress"
+msgstr "Email address"
+
+msgid "E-postadressen används redan av ett konto."
+msgstr "The email address is already used by an account."
+
+msgid "Inbjudan"
+msgstr "Invitation"
+
+msgid "Importera konton"
+msgstr "Import accounts"
+
+msgid "Ingen förhandsgranskad fil hittades. Ladda upp filen igen."
+msgstr "No previewed file was found. Upload the file again."
+
+msgid "Välj en CSV-fil."
+msgstr "Choose a CSV file."
+
+msgid "Inbjudan kunde inte skickas. Kontot är fortsatt inaktivt; försök igen via åtgärden Skicka ny inbjudan."
+msgstr "The invitation could not be sent. The account remains inactive; try again using Resend invitation."
+
+msgid "Inbjudan skickad. Länken gäller i 72 timmar."
+msgstr "Invitation sent. The link is valid for 72 hours."
+
+msgid "Skicka ny inbjudan (ogiltigförklarar tidigare länk)"
+msgstr "Resend invitation (invalidates the previous link)"
+
+msgid "Aktiva konton eller konton med lösenord kan inte bjudas in igen."
+msgstr "Active accounts or accounts with passwords cannot be invited again."
+
+msgid "Aktiverad"
+msgstr "Activated"
+
+msgid "Ingen inbjudan"
+msgstr "No invitation"
+
+msgid "Ej skickad (leveransfel)"
+msgstr "Not sent (delivery failed)"
+
+msgid "Utgången"
+msgstr "Expired"
+
+#, python-format
+msgid "Skickad, giltig till %(expires)s"
+msgstr "Sent, valid until %(expires)s"
+
+msgid "Endast inaktiva konton utan lösenord kan bjudas in."
+msgstr "Only inactive accounts without passwords can be invited."
+
+msgid "Filen är för stor (högst 1 MB)."
+msgstr "The file is too large (maximum 1 MB)."
+
+msgid "Filen måste vara UTF-8-kodad CSV."
+msgstr "The file must be a UTF-8 encoded CSV."
+
+msgid "Filen är tom."
+msgstr "The file is empty."
+
+msgid "Filen innehåller inga kontorader."
+msgstr "The file contains no account rows."
+
+msgid "CSV-filen kunde inte läsas. Kontrollera filformatet."
+msgstr "The CSV file could not be read. Check the file format."
+
+msgid "Användarnamn saknas."
+msgstr "Username is missing."
+
+msgid "Användarnamnet får bara innehålla bokstäver, siffror och @/./+/-/_."
+msgstr "The username may only contain letters, numbers and @/./+/-/_."
+
+msgid "E-postadress saknas."
+msgstr "Email address is missing."
+
+msgid "E-postadressen är ogiltig."
+msgstr "The email address is invalid."
+
+msgid "Användarnamnet används redan av ett konto."
+msgstr "The username is already used by an account."
+
+#, python-format
+msgid "Filen har fler än %(limit)s rader. Dela upp importen."
+msgstr "The file has more than %(limit)s rows. Split the import."
+
+#, python-format
+msgid "Användarnamnet är längre än %(limit)s tecken."
+msgstr "The username is longer than %(limit)s characters."
+
+#, python-format
+msgid "Användarnamnet förekommer även på rad %(row)s i filen."
+msgstr "The username also appears on row %(row)s in the file."
+
+#, python-format
+msgid "E-postadressen förekommer även på rad %(row)s i filen."
+msgstr "The email address also appears on row %(row)s in the file."
+
+#, python-format
+msgid "Rubrikraden saknar obligatoriska kolumner: %(columns)s. Använd kolumnerna username och email (eller användarnamn och e-post)."
+msgstr "The header is missing required columns: %(columns)s. Use the columns username and email (or användarnamn and e-post)."
+
+msgid "Start"
+msgstr "Home"
+
+msgid "Användare"
+msgstr "Users"
+
+msgid "Förhandsgranskning"
+msgstr "Preview"
+
+msgid "Rad"
+msgstr "Row"
+
+msgid "OK – skapas"
+msgstr "OK – will be created"
+
+msgid "Skapas inte:"
+msgstr "Will not be created:"
+
+msgid "Ingen rad är giltig, så det finns inget att importera."
+msgstr "No rows are valid, so there is nothing to import."
+
+msgid "Avbryt och välj ny fil"
+msgstr "Cancel and choose a new file"
+
+msgid "Import klar"
+msgstr "Import complete"
+
+msgid "Till användarlistan"
+msgstr "To the user list"
+
+msgid "Förhandsgranska"
+msgstr "Preview"
+
+msgid "Ladda upp en CSV-fil (UTF-8, kommatecken eller semikolon) med kolumnerna"
+msgstr "Upload a CSV file (UTF-8, comma or semicolon) with the columns"
+
+msgid "och"
+msgstr "and"
+
+msgid "Filen kontrolleras och förhandsgranskas innan något konto sparas. Högst 500 rader."
+msgstr "The file is checked and previewed before any accounts are saved. Maximum 500 rows."
+
+msgid "Inget konto har skapats ännu."
+msgstr "No accounts have been created yet."
+
+#, python-format
+msgid "%(count)s rader lästa:"
+msgstr "%(count)s rows read:"
+
+#, python-format
+msgid "%(count)s giltiga"
+msgstr "%(count)s valid"
+
+#, python-format
+msgid "%(count)s med fel"
+msgstr "%(count)s with errors"
+
+#, python-format
+msgid "Vid bekräftelse skapas %(count)s inaktiva konton och en inbjudan skickas till varje adress."
+msgstr "Confirmation creates %(count)s inactive accounts and sends an invitation to each address."
+
+#, python-format
+msgid "De %(count)s raderna med fel hoppas över."
+msgstr "The %(count)s rows with errors are skipped."
+
+#, python-format
+msgid "Bekräfta import av %(count)s konton"
+msgstr "Confirm import of %(count)s accounts"
+
+#, python-format
+msgid "%(created)s konton skapades. %(sent)s inbjudningar skickades."
+msgstr "%(created)s accounts created. %(sent)s invitations sent."
+
+#, python-format
+msgid "Inbjudan kunde inte skickas till: %(users)s. Kontona finns kvar inaktiva; använd åtgärden Skicka ny inbjudan."
+msgstr "Invitations could not be sent to: %(users)s. The accounts remain inactive; use Resend invitation."
+
+#, python-format
+msgid "%(count)s rader hoppades över (ogiltiga eller dubbletter)."
+msgstr "%(count)s rows skipped (invalid or duplicate)."

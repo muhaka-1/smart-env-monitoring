@@ -59,14 +59,17 @@ ul.messagelist li, ul.messagelist li.warning, ul.messagelist li.error { backgrou
 #changelist #toolbar { background: var(--admin-surface); border: 1px solid var(--hairline-color); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
 #changelist #toolbar form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 #changelist #toolbar form input[type="text"] { width: min(360px, 100%); }
-#changelist .actions { border: 1px solid var(--hairline-color); border-radius: 12px 12px 0 0; background: var(--admin-surface); padding: 14px; }
+#changelist .actions { box-sizing: border-box; max-width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border: 1px solid var(--hairline-color); border-radius: 12px 12px 0 0; background: var(--admin-surface); padding: 14px; }
+#changelist .actions label { min-width: 0; max-width: 100%; }
+#changelist .actions select { width: min(100%, 360px); max-width: 100%; box-sizing: border-box; }
 #changelist .results { background: var(--admin-surface); border: 1px solid var(--hairline-color); border-top: 0; overflow-x: auto; }
 #changelist .paginator { background: var(--admin-surface); border: 1px solid var(--hairline-color); border-top: 0; border-radius: 0 0 12px 12px; padding: 16px; }
 #changelist-filter { border: 1px solid var(--hairline-color); background: var(--admin-surface); border-radius: 12px; overflow: hidden; }
 #changelist-filter h2 { border: 0; padding: 16px; }
 #changelist-filter h3 { font-size: 13px; }
 #changelist-filter li { padding: 7px 16px; }
-.object-tools { margin-top: -60px; }
+.object-tools { float: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin: 0 0 24px; padding: 0; }
+.object-tools li { float: none; margin: 0; padding: 0; }
 .object-tools a { border-radius: 8px; padding: 10px 14px; min-height: 40px; box-sizing: border-box; }
 .dashboard #content { max-width: 1600px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; column-gap: 28px; width: 100%; }
 .dashboard #content > .administration-heading { grid-column: 1 / -1; }
