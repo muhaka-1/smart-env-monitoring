@@ -42,6 +42,29 @@ class Reading(models.Model):
         return f"{self.sensor_id} @ {self.timestamp:%Y-%m-%d %H:%M:%S} = {self.value}"
 
 
+class ReadingAssessment(models.Model):
+    """Statistisk bedömning av en mätning (misstänkt sensorfel eller avvikelse mot historiken)."""
+
+    class Kind(models.TextChoices):
+        SENSOR_FAULT = "sensor_fault", _("Misstänkt sensorfel")
+        DEVIATION = "deviation", _("Statistisk avvikelse")
+
+    class Reason(models.TextChoices):
+        FLATLINE = "flatline", _("Fastfruset värde")
+        ZERO = "zero", _("Plötsligt nollvärde")
+        JUMP = "jump", _("Orimligt hopp")
+        OUTLIER = "outlier", _("Avviker från tidigare värden")
+
+    reading = models.OneToOneField(Reading, on_delete=models.CASCADE, related_name="assessment")
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    reason = models.CharField(max_length=20, choices=Reason.choices)
+    score = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-reading__timestamp", "-pk"]
+
+
 class AccountInvitation(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     token_digest = models.CharField(max_length=64, blank=True)

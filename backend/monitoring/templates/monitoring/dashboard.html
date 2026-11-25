@@ -10,6 +10,17 @@
   <article class="summary-card"><p>{% translate "Inaktuella mätningar" %}</p><strong id="summary-stale">—</strong><small>{% translate "Behöver en ny uppdatering" %}</small></article>
 </div>
 {% endif %}
+<section id="ai-status" class="panel mb-4" aria-labelledby="ai-status-heading" data-summary-url="{% url 'ai-summary' %}" {% if user.is_authenticated %}data-assessments-url="{% url 'ai-assessments' %}"{% endif %}
+  data-label-ai="{% translate 'AI-genererad' %}" data-label-auto="{% translate 'Automatisk sammanfattning' %}"
+  data-label-generated="{% translate 'Skapad' %}" data-label-error="{% translate 'Sammanfattningen kunde inte hämtas.' %}"
+  data-label-ai-note="{% translate 'AI-text kan innehålla fel. Kontrollera mot mätvärdena nedan; statusen är projektens gränsregel och inte ett badråd.' %}"
+  data-label-quality="{% translate 'Datakvalitet' %}" data-label-no-flags="{% translate 'Inga misstänkta sensorfel eller statistiska avvikelser.' %}">
+  <div class="section-heading mt-0"><h2 id="ai-status-heading">{% translate "Läget just nu" %}</h2><span id="ai-status-badge" class="badge bg-secondary">…</span></div>
+  <p id="ai-status-text" class="mb-1" role="status">{% translate "Laddar…" %}</p>
+  <p id="ai-status-meta" class="small text-muted mb-3"></p>
+  {% if user.is_authenticated %}<h3 class="h6">{% translate "Datakvalitet" %}</h3>
+  <ul id="ai-quality-list" class="small mb-0"></ul>{% endif %}
+</section>
 <noscript><p class="alert alert-info">{% translate "Aktivera JavaScript för att hämta de senaste mätvärdena." %}</p></noscript>
 <section id="readings" aria-labelledby="readings-heading">
 <div class="section-heading"><h2 id="readings-heading">{% translate "Senaste mätvärden" %}</h2>{% if user.is_authenticated %}<a href="{% url 'history' %}">{% translate "Visa historik" %} →</a>{% endif %}</div>
@@ -24,4 +35,4 @@
 </div></section>
 {% else %}<div class="panel mt-4"><h2 class="h5">{% translate "Få tillgång till mer" %}</h2><p>{% translate "Logga in för att öppna historik, meddelanden och rapporter." %}</p><a class="btn btn-primary" href="{% url 'login' %}">{% translate "Logga in" %}</a></div>{% endif %}
 {% endblock %}
-{% block scripts %}{{ dashboard_i18n|json_script:"dashboard-i18n" }}<script src="{% static 'monitoring/dashboard.js' %}"></script>{% endblock %}
+{% block scripts %}{{ dashboard_i18n|json_script:"dashboard-i18n" }}<script src="{% static 'monitoring/dashboard.js' %}"></script><script src="{% static 'monitoring/ai_status.js' %}"></script>{% endblock %}

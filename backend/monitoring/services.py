@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from rest_framework.exceptions import ValidationError
 
+from .ai.anomaly import assess_reading
 from .models import Reading
 from .notifications import create_alert
 from .serializers import ReadingSerializer
@@ -38,6 +39,7 @@ def ingest_reading(payload: dict) -> Reading:
             raise ValidationError({
                 "non_field_errors": ["En mätning med samma sensor_id och timestamp finns redan."],
             }) from None
+        assess_reading(reading)  # statistisk bedömning; stoppar aldrig inmatningen
         create_alert(reading, threshold)
     return reading
 
