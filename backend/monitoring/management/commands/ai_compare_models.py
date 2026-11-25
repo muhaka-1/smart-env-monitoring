@@ -5,6 +5,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 
 from monitoring.ai import client, config, facts, summary
+from monitoring.ai.grounding import response_schema, selected_text
 
 # Fasta scenarier i samma form som ``facts.latest_facts()`` ger.
 SCENARIOS = {
@@ -80,15 +81,17 @@ class Command(BaseCommand):
         system, user = summary._prompt(scenario, language)
         started = time.perf_counter()
         try:
-            result = client.chat_json(system, user, summary.SCHEMA, model=model, standalone=True,
+            schema = response_schema("summary", scenario, language, summary.MAX_LENGTH)
+            result = client.chat_json(system, user, schema, model=model, standalone=True,
                                       timeout=config.timeout() * 4)
         except client.AIUnavailable as exc:
             return {"seconds": time.perf_counter() - started, "json": False, "numbers": False,
                     "advice_free": False, "language": False, "text": f"(fel: {exc})"}
         seconds = time.perf_counter() - started
         text = str(result.get("summary", "")).strip()
+        valid = selected_text(result, "summary", schema) is not None
         return {
-            "seconds": seconds, "json": bool(text), "numbers": bool(text) and facts.numbers_are_grounded(text, scenario),
+            "seconds": seconds, "json": bool(text), "numbers": valid and facts.numbers_are_grounded(text, scenario),
             "advice_free": not facts.contains_bathing_advice(text), "language": language_ok(text, language),
             "text": text,
         }

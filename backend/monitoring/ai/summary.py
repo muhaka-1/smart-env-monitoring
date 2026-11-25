@@ -10,15 +10,11 @@ from django.utils import timezone
 from django.utils.translation import gettext as _, ngettext, override
 
 from . import client, config, facts as facts_module
-from .grounding import numeric_statements
+from .grounding import response_schema, selected_text
 
 log = logging.getLogger(__name__)
 MAX_LENGTH = 700
-SCHEMA = {
-    "type": "object",
-    "properties": {"summary": {"type": "string", "maxLength": MAX_LENGTH}},
-    "required": ["summary"],
-}
+
 
 
 def _metric_label(metric):
@@ -53,14 +49,14 @@ def fallback_text(facts: dict, language: str) -> str:
 
 
 def _prompt(facts: dict, language: str):
+    schema = response_schema("summary", facts, language, MAX_LENGTH)
     system = (
-        "Du sammanfattar mätdata för en kommuns övervakning av badvatten. "
-        f"Skriv 2–3 korta meningar på {facts_module.language_name(language)}. "
-        "Använd ENDAST de tal och sensornamn som finns i underlaget. Hitta inte på värden. "
-        "Ge inga badråd och bedöm inte om vattnet är säkert; statusen är projektets gränsregel. "
-        "Svara som JSON med fältet summary."
+        "Välj den mest relevanta sammanfattningen från enum-alternativen i schemat. "
+        "Prioritera projektavvikelser och misstänkta sensorfel. Ändra inte text, tal eller sensornamn. "
+        f"Alternativen är på {facts_module.language_name(language)}. "
+        "Ge inga badråd. Svara enbart som JSON enligt schemat: "
+        + json.dumps(schema, ensure_ascii=False)
     )
-    system += " Om svaret innehåller siffror, använd endast hela meningar från denna lista, ordagrant: " + json.dumps(numeric_statements(facts, language), ensure_ascii=False)
     user = "Underlag (JSON):\n" + json.dumps(facts, ensure_ascii=False)
     return system, user
 
@@ -68,8 +64,9 @@ def _prompt(facts: dict, language: str):
 def generate(facts: dict, language: str, *, timeout=None) -> str:
     """Anropar modellen och kontrollerar svaret. Kastar AIUnavailable vid fel eller otillåtet innehåll."""
     system, user = _prompt(facts, language)
-    result = client.chat_json(system, user, SCHEMA, timeout=timeout)
-    text = result.get("summary")
+    schema = response_schema("summary", facts, language, MAX_LENGTH)
+    result = client.chat_json(system, user, schema, timeout=timeout)
+    text = selected_text(result, "summary", schema)
     if not isinstance(text, str) or not text.strip() or len(text) > MAX_LENGTH:
         raise client.AIUnavailable("tomt eller för långt svar")
     text = text.strip()
@@ -95,7 +92,7 @@ def get_summary(language: str) -> dict:
     if not config.enabled() or not facts["sensor_points"] or any(i.get("stale", False) for i in facts["items"]):
         return fallback
     signature = hashlib.sha256(json.dumps(facts, sort_keys=True).encode()).hexdigest()
-    key = f"ai-summary:v2:{language}:{signature}"
+    key = f"ai-summary:v3:{language}:{signature}"
     cached = cache.get(key)
     if cached and now - cached["generated_at"] < config.summary_cache_seconds():
         return cached

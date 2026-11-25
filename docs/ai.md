@@ -122,9 +122,15 @@ eller inaktuella mätningar, timeout eller upptagen modell används aktuell rese
 en utgången AI-text återanvänds inte. Underlaget innehåller mätningarnas tidsstämplar.
 
 Tal i fritt genererad prosa kan inte kontrolleras semantiskt med en mängd tillåtna
-tal. Numeriska svar måste därför bestå av hela, ordagranna meningar ur den lista
-som servern skickar med prompten. Varje mening binder sensor, mätstorhet, värde,
+tal. Svar måste därför väljas bland hela, ordagranna meningar som servern skapar
+från faktaunderlaget. Alternativen skickas både i prompten och som `enum` i
+Ollamas JSON-schema. Sammanfattningar kan innehålla en kombination av upp till
+tre sådana meningar; mejlförklaringar gäller bara den aktuella varningen. Varje mening binder sensor, mätstorhet, värde,
 enhet och gräns till samma mätning. Ändrade tecken, värden, enheter eller sensorer
 avvisas. Annan numerisk text ger reservsammanfattning eller utelämnad mejlförklaring.
-Detta gäller både sammanfattningar och mejlförklaringar; det bevisar inte att all
-sifferfri fritext är semantiskt korrekt. Verifiering med en riktig lokal modell återstår.
+Django kontrollerar även svaret efter generering: exakt fält, strängtyp, valt
+alternativ, språk och sifferbindning. Även sifferfri fritext utanför alternativen
+avvisas. Modellen prioriterar vilken verifierad text som visas; den skriver inte
+fri numerisk prosa. Ett modellsvar som avviker ger fortfarande reservtext.
+
+Se [Ollamas dokumentation om strukturerade svar](https://docs.ollama.com/capabilities/structured-outputs).

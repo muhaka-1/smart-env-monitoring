@@ -6,15 +6,10 @@ from django.core.cache import cache
 from django.utils.translation import gettext as _, override
 
 from . import client, config, facts as facts_module
-from .grounding import numeric_statements
+from .grounding import response_schema, selected_text
 
 log = logging.getLogger(__name__)
 MAX_LENGTH = 400
-SCHEMA = {
-    "type": "object",
-    "properties": {"explanation": {"type": "string", "maxLength": MAX_LENGTH}},
-    "required": ["explanation"],
-}
 _CACHE_SECONDS = 24 * 3600
 
 
@@ -40,26 +35,26 @@ def explain_alert(alert, language: str) -> str | None:
     if not config.enabled():
         return None
     language = (language or "sv")[:2]
-    key = f"ai-explain:{alert.pk}:{language}"
+    key = f"ai-explain:v2:{alert.pk}:{language}"
     cached = cache.get(key)
     if cached:
         return cached
     if not client.available():
         return None
     facts = alert_facts(alert)
+    schema = response_schema("explanation", facts, language, MAX_LENGTH)
     system = (
-        "Du förklarar en datavarning från en kommuns miljöövervakning för en handläggare. "
-        f"Skriv högst två korta meningar på {facts_module.language_name(language)}: vad värdet betyder i förhållande "
-        "till gränsvärdet och hur de senaste värdena har utvecklats. Använd ENDAST tal och namn som finns i underlaget. "
-        "Hitta inte på orsaker. Ge inga badråd. Svara som JSON med fältet explanation."
+        "Välj förklaringen från enum-alternativen i schemat utan att ändra text, tal eller sensornamn. "
+        f"Texten är på {facts_module.language_name(language)} och beskriver projektets gränsregel. "
+        "Ge inga badråd eller påhittade orsaker. Svara enbart som JSON enligt schemat: "
+        + json.dumps(schema, ensure_ascii=False)
     )
-    system += " Om svaret innehåller siffror, använd endast hela meningar från denna lista, ordagrant: " + json.dumps(numeric_statements(facts, language), ensure_ascii=False)
     user = "Underlag (JSON):\n" + json.dumps(facts, ensure_ascii=False)
     try:
-        result = client.chat_json(system, user, SCHEMA, timeout=config.mail_timeout())
+        result = client.chat_json(system, user, schema, timeout=config.mail_timeout())
     except client.AIUnavailable:
         return None
-    text = result.get("explanation")
+    text = selected_text(result, "explanation", schema)
     if not isinstance(text, str) or not text.strip() or len(text) > MAX_LENGTH:
         return None
     text = text.strip()

@@ -49,7 +49,7 @@ class ReviewRegressionsTests(TestCase):
         self.assertContains(response, 'id="ai-status"')
 
     def test_cached_summary_is_invalidated_by_new_reading(self):
-        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": "Läget följs upp."})) as post:
+        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": "1 mätpunkt har ett senaste mätvärde."})) as post:
             first = summary.get_summary("sv")
             self.assertEqual(summary.get_summary("sv"), first)
             self.assertEqual(post.call_count, 1)
@@ -69,7 +69,7 @@ class ReviewRegressionsTests(TestCase):
         self.assertNotIn("Inget mätvärde överskrider", data["text"])
 
     def test_lock_and_cooldown_cannot_return_expired_summary(self):
-        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": "Tidigare sammanfattning."})):
+        with patch("monitoring.ai.client.requests.post", return_value=ollama_response({"summary": "1 mätpunkt har ett senaste mätvärde."})):
             summary.get_summary("sv")
         with override_settings(AI_SUMMARY_CACHE_SECONDS=0), patch("monitoring.ai.client.available", return_value=False):
             self.assertEqual(summary.get_summary("sv")["source"], "fallback")
@@ -108,7 +108,7 @@ class ReviewRegressionsTests(TestCase):
     def test_reading_expiring_during_generation_returns_stale_fallback(self):
         def answer(*args, **kwargs):
             Reading.objects.filter(pk=self.reading.pk).update(timestamp=timezone.now() - timedelta(minutes=6))
-            return ollama_response({"summary": "Läget följs upp."})
+            return ollama_response({"summary": "1 mätpunkt har ett senaste mätvärde."})
         with patch("monitoring.ai.client.requests.post", side_effect=answer):
             result = summary.get_summary("sv")
         self.assertEqual(result["source"], "fallback")

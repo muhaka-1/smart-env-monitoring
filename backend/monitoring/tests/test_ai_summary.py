@@ -114,7 +114,7 @@ class SummaryTests(TestCase):
     @override_settings(AI_ENABLED="1")
     def test_concurrent_generation_is_not_started_twice(self):
         signature = summary.hashlib.sha256(json.dumps(facts.latest_facts(), sort_keys=True).encode()).hexdigest()
-        cache.set(f"ai-summary:v2:sv:{signature}:lock", 1, 30)
+        cache.set(f"ai-summary:v3:sv:{signature}:lock", 1, 30)
         with patch("monitoring.ai.client.requests.post") as post:
             data = summary.get_summary("sv")
         post.assert_not_called()
@@ -153,7 +153,7 @@ class SummaryApiAndDashboardTests(TestCase):
 
     @override_settings(AI_ENABLED="1")
     def test_summary_endpoint_marks_ai_text(self):
-        answer = ollama_response({"summary": "Alla värden ser lugna ut."})
+        answer = ollama_response({"summary": numeric_statements(facts.latest_facts(), "sv")[0]})
         with patch("monitoring.ai.client.requests.post", return_value=answer):
             body = self.client.get(reverse("ai-summary")).json()
         self.assertEqual((body["source"], body["ai_enabled"], body["model"]), ("ai", True, "llama3.2:3b"))

@@ -17,7 +17,7 @@ from .ai_helpers import clean_state, ollama_response
 def fake_ollama(url, json=None, **kwargs):
     model = json["model"]
     if model == "bra-modell":
-        return ollama_response({"summary": "Alla mätpunkter ligger under gränsen och värdet är inte högt. Det är ett lugnt läge."})
+        return ollama_response({"summary": json["format"]["properties"]["summary"]["enum"][0]})
     if model == "dålig-modell":
         return ollama_response({"summary": "Värdet är 99 NTU. Det är säkert att bada."})
     raise requests.ConnectionError("model not found")
